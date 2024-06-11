@@ -1,0 +1,23 @@
+h1 {
+    text-align: center;
+}
+
+.table-header {
+    background-color: #FFDDC1;
+    border: 2px solid #e3b188;
+}
+.table-cell1 {
+    background-color: #FFDDC1;
+    border: 2px solid #e3b188;
+}
+.table-cell2 {
+    background-color: #FFDDC1;
+    border: 2px solid #e3b188;
+}
+
+.correct {
+    border: 2px solid green;
+}
+.wrong {
+    border: 2px solid red;
+}

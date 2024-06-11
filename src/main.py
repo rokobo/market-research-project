@@ -2,7 +2,7 @@ from dash import Dash, html, dcc
 import dash
 import dash_bootstrap_components as dbc
 import sys
-from os.path import abspath, join, dirname
+from os.path import join, dirname
 
 
 sys.path.append(join(dirname(__file__), "pages"))
@@ -11,7 +11,8 @@ sys.path.append(dirname(__file__))
 app = Dash(
     title="test title", update_title=None,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
-    use_pages=True
+    use_pages=True,
+    assets_folder='../assets'
 )
 
 app.layout = [
