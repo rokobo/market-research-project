@@ -1,3 +1,16 @@
+canvas#confetti {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1;
+}
+.confetti{
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+    user-select: none;
+}
 h1 {
     text-align: center;
 }

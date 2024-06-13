@@ -10,9 +10,9 @@ def load_establishments() -> list[dict[str, str]]:
     establishments = []
     with open(join(HOME, "config/estabelecimentos.txt"), 'r') as file:
         for line in file:
-            code, info = line.strip().split(' ', 1)
+            est = line.strip()
             establishments.append({
-                "label": f"{code} {info}", "value": code
+                "label": est, "value": est
             })
     return establishments
 
@@ -36,7 +36,6 @@ def load_brands(product: str) -> list[dict[str, str]]:
 def validate_products(values) -> list[bool]:
     npt, npr, br, pr, qn, obs = values
     validations = []
-    print(values)
     size = len(pr)
 
     validations.append([isinstance(brand, str) for brand in br])
@@ -67,3 +66,10 @@ def validate_products(values) -> list[bool]:
     else:
         validations.append([])
     return validations
+
+
+def save_products(products, info):
+    # TODO
+    print(products)
+    print(info)
+    return
