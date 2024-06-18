@@ -12,12 +12,12 @@ layout = html.Div([
                 "Instruções de preenchimento",
                 className="alert-heading", style={'fontWeight': 'bold'}),
             html.P([
-                "Se a quantidade coletada não for igual à quantidade padrão, "
+                "Se a quantidade coletada não for igual a quantidade padrão, "
                 "selecione \"Fora de padrão\" e especifique a quantidade "
                 "coletada com a mesma unidade de medida especificada na seção"
             ], className="mb-0"),
     ], dismissable=True, color="warning"),
-    html.H1("Coleta de preços", className="m-3"),
+    html.H1("Coleta de preços", className="m-3", style={'fontWeight': 'bold'}),
     input_form("Nome do coletor", "collector_name", "text"),
     input_form(
         "Data de coleta", "collection_date", "date",

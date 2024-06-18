@@ -3,15 +3,15 @@ const gravity = 0.5;
 const terminalVelocity = 5;
 const drag = 0.075;
 const colors = [
-    { front: 'red', back: 'darkred' },
-    { front: 'green', back: 'darkgreen' },
-    { front: 'blue', back: 'darkblue' },
-    { front: 'yellow', back: 'darkyellow' },
-    { front: 'orange', back: 'darkorange' },
-    { front: 'pink', back: 'darkpink' },
-    { front: 'purple', back: 'darkpurple' },
-    { front: 'turquoise', back: 'darkturquoise' }];
-const confettiQuantityRatio = 5000;
+    { front: '#FF0000', back: '#8B0000' },
+    { front: '#00cc00', back: '#006400' },
+    { front: '#0000FF', back: '#00008B' },
+    { front: '#FFFF00', back: '#b3b300' },
+    { front: '#FFA500', back: '#805300' },
+    { front: '#FFC0CB', back: '#800015' },
+    { front: '#990099', back: '#660066' },
+    { front: '#40E0D0', back: '#126e64' }];
+const confettiQuantityRatio = 7500;
 
 randomRange = (min, max) => Math.random() * (max - min) + min;
 
@@ -45,6 +45,8 @@ function animateConfetti() {
                     this.size_x = (Math.random() * 10) + 10;
                     this.size_y = (Math.random() * 20) + 10;
                     this.rotation = Math.random() * 2 * Math.PI;
+                    this.rotation_speed_y = ((Math.random() * 5) / 100) + 0.05;
+                    this.rotation_speed_z = Math.random() / 10;
                     this.scale_x = 1;
                     this.scale_y = 1;
                     this.velocity_x = (Math.random() * 50) - 25;
@@ -65,6 +67,12 @@ function animateConfetti() {
                     // Set position
                     this.x += this.velocity_x;
                     this.y += this.velocity_y;
+
+                    // Apply rotation along the z axis
+                    this.rotation = this.rotation + this.rotation_speed_z;
+                    if (this.rotation > Math.PI * 2) {
+                        this.rotation = 0;
+                    }
                 }
                 draw() {
                     this.width = this.size_x * this.scale_x;
@@ -75,7 +83,7 @@ function animateConfetti() {
                     if (this.x < 0) {this.x = canvas.width}
 
                     // Spin confetto by scaling y, draw, reset transform matrix
-                    this.scale_y = Math.cos(this.y * 0.1);
+                    this.scale_y = Math.cos(this.y * this.rotation_speed_y);
                     ctx.fillStyle = this.scale_y > 0 ? this.color.front : this.color.back;
                     ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -100,7 +108,6 @@ function animateConfetti() {
                         confetto.draw();
                     }
                 });
-
                 if (confetti.length > 0) {
                     requestAnimationFrame(animate);
                 } else {

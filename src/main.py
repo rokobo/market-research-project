@@ -10,7 +10,7 @@ sys.path.append(dirname(__file__))
 
 app = Dash(
     title="test title", update_title=None,
-    external_stylesheets=[dbc.themes.COSMO],
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
     use_pages=True,
     assets_folder='../assets'
 )

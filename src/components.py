@@ -114,7 +114,7 @@ def product_form(
         dbc.Row([
             create_product_form(
                 id_name, no_price, brand, price, no_pattern, quantity, obs),
-        ], id=f"container-{id_name}"),
+        ], id=f"container-{id_name}", className="g-0"),
         html.Button("+", id=f"add-{id_name}", className="mb-4")
     ], className="m-2 g-0")
 

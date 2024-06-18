@@ -1,6 +1,7 @@
 """Tools for the pages."""
 
 from os.path import dirname, join
+import pandas as pd
 
 
 HOME = dirname(dirname(__file__))
@@ -68,8 +69,39 @@ def validate_products(values) -> list[bool]:
     return validations
 
 
-def save_products(products, info):
-    # TODO
-    print(products)
-    print(info)
+PRODUCTS = [
+    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
+    "soja", "banana", "batata", "tomate", "carne", "pao"]
+QUANTIDADES = {
+    'cafe': 0.5, 'arroz': 5, 'manteiga': 0.2, 'soja': 0.9
+}
+
+def save_products(product_data, info):
+    rows = []
+    for product, prod_name in zip(product_data, PRODUCTS):
+        size = len(product[3])
+        product = [
+            col if len(col) == size
+            else col + ([None] * (size - len(col)))
+            for col in product]
+        for row in list(zip(*product)):
+            data = [prod_name]
+            data.extend(row[2:5])
+            if not isinstance(data[3], (float, int)):
+                if prod_name in QUANTIDADES:
+                    quantidade = QUANTIDADES[prod_name]
+                else:
+                    quantidade = 1
+                data[3] = quantidade
+            rows.append(data)
+    df = pd.DataFrame(
+        rows, columns=["Produto", "Marca", "Preço", "Quantidade"])
+    df["Nome"] = info[0]
+    df["Data"] = info[1]
+    df["Estabelecimento"] = info[2]
+    df["PPK"] = df["Preço"] / df["Quantidade"]
+    df = df[[
+        "Nome", "Data", "Estabelecimento", "Produto",
+        "Marca", "Preço", "Quantidade", "PPK"]]
+    df.to_excel("text.xlsx", index=False)
     return
