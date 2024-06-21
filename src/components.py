@@ -44,11 +44,11 @@ def input_form(
 
 
 def create_product_form(
-    id_name: str, no_price=False, brand=False, price=False,
-    no_pattern=False, quantity=False, obs=False, idx: int = 0, values=None
+    id_name: str, brand=False, price=False,
+    quantity=False, obs=False, idx: int = 0, values=None
 ):
     row = []
-    values = values if values is not None else [None] * 6
+    values = values if values is not None else [None] * 4
 
     row.append(
         dbc.Col(dbc.Button(
@@ -56,48 +56,36 @@ def create_product_form(
             id={"type": f"delete-{id_name}", "index": idx}
         ), width="auto")
     )
-    if no_price:
-        row.append(dbc.Col(dbc.Checkbox(
-            id={"type": f"no_price-{id_name}", "index": idx}, value=values[0]
-        ), width=2))
-    if no_pattern:
-        row.append(dbc.Col(dbc.Checkbox(
-            id={"type": f"no_pattern-{id_name}", "index": idx}, value=values[1]
-        ), width=2))
     if brand:
         row.append(dbc.Col(dbc.Select(
-            options=load_brands(id_name), value=values[2],
-            id={"type": f"brand-{id_name}", "index": idx}), width=4))
+            options=load_brands(id_name), value=values[0],
+            id={"type": f"brand-{id_name}", "index": idx}), width=5))
     if price:
         row.append(dbc.Col(dbc.Input(
             type="number", id={"type": f"price-{id_name}", "index": idx},
-            min=0, value=values[3]
+            min=0, value=values[1]
         )))
     if quantity:
         row.append(dbc.Col(dbc.Input(
             type="number", id={"type": f"quantity-{id_name}", "index": idx},
-            min=0, value=values[4]
+            min=0, value=values[2]
         )))
     if obs:
         row.append(dbc.Col(dbc.Input(
-            id={"type": f"obs-{id_name}", "index": idx}, value=values[5])))
+            id={"type": f"obs-{id_name}", "index": idx}, value=values[3])))
     return dbc.Row(row, className="g-0", id=f"{id_name}-product-row-{idx}")
 
 
 def product_form(
-    label: str, id_name: str, no_price=False, brand=False, price=False,
-    no_pattern=False, quantity=False, obs=False
+    label: str, id_name: str, brand=False, price=False,
+    quantity=False, obs=False
 ):
     row = []
     style = {'textAlign': 'center', 'width': '100%'}
     row.append(dbc.Col(style={'marginRight': '30px'}, width="auto"))
 
-    if no_price:
-        row.append(dbc.Col(dbc.Label("Faltando", style=style), width=2))
-    if no_pattern:
-        row.append(dbc.Col(dbc.Label("Fora de padrão", style=style), width=2))
     if brand:
-        row.append(dbc.Col(dbc.Label("Marca", style=style), width=4))
+        row.append(dbc.Col(dbc.Label("Marca", style=style), width=5))
     if price:
         row.append(dbc.Col(dbc.Label("Preço", style=style)))
     if quantity:
@@ -113,7 +101,7 @@ def product_form(
         dbc.Row(row, className="g-0"),
         dbc.Row([
             create_product_form(
-                id_name, no_price, brand, price, no_pattern, quantity, obs),
+                id_name, brand, price, quantity, obs),
         ], id=f"container-{id_name}", className="g-0"),
         html.Button("+", id=f"add-{id_name}", className="mb-4")
     ], className="m-2 g-0")
@@ -124,35 +112,35 @@ def add_new_form(context: str, idx: int, values=None) -> dbc.Row:
         case "acucar":
             new_row = create_product_form(
                 context, brand=True, price=True,
-                no_pattern=True, quantity=True, idx=idx, values=values)
+                quantity=True, idx=idx, values=values)
         case "arroz":
             new_row = create_product_form(
                 context, brand=True, price=True,
-                no_pattern=True, quantity=True, idx=idx, values=values)
+                quantity=True, idx=idx, values=values)
         case "cafe":
             new_row = create_product_form(
                 context, brand=True, price=True,
-                no_pattern=True, quantity=True, idx=idx, values=values)
+                quantity=True, idx=idx, values=values)
         case "farinha":
             new_row = create_product_form(
                 context, brand=True, price=True,
-                no_pattern=True, quantity=True, idx=idx, values=values)
+                quantity=True, idx=idx, values=values)
         case "feijao":
             new_row = create_product_form(
                 context, brand=True, price=True,
-                no_pattern=True, quantity=True, idx=idx, values=values)
+                quantity=True, idx=idx, values=values)
         case "leite":
             new_row = create_product_form(
                 context, brand=True, price=True,
-                no_pattern=True, quantity=True, idx=idx, values=values)
+                quantity=True, idx=idx, values=values)
         case "manteiga":
             new_row = create_product_form(
                 context, brand=True, price=True,
-                no_pattern=True, quantity=True, idx=idx, values=values)
+                quantity=True, idx=idx, values=values)
         case "soja":
             new_row = create_product_form(
                 context, brand=True, price=True,
-                no_pattern=True, quantity=True, idx=idx, values=values)
+                quantity=True, idx=idx, values=values)
         case "banana":
             new_row = create_product_form(
                 context, brand=True, price=True, idx=idx, values=values)
@@ -164,11 +152,11 @@ def add_new_form(context: str, idx: int, values=None) -> dbc.Row:
                 context, price=True, obs=True, idx=idx, values=values)
         case "carne":
             new_row = create_product_form(
-                context, no_price=True, price=True,
+                context, price=True,
                 obs=True, idx=idx, values=values)
         case "pao":
             new_row = create_product_form(
-                context, no_price=True, price=True,
+                context, price=True,
                 obs=True, idx=idx, values=values)
         case _:
             raise NotImplementedError("No product found")

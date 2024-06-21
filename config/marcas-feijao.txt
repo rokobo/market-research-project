@@ -1,3 +1,4 @@
+-p
 Broto Legal
 Camil
 Empório São João
@@ -6,7 +7,7 @@ Kicaldo
 Joli
 Oliron
 Solito
--
+-np
 Carrefour
 Caldo Nobre
 Fantástico

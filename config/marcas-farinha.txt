@@ -1,3 +1,4 @@
+-p
 Dona Benta
 Famiglia Venturelli
 Globo
@@ -5,7 +6,7 @@ Nita
 Renata
 Rosa Branca
 Sol
--
+-np
 Adria
 Anaconda
 Carrefour

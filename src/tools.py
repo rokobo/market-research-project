@@ -1,7 +1,10 @@
 """Tools for the pages."""
 
-from os.path import dirname, join
+from os.path import dirname, join, exists
+from os import makedirs, listdir
 import pandas as pd
+from openpyxl import load_workbook
+import time
 
 
 HOME = dirname(dirname(__file__))
@@ -23,9 +26,15 @@ def load_brands(product: str) -> list[dict[str, str]]:
     with open(join(HOME, f"config/marcas-{product}.txt"), 'r') as file:
         for line in file:
             brand = line.strip()
-            if brand == "-":
+            if brand == "-p":
                 brands.append({
-                    "label": brand*20, "value": brand, "disabled": True
+                    "label": "Preferenciais",
+                    "value": brand, "disabled": True
+                })
+            elif brand == "-np":
+                brands.append({
+                    "label": "Não Preferenciais",
+                    "value": brand, "disabled": True
                 })
             else:
                 brands.append({
@@ -34,39 +43,9 @@ def load_brands(product: str) -> list[dict[str, str]]:
     return brands
 
 
-def validate_products(values) -> list[bool]:
-    npt, npr, br, pr, qn, obs = values
-    validations = []
-    size = len(pr)
-
-    validations.append([isinstance(brand, str) for brand in br])
-    if npr != []:
-        validations.append([
-            (isinstance(price, (int, float)) and not no_price) or
-            (no_price and price is None)
-            for price, no_price in zip(pr, npr)
-        ])
-    else:
-        validations.append([
-            isinstance(price, (int, float))
-            for price in pr
-        ])
-
-    if npt != []:
-        validations.append([
-            (isinstance(quantity, (int, float)) and no_pattern) or
-            (not no_pattern and quantity is None)
-            for quantity, no_pattern in zip(qn, npt)
-        ])
-    else:
-        validations.append([
-            isinstance(quantity, (int, float)) for quantity in qn])
-
-    if obs != []:
-        validations.append([True] * size)
-    else:
-        validations.append([])
-    return validations
+def check_folder(path):
+    if not exists(path):
+        makedirs(path, exist_ok=True)
 
 
 PRODUCTS = [
@@ -76,17 +55,20 @@ QUANTIDADES = {
     'cafe': 0.5, 'arroz': 5, 'manteiga': 0.2, 'soja': 0.9
 }
 
+
 def save_products(product_data, info):
+    check_folder("data")
     rows = []
+
     for product, prod_name in zip(product_data, PRODUCTS):
-        size = len(product[3])
+        size = len(product[1])
         product = [
             col if len(col) == size
             else col + ([None] * (size - len(col)))
             for col in product]
         for row in list(zip(*product)):
             data = [prod_name]
-            data.extend(row[2:5])
+            data.extend(row[:-1])
             if not isinstance(data[3], (float, int)):
                 if prod_name in QUANTIDADES:
                     quantidade = QUANTIDADES[prod_name]
@@ -94,14 +76,21 @@ def save_products(product_data, info):
                     quantidade = 1
                 data[3] = quantidade
             rows.append(data)
+
     df = pd.DataFrame(
         rows, columns=["Produto", "Marca", "Preço", "Quantidade"])
     df["Nome"] = info[0]
     df["Data"] = info[1]
     df["Estabelecimento"] = info[2]
-    df["PPK"] = df["Preço"] / df["Quantidade"]
     df = df[[
         "Nome", "Data", "Estabelecimento", "Produto",
-        "Marca", "Preço", "Quantidade", "PPK"]]
-    df.to_excel("text.xlsx", index=False)
+        "Marca", "Preço", "Quantidade"]]
+    df.to_csv(f"data/{info[1]}|{int(time.time())}.csv", index=False)
     return
+# save_products(d, info)
+# workbook = load_workbook(f"{info[1]}|{info[0]}.xlsx")
+# sheet = workbook.active
+# for row in range(2, 15):  # Adjust the range based on DataFrame size
+#     sheet[f'H{row}'] = f'=F{row} / G{row}'  # Example formula
+
+# workbook.save(f"{info[1]}|{info[0]}.xlsx")

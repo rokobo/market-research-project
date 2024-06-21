@@ -4,3 +4,5 @@ tempCodeRunnerFile.py
 *.code-workspace
 .fuse*
 test*.*
+.env
+/data
