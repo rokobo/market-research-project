@@ -7,3 +7,4 @@ test*.*
 .env
 /data
 *.xlsx
+.venv
