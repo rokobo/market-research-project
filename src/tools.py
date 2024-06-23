@@ -94,7 +94,7 @@ def save_products(product_data, info, test=False):
 def aggregate_reports(date=["2024", "06"]):
     # Collect all reports into a single dataframe
     reports = []
-    name = f"{date[0]}_{date[1]}_Coleta.xlsx"
+    check_folder("data_agg")
     for file in listdir("data"):
         file_date = file.split("|")[0].split("-")
         if file_date[1] != date[1]:
@@ -130,7 +130,7 @@ def aggregate_reports(date=["2024", "06"]):
 
     # Save
     with pd.ExcelWriter(
-        name, engine="xlsxwriter",
+        f"data_agg/{date[0]}_{date[1]}_Coleta.xlsx", engine="xlsxwriter",
         engine_kwargs={'options': {
             'use_future_functions': True, 'strings_to_numbers': True}}
     ) as writer:
