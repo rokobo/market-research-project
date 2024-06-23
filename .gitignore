@@ -6,3 +6,4 @@ tempCodeRunnerFile.py
 test*.*
 .env
 /data
+*.xlsx

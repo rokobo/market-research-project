@@ -77,7 +77,7 @@ layout = html.Div([
     dcc.Interval(id="save-interval", interval=2 * 1000),
     html.Div(id="dummy-div-validation"),  # For calling validation after load
     html.Div(id="dummy-div-save"),  # For calling save after load
-    html.Div(id="test")
+    html.Div(id="dummy-div-load")  # For calling load after save products
 ])
 
 PRODUCTS = [
@@ -114,16 +114,25 @@ clientside_callback(
     Output("dummy-div-validation", "className"),
     Output("dummy-div-save", "className"),
     Input("save-products", 'children'),
+    Input("dummy-div-load", 'className'),
     State('store', 'data'),
     prevent_initial_call=True
 )
-def load_state(_, data):
+def load_state(_1, _2, data):
     if data is None:
         return dash.no_update
 
     return_data = []
     return_data.append(True)
     containers = [[] for _ in range(len(PRODUCTS))]
+
+    if data == []:
+        return_data.extend([None]*4)
+        for idx, product in zip(range(len(PRODUCTS)), PRODUCTS):
+            containers[idx].append(add_new_form(
+                product, 0, [None] * 4
+            ))
+        return return_data + containers + ["", ""]
 
     for item in data:
         if "first" in item:
@@ -210,12 +219,16 @@ clientside_callback(
     Input("dummy-div-validation", "className"),
     [Input({"type": f"{field}-{product}", "index": ALL}, "value")
         for product in PRODUCTS for field in FIELDS],
+    [Input(f"container-{product}", 'children')
+        for product in PRODUCTS],
     [State({"type": f"{field}-{product}", "index": ALL}, "value")
         for product in PRODUCTS for field in FIELDS]
 )
 
 
 @callback(
+    Output('store', 'data', allow_duplicate=True),
+    Output('dummy-div-load', 'className'),
     Input("save-products", "n_clicks"),
     State("collector_name", "value"),
     State("collection_date", "value"),
@@ -223,7 +236,11 @@ clientside_callback(
     State("general_observations", "value"),
     [State({"type": f"{field}-{product}", "index": ALL}, "value")
         for product in PRODUCTS for field in FIELDS],
+    prevent_initial_call=True
 )
-def save_args(_, name, date, establishment, obs, *values):
+def save_args(clicks, name, date, establishment, obs, *values):
+    if clicks is None:
+        return dash.no_update
     products = [values[i:i + 4] for i in range(0, len(values), 4)]
     save_products(products, (name, date, establishment))
+    return [], ""

@@ -53,16 +53,15 @@ window.dash_clientside.clientside = {
         return values.map(v => (v !== null && v !== "" ? "correct" : "wrong"));
     },
     validate_args_2: function (_1, ...values) {
-        let args = values.slice(values.length/2, values.length);
-        let validations = [];
-        let validations2 = [];
-        let status1 = [];
-        let status2 = [];
+        var slice_length = values.length - PRODUCTS.length;
+        var args = values.slice(slice_length/2 + PRODUCTS.length);
+        var validations = [];
+        var status1 = [];
+        var status2 = [];
 
         // Individual validations
         for (var i = 0; i < args.length; i += 4) {
-            let [br, pr, qn, obs] = args.slice(i, i + 4);
-            let size = pr.length;
+            var [br, pr, qn, obs] = args.slice(i, i + 4);
 
             validations.push(br.map(brand => typeof brand == 'string'));
             validations.push(pr.map(price => typeof price === 'number' && !isNaN(price)));
@@ -71,7 +70,7 @@ window.dash_clientside.clientside = {
         };
 
         // Section validations
-        for (let i = 0; i < validations.length; i += 4) {
+        for (var i = 0; i < validations.length; i += 4) {
             const val = validations.slice(i, i + 4);
             if (val.every(sublist => sublist.every(v => v))) {
                 status1.push("Correto");
