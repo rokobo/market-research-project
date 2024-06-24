@@ -139,7 +139,9 @@ def aggregate_reports(date=["2024", "06"]):
             'use_future_functions': True, 'strings_to_numbers': True}}
     ) as writer:
         # Coleta_Mes
-        coleta_mes.to_excel(writer, sheet_name="Coleta_Mes", index=False, header=False, startrow=1)
+        coleta_mes.to_excel(
+            writer, sheet_name="Coleta_Mes",
+            index=False, header=False, startrow=1)
         workbook = writer.book
         worksheet = writer.sheets["Coleta_Mes"]
         worksheet.set_column("B:B", 10)
@@ -177,34 +179,33 @@ def aggregate_reports(date=["2024", "06"]):
 
         # Balanço_ProdutoMarca
         worksheet = workbook.add_worksheet("Balanço_ProdutoMarca")
-        marca = "coleta_mes[Marca]"
-        sro = "ANCHORARRAY(B2)"
-        prod = "coleta_mes[Produto]"
-
         for col, value in enumerate([
             "Data", "Produto", "Marca", "Preço", "Registros", "PPK"
         ]):
             worksheet.write(0, col, value)
 
+        marca = "coleta_mes[Marca]"
+        sro = "ANCHORARRAY(B2)"
+        prod = "coleta_mes[Produto]"
+        prd_mrc = "coleta_mes[[Produto]:[Marca]]"
+        sqn = f"SEQUENCE(ROWS({sro}), 1)"
+
         worksheet.write_dynamic_array_formula("A2", (
-            f'=VLOOKUP(INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 1),'
-            'balanço[[Data]:[Produto]], 1)'))
+            f'=VLOOKUP(INDEX({sro}, {sqn}, 1), balanço[[Data]:[Produto]], 1)'))
         worksheet.write_dynamic_array_formula("B2", (
-            '=UNIQUE(IF(coleta_mes[[Produto]:[Marca]]<>"", '
-            f'coleta_mes[[Produto]:[Marca]], '
-            f'coleta_mes[[Produto]:[Marca]] & ""), FALSE, FALSE)'))
+            f'=UNIQUE(IF({prd_mrc}<>"", {prd_mrc}, '
+            f'{prd_mrc} & ""), FALSE, FALSE)'))
         worksheet.write_dynamic_array_formula("D2", (
             '=ROUND(AVERAGEIFS(coleta_mes[Preço], '
-            f'{prod}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 1), '
-            f'{marca}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 2)), 3)'))
+            f'{prod}, INDEX({sro}, {sqn}, 1), '
+            f'{marca}, INDEX({sro}, {sqn}, 2)), 3)'))
         worksheet.write_dynamic_array_formula("E2", (
-            f'=COUNTIFS({prod}, '
-            f'INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 1), '
-            f'{marca}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 2))'))
+            f'=COUNTIFS({prod}, INDEX({sro}, {sqn}, 1), '
+            f'{marca}, INDEX({sro}, {sqn}, 2))'))
         worksheet.write_dynamic_array_formula("F2", (
             '=ROUND(AVERAGEIFS(coleta_mes[PPK], '
-            f'{prod}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 1), '
-            f'{marca}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 2)), 3)'))
+            f'{prod}, INDEX({sro}, {sqn}, 1), '
+            f'{marca}, INDEX({sro}, {sqn}, 2)), 3)'))
 
         # 3Col_Mes
         worksheet = workbook.add_worksheet("3Col_Mes")
