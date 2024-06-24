@@ -1,6 +1,8 @@
 # Market research project
 
-To the next developer that takes over this project, here are some important considerations and guidelines to ensure a smooth setup and maintenance of the infrastructure. This project requires careful attention to detail during the initial setup phase, as well as ongoing management to keep everything running smoothly. In the following sections, you will find detailed instructions on how to properly configure the environment, set up necessary dependencies, and manage the infrastructure effectively. Following these guidelines will help you avoid common pitfalls and ensure that the project remains stable and maintainable.
+To the next developer that takes over this project, here are some important considerations and guidelines to ensure a smooth setup and maintenance of the infrastructure. This project requires careful attention to detail during the initial setup phase, as well as ongoing management to keep everything running smoothly.
+
+In the following sections, you will find detailed instructions on how to properly configure the environment, set up necessary dependencies, and manage the infrastructure effectively. Following these guidelines will help you avoid common pitfalls and ensure that the project remains stable and maintainable.
 
 ## Excel workbook
 
@@ -15,7 +17,9 @@ The `aggregate_reports()` function is responsible for creating the Excel workboo
 
 ## AWS costs and free tier
 
-This project relies heavily on the free tier of EC2 with EBS and Lambda. EC2 has 12 months free tier which is a yearly maintenance for the project developer. Just create a new account and use the free tier again. That said, the only cost that this project is supposed to possibly have is if the data sent out of the server is bigger than the free tier limit (always check if there were any changes to the billing policy). Ways to decrease or eliminate this cost are explained in the following sections.
+This project relies heavily on the free tier of EC2 with EBS and Lambda. EC2 has 12 months free tier which is a yearly maintenance for the project developer. Just create a new account and use the free tier again.
+
+That said, the only cost that this project is supposed to possibly have is if the data sent out of the server is bigger than the free tier limit (always check if there were any changes to the billing policy). Ways to decrease or eliminate this cost are explained in the following sections.
 
 ## Clientside callbacks and authentication
 
