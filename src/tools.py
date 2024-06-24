@@ -95,6 +95,7 @@ def aggregate_reports(date=["2024", "06"]):
     # Collect all reports into a single dataframe
     reports = []
     check_folder("data_agg")
+
     for file in listdir("data"):
         file_date = file.split("|")[0].split("-")
         if file_date[1] != date[1]:
@@ -149,8 +150,8 @@ def aggregate_reports(date=["2024", "06"]):
         worksheet.set_column("D:D", 18)
         worksheet.set_column("E:E", 18)
         worksheet.set_column("G:G", 13)
-        a, d = coleta_mes.shape
-        worksheet.add_table(0, 0, a, d-1, {
+        rows, columns = coleta_mes.shape
+        worksheet.add_table(0, 0, rows, columns - 1, {
             'columns': [{'header': column} for column in coleta_mes.columns],
             'name': 'coleta_mes'
         })
@@ -171,8 +172,8 @@ def aggregate_reports(date=["2024", "06"]):
         worksheet.set_column("B:B", 10)
         worksheet.set_column("D:D", 11)
         worksheet.set_column("H:H", 30)
-        a, d = balanco.shape
-        worksheet.add_table(0, 0, a, d-1, {
+        rows, columns = balanco.shape
+        worksheet.add_table(0, 0, rows, columns - 1, {
             'columns': [{'header': column} for column in balanco.columns],
             'name': 'balanço'
         })
