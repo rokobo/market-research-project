@@ -106,24 +106,28 @@ def aggregate_reports(date=["2024", "06"]):
         reports.append(df)
     coleta_mes = pd.concat(reports)
     coleta_mes.Marca = coleta_mes.Marca.fillna("")
+    coleta_mes["PPK"] = [
+        f"=F{idx}/G{idx}" for idx in range(2, 2 + coleta_mes.shape[0])]
 
-    # Aggregate reports
+    # Create basic statistics for the reports
     prc = "coleta_mes[Preço]"
     prd = "coleta_mes[Produto]"
+    date_col = f"{date[0]}/{date[1]}"
     balanco = pd.DataFrame([{
+        "Data": date_col,
         "Produto": PRODUCTS[i-2],
-        "Registros": f"=COUNTIF({prd}, A{i})",
-        "Min": f'=MINIFS({prc}, {prd}, A{i})',
-        "Max": f"=MAXIFS({prc}, {prd}, A{i})",
-        "Média": f"=ROUND(AVERAGEIFS({prc}, {prd}, A{i}), 2)",
-        # "Q1": f"=QUARTILE(IF({prd}=A{i}, {prc}), 1)",
-        # "Q2": f"=QUARTILE(IF({prd}=A{i}, {prc}), 2)",
-        # "Q3": f"=QUARTILE(IF({prd}=A{i}, {prc}), 3)",
-        "σ": f"=SINGLE(ROUND(STDEV.P(IF({prd}=A{i}, {prc})) , 2))",
+        "Média": f"=ROUND(AVERAGEIFS({prc}, {prd}, B{i}), 3)",
+        "Registros": f"=COUNTIF({prd}, B{i})",
+        "Min": f'=MINIFS({prc}, {prd}, B{i})',
+        "Max": f"=MAXIFS({prc}, {prd}, B{i})",
+        # "Q1": f"=QUARTILE(IF({prd}=B{i}, {prc}), 1)",
+        # "Q2": f"=QUARTILE(IF({prd}=B{i}, {prc}), 2)",
+        # "Q3": f"=QUARTILE(IF({prd}=B{i}, {prc}), 3)",
+        "σ": f"=SINGLE(ROUND(STDEV.P(IF({prd}=B{i}, {prc})) , 3))",
         "Lista de outliers": (
-            f'=TEXTJOIN(", ", TRUE, FILTER({prc}, ({prd}=A{i})'
-            f' * (({prc} < (E{i} - (F{i} * 3))) + '
-            f'({prc} > (E{i} + (F{i} * 3)))), "-"))'
+            f'=TEXTJOIN(", ", TRUE, FILTER({prc}, ({prd}=B{i})'
+            f' * (({prc} < (C{i} - (G{i} * 3))) + '
+            f'({prc} > (C{i} + (G{i} * 3)))), "-"))'
         ),
         # "Outliers IQR":
     } for i in range(2, len(PRODUCTS) + 2)])
@@ -134,6 +138,7 @@ def aggregate_reports(date=["2024", "06"]):
         engine_kwargs={'options': {
             'use_future_functions': True, 'strings_to_numbers': True}}
     ) as writer:
+        # Coleta_Mes
         coleta_mes.to_excel(writer, sheet_name="Coleta_Mes", index=False, header=False, startrow=1)
         workbook = writer.book
         worksheet = writer.sheets["Coleta_Mes"]
@@ -150,19 +155,58 @@ def aggregate_reports(date=["2024", "06"]):
         worksheet.conditional_format(f'F2:F{coleta_mes.shape[0] + 1}', {
             'type': 'formula',
             'criteria': (
-                '=ABS(F2 - VLOOKUP(D2, Balanço!A:G, 5, FALSE)) '
-                '> VLOOKUP(D2, Balanço!A:G, 6, FALSE)*3'),
+                '=ABS(F2 - VLOOKUP(D2, Balanço!B:H, 2, FALSE)) '
+                '> VLOOKUP(D2, Balanço!B:H, 6, FALSE)*3'),
             'format': workbook.add_format({
                 'bg_color':   '#FFC7CE', 'font_color': '#9C0006'})
         })
 
-        balanco.to_excel(writer, sheet_name="Balanço", index=False, header=False, startrow=1)
+        # Balanço
+        balanco.to_excel(
+            writer, sheet_name="Balanço",
+            index=False, header=False, startrow=1)
         worksheet = writer.sheets["Balanço"]
-        worksheet.set_column("A:A", 18)
         worksheet.set_column("B:B", 10)
-        worksheet.set_column("G:G", 30)
+        worksheet.set_column("D:D", 11)
+        worksheet.set_column("H:H", 30)
         a, d = balanco.shape
         worksheet.add_table(0, 0, a, d-1, {
             'columns': [{'header': column} for column in balanco.columns],
             'name': 'balanço'
         })
+
+        # Balanço_ProdutoMarca
+        worksheet = workbook.add_worksheet("Balanço_ProdutoMarca")
+        marca = "coleta_mes[Marca]"
+        sro = "ANCHORARRAY(B2)"
+        prod = "coleta_mes[Produto]"
+
+        for col, value in enumerate([
+            "Data", "Produto", "Marca", "Preço", "Registros", "PPK"
+        ]):
+            worksheet.write(0, col, value)
+
+        worksheet.write_dynamic_array_formula("A2", (
+            f'=VLOOKUP(INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 1),'
+            'balanço[[Data]:[Produto]], 1)'))
+        worksheet.write_dynamic_array_formula("B2", (
+            '=UNIQUE(IF(coleta_mes[[Produto]:[Marca]]<>"", '
+            f'coleta_mes[[Produto]:[Marca]], '
+            f'coleta_mes[[Produto]:[Marca]] & ""), FALSE, FALSE)'))
+        worksheet.write_dynamic_array_formula("D2", (
+            '=ROUND(AVERAGEIFS(coleta_mes[Preço], '
+            f'{prod}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 1), '
+            f'{marca}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 2)), 3)'))
+        worksheet.write_dynamic_array_formula("E2", (
+            f'=COUNTIFS({prod}, '
+            f'INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 1), '
+            f'{marca}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 2))'))
+        worksheet.write_dynamic_array_formula("F2", (
+            '=ROUND(AVERAGEIFS(coleta_mes[PPK], '
+            f'{prod}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 1), '
+            f'{marca}, INDEX({sro}, SEQUENCE(ROWS({sro}), 1), 2)), 3)'))
+
+        # 3Col_Mes
+        worksheet = workbook.add_worksheet("3Col_Mes")
+        worksheet.write_dynamic_array_formula(
+            "A1", '=balanço[[#All], [Data]:[Média]]')
