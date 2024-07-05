@@ -57,7 +57,7 @@ QUANTIDADES = {
 
 
 def save_products(product_data, info, test=False):
-    check_folder("/dev/sda1/data")
+    check_folder("data")
     rows = []
 
     for product, prod_name in zip(product_data, PRODUCTS):
@@ -88,7 +88,7 @@ def save_products(product_data, info, test=False):
     if test:
         return df
     df.to_csv(
-        f"/dev/sda1/data/{info[1]}|{int(time.time())}|{info[0]}.csv",
+        f"data/{info[1]}|{int(time.time())}|{info[0]}.csv",
         index=False)
     return
 
@@ -96,14 +96,14 @@ def save_products(product_data, info, test=False):
 def aggregate_reports(date=["2024", "06"]):
     # Collect all reports into a single dataframe
     reports = []
-    check_folder("/dev/sda1/data_agg")
+    check_folder("data_agg")
 
-    for file in listdir("/dev/sda1/data"):
+    for file in listdir("data"):
         file_date = file.split("|")[0].split("-")
         if file_date[1] != date[1]:
             continue
 
-        df = pd.read_csv(f"/dev/sda1/data/{file}")
+        df = pd.read_csv(f"data/{file}")
         if df.empty:
             continue
         reports.append(df)
@@ -139,7 +139,7 @@ def aggregate_reports(date=["2024", "06"]):
 
     # Save
     with pd.ExcelWriter(
-        f"/dev/sda1/data_agg/{date[0]}_{date[1]}_Coleta.xlsx", engine="xlsxwriter",
+        f"data_agg/{date[0]}_{date[1]}_Coleta.xlsx", engine="xlsxwriter",
         engine_kwargs={'options': {
             'use_future_functions': True, 'strings_to_numbers': True}}
     ) as writer:

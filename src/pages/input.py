@@ -5,7 +5,7 @@ from components import input_form, product_form, add_new_form
 from tools import load_establishments, save_products
 import dash_bootstrap_components as dbc
 
-dash.register_page(__name__)
+dash.register_page(__name__, path="/")
 
 layout = html.Div([
     dbc.Alert([
