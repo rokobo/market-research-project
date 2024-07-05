@@ -8,3 +8,5 @@ test*.*
 /data
 *.xlsx
 .venv
+.vscode
+*.pem

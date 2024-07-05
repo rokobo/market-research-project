@@ -57,7 +57,7 @@ QUANTIDADES = {
 
 
 def save_products(product_data, info, test=False):
-    check_folder("data")
+    check_folder("/dev/sda1/data")
     rows = []
 
     for product, prod_name in zip(product_data, PRODUCTS):
@@ -87,21 +87,23 @@ def save_products(product_data, info, test=False):
         "Marca", "Preço", "Quantidade"]]
     if test:
         return df
-    df.to_csv(f"data/{info[1]}|{int(time.time())}|{info[0]}.csv", index=False)
+    df.to_csv(
+        f"/dev/sda1/data/{info[1]}|{int(time.time())}|{info[0]}.csv",
+        index=False)
     return
 
 
 def aggregate_reports(date=["2024", "06"]):
     # Collect all reports into a single dataframe
     reports = []
-    check_folder("data_agg")
+    check_folder("/dev/sda1/data_agg")
 
-    for file in listdir("data"):
+    for file in listdir("/dev/sda1/data"):
         file_date = file.split("|")[0].split("-")
         if file_date[1] != date[1]:
             continue
 
-        df = pd.read_csv(f"data/{file}")
+        df = pd.read_csv(f"/dev/sda1/data/{file}")
         if df.empty:
             continue
         reports.append(df)
@@ -111,31 +113,33 @@ def aggregate_reports(date=["2024", "06"]):
         f"=F{idx}/G{idx}" for idx in range(2, 2 + coleta_mes.shape[0])]
 
     # Create basic statistics for the reports
-    prc = "coleta_mes[Preço]"
+    ppk = "coleta_mes[PPK]"
     prd = "coleta_mes[Produto]"
+    prc = "coleta_mes[Preço]"
     date_col = f"{date[0]}/{date[1]}"
     balanco = pd.DataFrame([{
         "Data": date_col,
         "Produto": PRODUCTS[i-2],
-        "Média": f"=ROUND(AVERAGEIFS({prc}, {prd}, B{i}), 3)",
+        "Média Preço": f"=ROUND(AVERAGEIFS({prc}, {prd}, B{i}), 3)",
+        "Média PPK": f"=ROUND(AVERAGEIFS({ppk}, {prd}, B{i}), 3)",
         "Registros": f"=COUNTIF({prd}, B{i})",
-        "Min": f'=MINIFS({prc}, {prd}, B{i})',
-        "Max": f"=MAXIFS({prc}, {prd}, B{i})",
-        # "Q1": f"=QUARTILE(IF({prd}=B{i}, {prc}), 1)",
-        # "Q2": f"=QUARTILE(IF({prd}=B{i}, {prc}), 2)",
-        # "Q3": f"=QUARTILE(IF({prd}=B{i}, {prc}), 3)",
-        "σ": f"=SINGLE(ROUND(STDEV.P(IF({prd}=B{i}, {prc})) , 3))",
-        "Lista de outliers": (
+        "Min PPK": f'=ROUND(MINIFS({ppk}, {prd}, B{i}), 3)',
+        "Max PPK": f"=ROUND(MAXIFS({ppk}, {prd}, B{i}), 3)",
+        # "Q1": f"=QUARTILE(IF({prd}=B{i}, {ppk}), 1)",
+        # "Q2": f"=QUARTILE(IF({prd}=B{i}, {ppk}), 2)",
+        # "Q3": f"=QUARTILE(IF({prd}=B{i}, {ppk}), 3)",
+        "σ PPK": f"=SINGLE(ROUND(STDEV.P(IF({prd}=B{i}, {ppk})) , 3))",
+        "Lista de preços outlier": (
             f'=TEXTJOIN(", ", TRUE, FILTER({prc}, ({prd}=B{i})'
-            f' * (({prc} < (C{i} - (G{i} * 3))) + '
-            f'({prc} > (C{i} + (G{i} * 3)))), "-"))'
+            f' * (({ppk} < (D{i} - (H{i} * 3))) + '
+            f'({ppk} > (D{i} + (H{i} * 3)))), "-"))'
         ),
         # "Outliers IQR":
     } for i in range(2, len(PRODUCTS) + 2)])
 
     # Save
     with pd.ExcelWriter(
-        f"data_agg/{date[0]}_{date[1]}_Coleta.xlsx", engine="xlsxwriter",
+        f"/dev/sda1/data_agg/{date[0]}_{date[1]}_Coleta.xlsx", engine="xlsxwriter",
         engine_kwargs={'options': {
             'use_future_functions': True, 'strings_to_numbers': True}}
     ) as writer:
@@ -158,8 +162,8 @@ def aggregate_reports(date=["2024", "06"]):
         worksheet.conditional_format(f'F2:F{coleta_mes.shape[0] + 1}', {
             'type': 'formula',
             'criteria': (
-                '=ABS(F2 - VLOOKUP(D2, Balanço!B:H, 2, FALSE)) '
-                '> VLOOKUP(D2, Balanço!B:H, 6, FALSE)*3'),
+                '=ABS(H2 - VLOOKUP(D2, Balanço!B:H, 3, FALSE)) '
+                '> VLOOKUP(D2, Balanço!B:H, 7, FALSE)*3'),
             'format': workbook.add_format({
                 'bg_color':   '#FFC7CE', 'font_color': '#9C0006'})
         })
@@ -170,8 +174,12 @@ def aggregate_reports(date=["2024", "06"]):
             index=False, header=False, startrow=1)
         worksheet = writer.sheets["Balanço"]
         worksheet.set_column("B:B", 10)
-        worksheet.set_column("D:D", 11)
-        worksheet.set_column("H:H", 30)
+        worksheet.set_column("C:C", 14)
+        worksheet.set_column("D:D", 12)
+        worksheet.set_column("E:E", 11)
+        worksheet.set_column("F:F", 10)
+        worksheet.set_column("G:G", 10)
+        worksheet.set_column("I:I", 30)
         rows, columns = balanco.shape
         worksheet.add_table(0, 0, rows, columns - 1, {
             'columns': [{'header': column} for column in balanco.columns],
@@ -211,4 +219,5 @@ def aggregate_reports(date=["2024", "06"]):
         # 3Col_Mes
         worksheet = workbook.add_worksheet("3Col_Mes")
         worksheet.write_dynamic_array_formula(
-            "A1", '=balanço[[#All], [Data]:[Média]]')
+            "A1", '=balanço[[#All], [Data]:[Média Preço]]')
+        worksheet.set_column("C:C", 11)

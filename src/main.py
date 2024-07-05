@@ -14,13 +14,16 @@ load_dotenv()
 
 
 app = Dash(
-    title="test title", update_title=None,
+    title="ICB", update_title=None,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     use_pages=True,
-    assets_folder='../assets'
+    assets_folder='../assets',
+    compress=False
 )
 
 app.server.secret_key = getenv('SECRET_KEY')
+
+server = app.server
 
 auth = dash_auth.BasicAuth(
     app,
@@ -35,9 +38,9 @@ app.layout = [
 ]
 
 if __name__ == "__main__":
-    app.run(
-        debug=True,
+    app.run_server(
+        # debug=True,
         port="8060",
-        dev_tools_hot_reload=True,
-        use_reloader=True
+        # dev_tools_hot_reload=True,
+        # use_reloader=True
     )

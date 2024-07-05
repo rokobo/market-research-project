@@ -1,11 +1,5 @@
-if (!window.dash_clientside) {
-    window.dash_clientside = {};
-}
-
-const PRODUCTS = [
-    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
-    "soja", "banana", "batata", "tomate", "carne", "pao"
-];
+if (!window.dash_clientside) {window.dash_clientside = {}}
+const PRODUCTS = ["acucar","arroz","cafe","farinha","feijao","leite","manteiga","soja","banana","batata","tomate","carne","pao"];
 const FIELDS = ["brand", "price", "quantity", "obs"];
 
 window.dash_clientside.clientside = {
@@ -35,11 +29,8 @@ window.dash_clientside.clientside = {
                         values = [vals[1], vals[2], vals[3], null];
                         break;
                     case 3:
-                        if (typeof vals[1] === 'string') {
-                            values = [vals[1], vals[2], null, null];
-                        } else {
-                            values = [null, vals[1], null, vals[2]];
-                        }
+                        if (typeof vals[1] === 'string') {values = [vals[1], vals[2], null, null]}
+                        else {values = [null, vals[1], null, vals[2]]}
                         break;
                     default:
                         values = [null, null, null, null];
@@ -62,7 +53,6 @@ window.dash_clientside.clientside = {
         // Individual validations
         for (var i = 0; i < args.length; i += 4) {
             var [br, pr, qn, obs] = args.slice(i, i + 4);
-
             validations.push(br.map(brand => typeof brand == 'string'));
             validations.push(pr.map(price => typeof price === 'number' && !isNaN(price)));
             validations.push(qn.map(() => true));
@@ -100,18 +90,13 @@ window.dash_clientside.clientside = {
         var contextType = ctx.type.slice(7);
         var prop_id = `${contextType}-product-row-${ctx.index}`
         var index = PRODUCTS.indexOf(contextType);
-
         var patched_children = Array(PRODUCTS.length).fill(window.dash_clientside.no_update);
         var children = children_states[index];
 
         for (let i = 0; i < children.length; i++) {
             var child = children[i];
-            // Find correct row by row index and context index
-            if (child.props.id === prop_id) {
-                // Remove the child at index i
-                children.splice(i, 1);
-                break;
-            }
+            // Find row by row index and context index, remove child at index i
+            if (child.props.id === prop_id) {children.splice(i, 1);break;}
         }
         patched_children[index] = children;
         return patched_children;
