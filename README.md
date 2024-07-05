@@ -63,11 +63,11 @@ To deploy to EC2, you will need a AWS account (not the same as amazon account) t
 
 One of the first things that can be specified in the EC2 configuration is the instance type of the EC2 service. Each instance type will give you a virtual machine with different hardware configurations. Look for the best instance type that has `Free tier eligible` specified:
 
-<center><img src="images/launch.png?raw=true" alt="." width="40%"/></center>
+<center><img src="images/launch.png?raw=true" alt="." width="60%"/></center>
 
 Then configure your key pair file for accessing your EC2 instance with SSH. While RSA is acceptable, ED25519 should be safer. This file must **NEVER** be publicly available.:
 
-<center><img src="images/keypair.png?raw=true" alt="." width="35%"/></center>
+<center><img src="images/keypair.png?raw=true" alt="." width="60%"/></center>
 
 ### Configure network settings
 
@@ -101,7 +101,7 @@ Are you sure you want to continue connecting (yes/no)?
 
 However, for simplicity, using instance connect from the web console is simpler and I recommend it.
 
-<center><img src="images/connect.png?raw=true" alt="." width="35%"/></center>
+<center><img src="images/connect.png?raw=true" alt="." width="60%"/></center>
 
 Update system packages and install dependencies:
 
