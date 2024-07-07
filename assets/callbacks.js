@@ -63,10 +63,10 @@ window.dash_clientside.clientside = {
         for (var i = 0; i < validations.length; i += 4) {
             const val = validations.slice(i, i + 4);
             if (val.every(sublist => sublist.every(v => v))) {
-                status1.push("Correto");
+                status1.push("Completo");
                 status2.push("success");
             } else {
-                status1.push("Erro");
+                status1.push("Faltando");
                 status2.push("danger");
             }
         };

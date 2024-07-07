@@ -13,10 +13,13 @@ layout = html.Div([
                 "Instruções de preenchimento",
                 className="alert-heading", style={'fontWeight': 'bold'}),
             html.P([
-                "Se a quantidade coletada não for igual a quantidade padrão, "
-                "selecione \"Fora de padrão\" e especifique a quantidade "
-                "coletada com a mesma unidade de medida especificada na seção"
-            ], className="mb-0"),
+                "Se a quant. coletada não for igual a quant. padrão, "
+                "especifique a quant. coletada com a mesma unidade de medida "
+                "do título da seção. \n\n"
+                "O envio é liberado se todas as seções estiverem completas. "
+                "Caso queira não enviar alguma seção, delete a "
+                "fileira clicando no botão com X."
+            ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=True, color="warning"),
     html.H1("Coleta de preços", className="m-3", style={'fontWeight': 'bold'}),
     input_form("Nome do coletor", "collector_name", "text"),
@@ -72,7 +75,7 @@ layout = html.Div([
         "Opcional: relatar algo relevante"
     ),
     html.Div(dbc.Button(
-        "Salvar", color="success", id="save-products"
+        "Enviar", color="success", id="save-products"
     ), className="d-grid m-5"),
     dcc.Interval(id="save-interval", interval=2 * 1000),
     html.Div(id="dummy-div-validation"),  # For calling validation after load
