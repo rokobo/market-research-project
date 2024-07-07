@@ -236,9 +236,8 @@ Update code or pull newer version:
 git pull origin main
 ```
 
-Restart gunicorn and restart nginx:
+Restart gunicorn:
 
 ```sh
 <path-to-gunicorn> src.main:server --daemon -b 127.0.0.1:<application-port>
-sudo systemctl restart nginx
 ```
