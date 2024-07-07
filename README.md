@@ -239,5 +239,5 @@ git pull origin main
 Restart gunicorn:
 
 ```sh
-<path-to-gunicorn> src.main:server --daemon -b 127.0.0.1:<application-port>
+gunicorn src.main:server --daemon -b 127.0.0.1:<application-port>
 ```
