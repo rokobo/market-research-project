@@ -13,9 +13,8 @@ layout = html.Div([
                 "Instruções de preenchimento",
                 className="alert-heading", style={'fontWeight': 'bold'}),
             html.P([
-                "Se a quant. coletada não for igual a quant. padrão, "
-                "especifique a quant. coletada com a mesma unidade de medida "
-                "do título da seção. \n\n"
+                "Só é necessário especificar a Quant. se ela for diferente "
+                "da quantidade padrão. \n\n"
                 "O envio é liberado se todas as seções estiverem completas. "
                 "Caso queira não enviar alguma seção, delete a "
                 "fileira clicando no botão com X."
