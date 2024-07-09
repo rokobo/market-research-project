@@ -8,6 +8,11 @@ import dash_bootstrap_components as dbc
 dash.register_page(__name__, path="/")
 
 layout = html.Div([
+    html.Div([
+        dbc.Progress(
+            id="progress", style={"height": "12px"},
+            striped=True, animated=True),
+    ], className="foregroundFixed"),
     dbc.Alert([
             html.H4(
                 "Instruções de preenchimento",
@@ -98,6 +103,7 @@ layout = html.Div([
 PRODUCTS = [
     "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
     "soja", "banana", "batata", "tomate", "carne", "pao"]
+FIELDS = ["brand", "price", "quantity", "obs"]
 
 
 clientside_callback(
@@ -124,6 +130,24 @@ clientside_callback(
     ),
     Output('store', 'data'),
     Input("confirm-clear", "submit_n_clicks")
+)
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="display_progress"
+    ),
+    Output('progress', 'value'),
+    Output('progress', 'label'),
+    Output("save-products", "disabled"),
+    Output("save-products", "color"),
+    Input("dummy-div-save", "className"),
+    Input("collector_name", "className"),
+    Input("collection_date", "className"),
+    Input("establishment", "className"),
+    [Input({"type": f"{field}-{product}", "index": ALL}, "className")
+        for product in PRODUCTS for field in FIELDS]
 )
 
 
@@ -210,9 +234,6 @@ def add_new_row(*values):
     return patched_children
 
 
-FIELDS = ["brand", "price", "quantity", "obs"]
-
-
 clientside_callback(
     ClientsideFunction(
         namespace='clientside',
@@ -240,8 +261,6 @@ clientside_callback(
         for product in PRODUCTS for field in FIELDS],
     [Output(f"status-{product}", 'children') for product in PRODUCTS],
     [Output(f"status-{product}", 'color') for product in PRODUCTS],
-    Output("save-products", "disabled"),
-    Output("save-products", "color"),
     Output("dummy-div-save", "className", allow_duplicate=True),
     Input("dummy-div-validation", "className"),
     [Input({"type": f"{field}-{product}", "index": ALL}, "value")

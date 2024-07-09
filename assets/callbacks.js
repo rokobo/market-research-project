@@ -86,10 +86,6 @@ window.dash_clientside.clientside = {
         validations = validations.map(sublist => sublist.map(v => v ? "correct" : "wrong"));
         console.log("CALL validation2", groupValidations2(validations, PRODUCTS));
         validations = validations.concat(status1).concat(status2);
-
-        // Update save button status
-        if (status1.every(v => v === "Completo")) {validations = validations.concat([false, "success"])}
-        else {validations = validations.concat([true, "danger"])}
         validations.push("");
         return validations;
     },
@@ -114,5 +110,18 @@ window.dash_clientside.clientside = {
         patched_children[index] = children;
         console.log("CALL delete row:", PRODUCTS[index]);
         return patched_children;
+    },
+    display_progress: function (_1, ...values) {
+        var fields = values.flat(1);
+        var progress = 100 * fields.reduce((total,x) => total+(x==="correct"), 0);
+        progress = progress / fields.length;
+        progress = progress.toFixed(0);
+        console.log("CALL progress:", [fields.length, progress]);
+        return_vals = [progress, progress + "%"];
+
+        // Update save button status
+        if (progress == 100) {return_vals = return_vals.concat([false, "success"])}
+        else {return_vals = return_vals.concat([true, "danger"])}
+        return return_vals;
     }
 }

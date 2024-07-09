@@ -33,15 +33,15 @@ auth = dash_auth.BasicAuth(
 app.layout = [
     dcc.Store(id="store", storage_type="local"),
     dcc.Store(id="load-flag", storage_type="local", data=False),
-    html.Canvas(id="confetti"),
+    html.Canvas(id="confetti", className="foregroundAbsolute"),
     dash.page_container,
 ]
 
 if __name__ == "__main__":
     app.run_server(
         host="0.0.0.0",
-        # debug=True,
         port="8060",
+        # debug=True,
         # dev_tools_hot_reload=True,
         # use_reloader=True
     )
