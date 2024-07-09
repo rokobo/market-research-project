@@ -2,7 +2,14 @@ if (!window.dash_clientside) {window.dash_clientside = {}}
 const PRODUCTS = ["acucar","arroz","cafe","farinha","feijao","leite","manteiga","soja","banana","batata","tomate","carne","pao"];
 const FIELDS = ["brand", "price", "quantity", "obs"];
 
+const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[i/4]){acc[keys[i/4]]=lists.slice(i,i+4).flat()}return acc},{});
+
 window.dash_clientside.clientside = {
+    clear_contents: function(click) {
+        if (typeof click !== 'number') {return window.dash_clientside.no_update};
+        console.log("CALL clear contents");
+        return [];
+    },
     save_state: function(_1, _2, load_flag, name, date, establishment, observations, ...products) {
         if (load_flag === null) {return window.dash_clientside.no_update}
 
@@ -38,10 +45,14 @@ window.dash_clientside.clientside = {
                 data.push({"container": product_name, "values": values, "row_id": row_id.split("-").slice(-1)[0]});
             }
         }
+        console.log("CALL save data", data);
         return data;
     },
     validate_args_1: function (_1, _2, _3, ...values) {
-        return values.map(v => (v !== null && v !== "" ? "correct" : "wrong"));
+        validations = values.map(v => (v !== null && v !== "" ? "correct" : "wrong"));
+        console.log("CALL validation1", validations);
+        validations.push("");
+        return validations;
     },
     validate_args_2: function (_1, ...values) {
         var slice_length = values.length - PRODUCTS.length;
@@ -73,11 +84,13 @@ window.dash_clientside.clientside = {
 
         // Transform to appropriate classnames
         validations = validations.map(sublist => sublist.map(v => v ? "correct" : "wrong"));
+        console.log("CALL validation2", groupValidations2(validations, PRODUCTS));
         validations = validations.concat(status1).concat(status2);
 
         // Update save button status
-        if (status1.every(v => v === "Correto")) {validations = validations.concat([false, "success"])}
+        if (status1.every(v => v === "Completo")) {validations = validations.concat([false, "success"])}
         else {validations = validations.concat([true, "danger"])}
+        validations.push("");
         return validations;
     },
     delete_product_row: function (...values) {
@@ -99,6 +112,7 @@ window.dash_clientside.clientside = {
             if (child.props.id === prop_id) {children.splice(i, 1);break;}
         }
         patched_children[index] = children;
+        console.log("CALL delete row:", PRODUCTS[index]);
         return patched_children;
     }
 }

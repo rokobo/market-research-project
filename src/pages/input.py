@@ -20,7 +20,20 @@ layout = html.Div([
                 "fileira clicando no botão com X."
             ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=True, color="warning"),
-    html.H1("Coleta de preços", className="m-3", style={'fontWeight': 'bold'}),
+    dbc.Stack([
+        html.H1(
+            "Coleta de preços", className="b-3 mx-auto",
+            style={'fontWeight': 'bold'}),
+        dcc.ConfirmDialogProvider(
+            dbc.Button("Limpar", color="warning", id="clear-products"),
+            id="confirm-clear",
+            message=(
+                "Você tem certeza que quer limpar todos os campos? "
+                "Essa ação não pode ser revertida! \n\nApós "
+                "limpar o cache, atualize a página para aplicar a limpeza."
+            )
+        )
+    ], direction="horizontal"),
     input_form("Nome do coletor", "collector_name", "text"),
     input_form(
         "Data de coleta", "collection_date", "date",
@@ -92,9 +105,9 @@ clientside_callback(
         namespace='clientside',
         function_name='save_state'
     ),
-    Output('store', 'data'),
-    Input("save-interval", "n_intervals"),
+    Output('store', 'data', allow_duplicate=True),
     Input("dummy-div-save", "className"),
+    Input("general_observations", "value"),
     State('load-flag', 'data'),
     State("collector_name", "value"),
     State("collection_date", "value"),
@@ -102,6 +115,15 @@ clientside_callback(
     State("general_observations", "value"),
     [State(f"container-{product}", 'children') for product in PRODUCTS],
     prevent_initial_call=True
+)
+
+clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="clear_contents"
+    ),
+    Output('store', 'data'),
+    Input("confirm-clear", "submit_n_clicks")
 )
 
 
@@ -199,12 +221,14 @@ clientside_callback(
     Output("collector_name", "className"),
     Output("collection_date", "className"),
     Output("establishment", "className"),
+    Output("dummy-div-save", "className", allow_duplicate=True),
     Input("collector_name", "value"),
     Input("collection_date", "value"),
     Input("establishment", "value"),
     State("collector_name", "value"),
     State("collection_date", "value"),
-    State("establishment", "value")
+    State("establishment", "value"),
+    prevent_initial_call=True
 )
 
 clientside_callback(
@@ -218,19 +242,21 @@ clientside_callback(
     [Output(f"status-{product}", 'color') for product in PRODUCTS],
     Output("save-products", "disabled"),
     Output("save-products", "color"),
+    Output("dummy-div-save", "className", allow_duplicate=True),
     Input("dummy-div-validation", "className"),
     [Input({"type": f"{field}-{product}", "index": ALL}, "value")
         for product in PRODUCTS for field in FIELDS],
     [Input(f"container-{product}", 'children')
         for product in PRODUCTS],
     [State({"type": f"{field}-{product}", "index": ALL}, "value")
-        for product in PRODUCTS for field in FIELDS]
+        for product in PRODUCTS for field in FIELDS],
+    prevent_initial_call=True
 )
 
 
 @callback(
     Output('store', 'data', allow_duplicate=True),
-    Output('dummy-div-load', 'className'),
+    Output('dummy-div-load', 'className', allow_duplicate=True),
     Input("save-products", "n_clicks"),
     State("collector_name", "value"),
     State("collection_date", "value"),
