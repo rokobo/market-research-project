@@ -11,7 +11,7 @@ const colors = [
     { front: '#FFC0CB', back: '#800015' },
     { front: '#990099', back: '#660066' },
     { front: '#40E0D0', back: '#126e64' }];
-const confettiQuantityRatio = 7500;
+const confettiQuantityRatio = 5000;
 
 randomRange = (min, max) => Math.random() * (max - min) + min;
 
