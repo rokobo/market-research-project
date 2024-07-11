@@ -11,7 +11,7 @@
     - [Configure network settings](#configure-network-settings)
     - [Set up application server](#set-up-application-server)
     - [Set up Nginx](#set-up-nginx)
-    - [Changing code and deploying](#changing-code-and-deploying)
+    - [Changing code, re-deploying and aliases](#changing-code-re-deploying-and-aliases)
 
 
 To the next developer that takes over this project, here are some important considerations and guidelines to ensure a smooth setup and maintenance of the infrastructure. This project requires careful attention to detail during the initial setup phase, as well as ongoing management to keep everything running smoothly.
@@ -141,7 +141,7 @@ Start your application WSGI server as a daemon (run in background):
 gunicorn src.main:server --daemon -b 127.0.0.1:<application-port>
 ```
 
-If Gunicorn is not found, use `which gunicorn` to get the path from the virtual environment's gunicorn, the use the full path instead:
+If Gunicorn is not found, use `which gunicorn` to get the path from the virtual environment's Gunicorn, the use the full path instead:
 
 ```sh
 <path-to-gunicorn> src.main:server --daemon -b 127.0.0.1:<application-port>
@@ -222,22 +222,22 @@ sudo systemctl restart nginx
 sudo systemctl status nginx
 ```
 
-### Changing code and deploying
+### Changing code, re-deploying and aliases
 
-To make changes to the code, either in the server or getting a newer version of the repository, deploying with the changes can be done as follows:
+Changing the web app code will be frequent as new functionalities are built. To simplify this process, aliases can be created so that you don't have to type long commands in the AWS console. The aliases can be done as follows:
 
 ```sh
-sudo killall gunicorn
+alias s1="sudo killall gunicorn"
+alias s2="source .venv/bin/activate"
+alias s3="git pull origin main"
+alias s4="gunicorn src.main:server --daemon -b 127.0.0.1:8060"
 ```
 
-Update code or pull newer version:
+So to change the server to the newest version, you simply need to kill all Gunicorn processes, active the virtual environment, update code by pulling the newest version from GitHub and restarting Gunicorn:
 
 ```sh
-git pull origin main
-```
-
-Restart gunicorn:
-
-```sh
-gunicorn src.main:server --daemon -b 127.0.0.1:<application-port>
+s1
+s2
+s3
+s4
 ```
