@@ -48,22 +48,17 @@ window.dash_clientside.clientside = {
         console.log("CALL save data", data);
         return data;
     },
-    validate_args_1: function (_1, _2, _3, ...values) {
-        validations = values.map(v => (v !== null && v !== "" ? "correct" : "wrong"));
-        console.log("CALL validation1", validations);
-        validations.push("");
-        return validations;
-    },
-    validate_args_2: function (_1, ...values) {
+    validate_args: function (_1, name, date, est, ...values) {
+        var first_args = values.splice(-3);
         var slice_length = values.length - PRODUCTS.length;
-        var args = values.slice(slice_length/2 + PRODUCTS.length);
+        var second_args = values.slice(slice_length/2 + PRODUCTS.length);
         var validations = [];
         var status1 = [];
         var status2 = [];
 
         // Individual validations
-        for (var i = 0; i < args.length; i += 4) {
-            var [br, pr, qn, obs] = args.slice(i, i + 4);
+        for (var i = 0; i < second_args.length; i += 4) {
+            var [br, pr, qn, obs] = second_args.slice(i, i + 4);
             validations.push(br.map(brand => typeof brand == 'string'));
             validations.push(pr.map(price => typeof price === 'number' && !isNaN(price)));
             validations.push(qn.map(() => true));
@@ -90,8 +85,10 @@ window.dash_clientside.clientside = {
 
         // Transform to appropriate classnames
         validations = validations.map(sublist => sublist.map(v => v ? "correct" : "wrong"));
-        console.log("CALL validation2", groupValidations2(validations, PRODUCTS));
-        validations = validations.concat(status1).concat(status2);
+        console.log("CALL validation", groupValidations2(validations, PRODUCTS));
+        validations = validations.concat(status1).concat(status2).concat(
+            first_args.map(v => (v !== null && v !== "" ? "correct" : "wrong"))
+        );
         validations.push("");
         return validations;
     },
@@ -125,12 +122,12 @@ window.dash_clientside.clientside = {
             else if (v === "danger") {return {"color": "red"}}
             else {return {"color": "#FCAE1E"}}
         });
-        console.log("CALL progress:", [name, date, est], badges, return_vals);
 
         // Update save button status
-        if ([name, date, est].every(v => v == "correct") && badges.every(v => v == "success")) {
+        if ([name, date, est].every(v => v == "correct") && badges.every(v => v != "danger")) {
             return_vals = return_vals.concat([false, "success"])}
         else {return_vals = return_vals.concat([true, "danger"])}
+        console.log("CALL progress:", [name, date, est], badges, return_vals);
         return return_vals;
     }
 }

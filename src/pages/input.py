@@ -249,38 +249,29 @@ def add_new_row(*values):
 clientside_callback(
     ClientsideFunction(
         namespace='clientside',
-        function_name='validate_args_1'
-    ),
-    Output("collector_name", "className"),
-    Output("collection_date", "className"),
-    Output("establishment", "className"),
-    Output("dummy-div-save", "className", allow_duplicate=True),
-    Input("collector_name", "value"),
-    Input("collection_date", "value"),
-    Input("establishment", "value"),
-    State("collector_name", "value"),
-    State("collection_date", "value"),
-    State("establishment", "value"),
-    prevent_initial_call=True
-)
-
-clientside_callback(
-    ClientsideFunction(
-        namespace='clientside',
-        function_name='validate_args_2'
+        function_name='validate_args'
     ),
     [Output({"type": f"{field}-{product}", "index": ALL}, "className")
         for product in PRODUCTS for field in FIELDS],
     [Output(f"status-{product}", 'children') for product in PRODUCTS],
     [Output(f"status-{product}", 'color') for product in PRODUCTS],
+    Output("collector_name", "className"),
+    Output("collection_date", "className"),
+    Output("establishment", "className"),
     Output("dummy-div-save", "className", allow_duplicate=True),
     Input("dummy-div-validation", "className"),
+    Input("collector_name", "value"),
+    Input("collection_date", "value"),
+    Input("establishment", "value"),
     [Input({"type": f"{field}-{product}", "index": ALL}, "value")
         for product in PRODUCTS for field in FIELDS],
     [Input(f"container-{product}", 'children')
         for product in PRODUCTS],
     [State({"type": f"{field}-{product}", "index": ALL}, "value")
         for product in PRODUCTS for field in FIELDS],
+    State("collector_name", "value"),
+    State("collection_date", "value"),
+    State("establishment", "value"),
     prevent_initial_call=True
 )
 
