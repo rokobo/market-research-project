@@ -1,15 +1,8 @@
-.foregroundAbsolute {
-    position: absolute;
-    top: 0;left: 0;
-    width: 100%;z-index: 1;
-    pointer-events: none
-}
-.foregroundFixed {
-    position: fixed;
-    top: 0;left: 0;
-    width: 100%;z-index: 1;
-    pointer-events: none
-}
-h1 {text-align: center}
-.correct {border: 2px solid green}
-.wrong {border: 2px solid red}
+html{scroll-padding-top:80px}
+.foregroundAbsolute{position:absolute;top:0;left:0;width:100%;z-index:1;pointer-events:none}
+.foregroundFixed{position:fixed;top:0;left:0;width:100%;z-index:1;pointer-events:none}
+h1{text-align:center}
+.correct{border:2px solid green}
+.wrong{border:2px solid red}
+.navigation{display:flex;flex-wrap:wrap;justify-content:space-evenly;width:100%}
+.navigation > *{flex:1 0 calc(100%/7);text-align:center}

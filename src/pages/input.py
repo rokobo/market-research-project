@@ -1,11 +1,16 @@
 import dash
 from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
-from components import input_form, product_form, add_new_form
+from components import input_form, product_form, add_new_form, ICONS
 from tools import load_establishments, save_products
 import dash_bootstrap_components as dbc
 
 dash.register_page(__name__, path="/")
+PRODUCTS = [
+    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
+    "soja", "banana", "batata", "tomate", "carne", "pao"]
+FIELDS = ["brand", "price", "quantity", "obs"]
+
 
 layout = html.Div([
     html.Div([
@@ -13,6 +18,16 @@ layout = html.Div([
             id="progress", style={"height": "12px"},
             striped=True, animated=True),
     ], className="foregroundFixed"),
+    dbc.Navbar([
+        dbc.Row([
+            html.A(
+                html.I(
+                    className=f"fa-solid fa-{ICONS[product]}",
+                    id=f"icon-{product}"),
+                style={"color": "red"}, href=f"#{product}-heading"
+            ) for product in PRODUCTS
+        ], className="g-0 m-0 navigation")
+    ], color="white", sticky="top", expand=True),
     dbc.Alert([
             html.H4(
                 "Instruções de preenchimento",
@@ -22,7 +37,10 @@ layout = html.Div([
                 "da quantidade padrão. \n\n"
                 "O envio é liberado se todas as seções estiverem completas. "
                 "Caso queira não enviar alguma seção, delete a "
-                "fileira clicando no botão com X."
+                "fileira clicando no botão com X.\n\n"
+                "Os ícones mostram se as informações de cada seção estão "
+                "válidas. Amarelo indica 2 ou menos items na seção. Clicar "
+                "no ícone te leva para a seção."
             ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=True, color="warning"),
     dbc.Stack([
@@ -71,13 +89,13 @@ layout = html.Div([
         "Óleo de soja - 0.9L", "soja",
         brand=True, price=True, quantity=True),
     product_form(
-        "Banana - 1kg (anotar Nanica e Prata)", "banana",
+        "Banana - 1kg (Nanica e Prata)", "banana",
         brand=True, price=True),
     product_form(
-        "Batata - 1kg (anotar a mais barata)", "batata",
+        "Batata - 1kg (mais barata)", "batata",
         price=True, obs=True),
     product_form(
-        "Tomate - 1kg (anotar o mais barato)", "tomate",
+        "Tomate - 1kg (mais barato)", "tomate",
         price=True, obs=True),
     product_form(
         "Carne - 1kg (Coxão Mole)", "carne",
@@ -97,13 +115,8 @@ layout = html.Div([
     dcc.Interval(id="save-interval", interval=2 * 1000),
     html.Div(id="dummy-div-validation"),  # For calling validation after load
     html.Div(id="dummy-div-save"),  # For calling save after load
-    html.Div(id="dummy-div-load")  # For calling load after save products
+    html.Div(id="dummy-div-load"),  # For calling load after save products
 ])
-
-PRODUCTS = [
-    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
-    "soja", "banana", "batata", "tomate", "carne", "pao"]
-FIELDS = ["brand", "price", "quantity", "obs"]
 
 
 clientside_callback(
@@ -138,16 +151,15 @@ clientside_callback(
         namespace="clientside",
         function_name="display_progress"
     ),
-    Output('progress', 'value'),
-    Output('progress', 'label'),
+    [Output(f"icon-{product}", 'style') for product in PRODUCTS],
     Output("save-products", "disabled"),
     Output("save-products", "color"),
     Input("dummy-div-save", "className"),
     Input("collector_name", "className"),
     Input("collection_date", "className"),
     Input("establishment", "className"),
-    [Input({"type": f"{field}-{product}", "index": ALL}, "className")
-        for product in PRODUCTS for field in FIELDS]
+    [Input(f"status-{product}", 'color') for product in PRODUCTS],
+    [State(f"container-{product}", 'children') for product in PRODUCTS]
 )
 
 

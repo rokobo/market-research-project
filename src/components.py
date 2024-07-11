@@ -6,6 +6,14 @@ from typing import Optional
 from tools import load_brands
 
 
+ICONS = {
+    "acucar": "cubes", "arroz": "bowl-rice", "cafe": "mug-hot",
+    "farinha": "wheat-awn", "feijao": "seedling", "leite": "bottle-droplet",
+    "manteiga": "cube", "soja": "wine-bottle", "banana": "phone",
+    "batata": "bacterium", "tomate": "apple-whole",
+    "carne": "drumstick-bite", "pao": "bread-slice"}
+
+
 def input_form(
     label: str, id_name: str, input_type: Optional[str] = None,
     placeholder: Optional[str] = None, formtext: Optional[str] = None,
@@ -92,11 +100,12 @@ def product_form(
         row.append(dbc.Col(dbc.Label("Quant.", style=style)))
     if obs:
         row.append(dbc.Col(dbc.Label("Obs.", style=style)))
-
     return dbc.Row([
         dbc.Col([
-            dbc.Label(label, style={'fontWeight': 'bold'}),
-            dbc.Badge("", pill=True, className="mx-2", id=f"status-{id_name}"),
+            html.I(className=f"fa-solid fa-{ICONS[id_name]}"),
+            dbc.Label(
+                label, style={'fontWeight': 'bold'}, className="mx-2"),
+            dbc.Badge("", pill=True, id=f"status-{id_name}"),
         ]),
         dbc.Row(row, className="g-0"),
         dbc.Row([
@@ -104,7 +113,7 @@ def product_form(
                 id_name, brand, price, quantity, obs),
         ], id=f"container-{id_name}", className="g-0"),
         html.Button("+", id=f"add-{id_name}", className="mb-4")
-    ], className="m-2 g-0")
+    ], className="m-2 g-0", id=f"{id_name}-heading")
 
 
 def add_new_form(context: str, idx: int, values=None) -> dbc.Row:

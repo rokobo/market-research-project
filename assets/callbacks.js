@@ -74,8 +74,14 @@ window.dash_clientside.clientside = {
         for (var i = 0; i < validations.length; i += 4) {
             const val = validations.slice(i, i + 4);
             if (val.every(sublist => sublist.every(v => v))) {
-                status1.push("Completo");
-                status2.push("success");
+                if (val[1].length > 2) {
+                    status1.push("Completo");
+                    status2.push("success");
+                } else {
+                    status1.push("Okay");
+                    status2.push("warning");
+                }
+
             } else {
                 status1.push("Faltando");
                 status2.push("danger");
@@ -111,16 +117,19 @@ window.dash_clientside.clientside = {
         console.log("CALL delete row:", PRODUCTS[index]);
         return patched_children;
     },
-    display_progress: function (_1, ...values) {
-        var fields = values.flat(1);
-        var progress = 100 * fields.reduce((total,x) => total+(x==="correct"), 0);
-        progress = progress / fields.length;
-        progress = progress.toFixed(0);
-        console.log("CALL progress:", [fields.length, progress]);
-        return_vals = [progress, progress + "%"];
+    display_progress: function (_1, name, date, est, ...values) {
+        badges = values.slice(0, 13);
+        children = values.slice(13).map(c => c.length);
+        return_vals = badges.map(v => {
+            if (v === "success") {return {"color": "green"}}
+            else if (v === "danger") {return {"color": "red"}}
+            else {return {"color": "#FCAE1E"}}
+        });
+        console.log("CALL progress:", [name, date, est], badges, return_vals);
 
         // Update save button status
-        if (progress == 100) {return_vals = return_vals.concat([false, "success"])}
+        if ([name, date, est].every(v => v == "correct") && badges.every(v => v == "success")) {
+            return_vals = return_vals.concat([false, "success"])}
         else {return_vals = return_vals.concat([true, "danger"])}
         return return_vals;
     }
