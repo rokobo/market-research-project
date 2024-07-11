@@ -4,7 +4,6 @@ from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
 from components import input_form, product_form, add_new_form, ICONS
 from tools import load_establishments, save_products
 import dash_bootstrap_components as dbc
-import time
 
 dash.register_page(__name__, path="/")
 PRODUCTS = [
@@ -237,7 +236,8 @@ def add_new_row(*values):
 
     context = context[4:]
     index = PRODUCTS.index(context)
-    new_row = add_new_form(context, int(time.time()))
+    idx = values[index]
+    new_row = add_new_form(context, idx)
     patched_children = [dash.no_update] * len(PRODUCTS)
     patch = Patch()
     patch.append(new_row)
