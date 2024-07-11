@@ -118,7 +118,7 @@ window.dash_clientside.clientside = {
         badges = values.slice(0, 13);
         children = values.slice(13).map(c => c.length);
         message = "Você tem certeza que quer enviar? Resumo do envio:\n\n";
-        message += "Seções com poucos itens: " + children.filter(v => v == 0).length;
+        message += "Seções com poucos itens: " + children.filter(v => v < 3).length;
         return_vals = badges.map(v => {
             if (v === "success") {return {"color": "green"}}
             else if (v === "danger") {return {"color": "red"}}
