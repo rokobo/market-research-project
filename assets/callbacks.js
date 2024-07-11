@@ -117,6 +117,8 @@ window.dash_clientside.clientside = {
     display_progress: function (_1, name, date, est, ...values) {
         badges = values.slice(0, 13);
         children = values.slice(13).map(c => c.length);
+        message = "Você tem certeza que quer enviar? Resumo do envio:\n\n";
+        message += "Seções com poucos itens: " + children.filter(v => v == 0).length;
         return_vals = badges.map(v => {
             if (v === "success") {return {"color": "green"}}
             else if (v === "danger") {return {"color": "red"}}
@@ -128,6 +130,7 @@ window.dash_clientside.clientside = {
             return_vals = return_vals.concat([false, "success"])}
         else {return_vals = return_vals.concat([true, "danger"])}
         console.log("CALL progress:", [name, date, est], badges, return_vals);
+        return_vals.push(message);
         return return_vals;
     }
 }

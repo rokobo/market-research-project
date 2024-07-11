@@ -13,11 +13,6 @@ FIELDS = ["brand", "price", "quantity", "obs"]
 
 
 layout = html.Div([
-    html.Div([
-        dbc.Progress(
-            id="progress", style={"height": "12px"},
-            striped=True, animated=True),
-    ], className="foregroundFixed"),
     dbc.Navbar([
         dbc.Row([
             html.A(
@@ -29,19 +24,19 @@ layout = html.Div([
         ], className="g-0 m-0 navigation")
     ], color="white", sticky="top", expand=True),
     dbc.Alert([
-            html.H4(
-                "Instruções de preenchimento",
-                className="alert-heading", style={'fontWeight': 'bold'}),
-            html.P([
-                "Só é necessário especificar a Quant. se ela for diferente "
-                "da quantidade padrão. \n\n"
-                "O envio é liberado se todas as seções estiverem completas. "
-                "Caso queira não enviar alguma seção, delete a "
-                "fileira clicando no botão com X.\n\n"
-                "Os ícones mostram se as informações de cada seção estão "
-                "válidas. Amarelo indica 2 ou menos items na seção. Clicar "
-                "no ícone te leva para a seção."
-            ], className="mb-0", style={'whiteSpace': 'pre-line'}),
+        html.H4(
+            "Instruções de preenchimento",
+            className="alert-heading", style={'fontWeight': 'bold'}),
+        html.P([
+            "Só é necessário especificar a Quant. se ela for diferente "
+            "da quantidade padrão. \n\n"
+            "O envio é liberado se todas as seções estiverem completas. "
+            "Caso queira não enviar alguma seção, delete a "
+            "fileira clicando no botão com X.\n\n"
+            "Os ícones mostram se as informações de cada seção estão "
+            "válidas. Amarelo indica 2 ou menos items na seção. Clicar "
+            "no ícone te leva para a seção."
+        ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=True, color="warning"),
     dbc.Stack([
         html.H1(
@@ -109,9 +104,12 @@ layout = html.Div([
         "Algo que tenha ocorrido ou marcas não listadas",
         "Opcional: relatar algo relevante"
     ),
-    html.Div(dbc.Button(
-        "Enviar", color="success", id="save-products"
-    ), className="d-grid m-5"),
+    dcc.ConfirmDialogProvider(
+        html.Div(dbc.Button(
+            "Enviar", color="success", id="save-products"
+        ), className="d-grid m-5"),
+        id="confirm-send"
+    ),
     dcc.Interval(id="save-interval", interval=2 * 1000),
     html.Div(id="dummy-div-validation"),  # For calling validation after load
     html.Div(id="dummy-div-save"),  # For calling save after load
@@ -154,6 +152,7 @@ clientside_callback(
     [Output(f"icon-{product}", 'style') for product in PRODUCTS],
     Output("save-products", "disabled"),
     Output("save-products", "color"),
+    Output("confirm-send", "message"),
     Input("dummy-div-save", "className"),
     Input("collector_name", "className"),
     Input("collection_date", "className"),
@@ -279,7 +278,7 @@ clientside_callback(
 @callback(
     Output('store', 'data', allow_duplicate=True),
     Output('dummy-div-load', 'className', allow_duplicate=True),
-    Input("save-products", "n_clicks"),
+    Input("confirm-send", "submit_n_clicks"),
     State("collector_name", "value"),
     State("collection_date", "value"),
     State("establishment", "value"),
