@@ -59,7 +59,6 @@ def load_images() -> dict[str, str]:
         path = join(HOME, f"assets/{product}.svg")
         if not exists(path):
             path = join(HOME, "assets/tomato.svg")
-        print(product)
         with open(path, "r") as file:
             svg_data = file.read()
         icons[product] = svg_data
