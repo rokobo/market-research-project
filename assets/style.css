@@ -6,3 +6,4 @@ h1{text-align:center}
 .wrong{border:2px solid red}
 .navigation{display:flex;flex-wrap:wrap;justify-content:space-evenly;width:100%}
 .navigation > *{flex:1 0 calc(100%/7);text-align:center}
+.icon {max-height: 20px;}
