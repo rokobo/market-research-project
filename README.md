@@ -227,10 +227,11 @@ sudo systemctl status nginx
 Changing the web app code will be frequent as new functionalities are built. To simplify this process, aliases can be created so that you don't have to type long commands in the AWS console. The aliases can be done as follows:
 
 ```sh
-alias s1="sudo killall gunicorn"
-alias s2="source .venv/bin/activate"
-alias s3="git pull origin main"
-alias s4="gunicorn src.main:server --daemon -b 127.0.0.1:8060"
+alias s1="cd market-research-project"
+alias s2="sudo killall gunicorn"
+alias s3="source .venv/bin/activate"
+alias s4="git pull origin main"
+alias s5="gunicorn src.main:server --daemon -b 127.0.0.1:8060"
 ```
 
 So to change the server to the newest version, you simply need to kill all Gunicorn processes, active the virtual environment, update code by pulling the newest version from GitHub and restarting Gunicorn:
@@ -240,4 +241,7 @@ s1
 s2
 s3
 s4
+s5
 ```
+
+If there are any new requirements, remember to update the environment.
