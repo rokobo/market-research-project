@@ -2,9 +2,10 @@ import dash
 from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
 from components import input_form, product_form, add_new_form, ICONS
-from tools import load_establishments, save_products
+from tools import load_establishments, save_products, PRODUCT_ROWS
 import dash_bootstrap_components as dbc
 import time
+from dash_dangerously_set_inner_html import DangerouslySetInnerHTML as InnerHTML
 
 dash.register_page(__name__, path="/")
 PRODUCTS = [
@@ -17,9 +18,8 @@ layout = html.Div([
     dbc.Navbar([
         dbc.Row([
             html.A(
-                html.I(
-                    className=f"fa-solid fa-{ICONS[product]}",
-                    id=f"icon-{product}"),
+                InnerHTML(ICONS[product]),
+                id=f"icon-{product}",
                 style={"color": "red"}, href=f"#{product}-heading"
             ) for product in PRODUCTS
         ], className="g-0 m-0 navigation")
@@ -111,11 +111,29 @@ layout = html.Div([
         ), className="d-grid m-5"),
         id="confirm-send"
     ),
-    dcc.Interval(id="save-interval", interval=2 * 1000),
+    dbc.Modal([
+        dbc.ModalHeader(
+            dbc.ModalTitle("RELATÓRIO ENVIADO"), close_button=False),
+        dbc.ModalBody("Obrigado por enviar seu relatório!"),
+        dbc.ModalFooter(
+            dbc.Button(
+                "Fechar", id="close-send-confirmation", className="ms-auto")),
+    ], id="send-confirmed-modal", centered=True, is_open=False),
     html.Div(id="dummy-div-validation"),  # For calling validation after load
     html.Div(id="dummy-div-save"),  # For calling save after load
     html.Div(id="dummy-div-load"),  # For calling load after save products
 ])
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='close_modal'
+    ),
+    Output("send-confirmed-modal", "is_open", allow_duplicate=True),
+    Input("close-send-confirmation", "n_clicks"),
+    prevent_initial_call=True
+)
 
 
 clientside_callback(
@@ -189,9 +207,10 @@ def load_state(_1, _2, data):
     if data == []:
         return_data.extend([None]*4)
         for idx, product in zip(range(len(PRODUCTS)), PRODUCTS):
-            containers[idx].append(add_new_form(
-                product, 0, [None] * 4
-            ))
+            containers[idx].extend([
+                add_new_form(product, idx, [None] * 4)
+                for idx in range(PRODUCT_ROWS[product])
+            ])
         return return_data + containers + ["", ""]
 
     for item in data:
@@ -278,6 +297,7 @@ clientside_callback(
 @callback(
     Output('store', 'data', allow_duplicate=True),
     Output('dummy-div-load', 'className', allow_duplicate=True),
+    Output("send-confirmed-modal", "is_open"),
     Input("confirm-send", "submit_n_clicks"),
     State("collector_name", "value"),
     State("collection_date", "value"),
@@ -291,5 +311,5 @@ def save_args(clicks, name, date, establishment, obs, *values):
     if clicks is None:
         return dash.no_update
     products = [values[i:i + 4] for i in range(0, len(values), 4)]
-    save_products(products, (name, date, establishment))
-    return [], ""
+    save_products(products, (name, date, establishment), obs)
+    return [], "", True

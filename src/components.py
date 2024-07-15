@@ -3,15 +3,11 @@
 import dash_bootstrap_components as dbc
 from dash import html
 from typing import Optional
-from tools import load_brands
+from tools import load_brands, load_images, PRODUCT_ROWS
+from dash_dangerously_set_inner_html import DangerouslySetInnerHTML as InnerHTML
 
 
-ICONS = {
-    "acucar": "cubes", "arroz": "bowl-rice", "cafe": "mug-hot",
-    "farinha": "wheat-awn", "feijao": "seedling", "leite": "bottle-droplet",
-    "manteiga": "cube", "soja": "wine-bottle", "banana": "phone",
-    "batata": "bacterium", "tomate": "apple-whole",
-    "carne": "drumstick-bite", "pao": "bread-slice"}
+ICONS = load_images()
 
 
 def input_form(
@@ -102,15 +98,16 @@ def product_form(
         row.append(dbc.Col(dbc.Label("Obs.", style=style)))
     return dbc.Row([
         dbc.Col([
-            html.I(className=f"fa-solid fa-{ICONS[id_name]}"),
+            html.Div(
+                InnerHTML(ICONS[id_name]), style={"display": "inline-block"}),
             dbc.Label(
-                label, style={'fontWeight': 'bold'}, className="mx-2"),
+                label, style={'fontWeight': 'bold'}, className="mx-2 mb-0"),
             dbc.Badge("", pill=True, id=f"status-{id_name}"),
         ]),
-        dbc.Row(row, className="g-0"),
+        dbc.Row(row, className="g-0 mt-2"),
         dbc.Row([
-            create_product_form(
-                id_name, brand, price, quantity, obs),
+            create_product_form(id_name, brand, price, quantity, obs, idx)
+            for idx in range(PRODUCT_ROWS[id_name])
         ], id=f"container-{id_name}", className="g-0"),
         html.Button("+", id=f"add-{id_name}", className="mb-4")
     ], className="m-2 g-0", id=f"{id_name}-heading")
