@@ -8,6 +8,15 @@ import time
 
 
 HOME = dirname(dirname(__file__))
+PRODUCTS = [
+    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
+    "soja", "banana", "batata", "tomate", "carne", "pao"]
+QUANTIDADES = {
+    'cafe': 0.5, 'arroz': 5, 'manteiga': 0.2, 'soja': 0.9}
+PRODUCT_ROWS = {
+    "acucar": 3, "arroz": 3, "cafe": 3, "farinha": 3, "feijao": 3,
+    "leite": 3, "manteiga": 3, "soja": 3, "banana": 2, "batata": 1,
+    "tomate": 1, "carne": 1, "pao": 1}
 
 
 def load_establishments() -> list[dict[str, str]]:
@@ -43,21 +52,28 @@ def load_brands(product: str) -> list[dict[str, str]]:
     return brands
 
 
+def load_images() -> dict[str, str]:
+    icons = {}
+
+    for product in PRODUCTS:
+        path = join(HOME, f"assets/{product}.svg")
+        if not exists(path):
+            path = join(HOME, "assets/tomato.svg")
+        print(product)
+        with open(path, "r") as file:
+            svg_data = file.read()
+        icons[product] = svg_data
+    return icons
+
+
 def check_folder(path):
     if not exists(path):
         makedirs(path, exist_ok=True)
 
 
-PRODUCTS = [
-    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
-    "soja", "banana", "batata", "tomate", "carne", "pao"]
-QUANTIDADES = {
-    'cafe': 0.5, 'arroz': 5, 'manteiga': 0.2, 'soja': 0.9
-}
-
-
-def save_products(product_data, info, test=False):
+def save_products(product_data, info, obs, test=False):
     check_folder("data")
+    check_folder("data_obs")
     rows = []
 
     for product, prod_name in zip(product_data, PRODUCTS):
@@ -90,6 +106,8 @@ def save_products(product_data, info, test=False):
     df.to_csv(
         f"data/{info[1]}|{int(time.time())}|{info[0]}.csv",
         index=False)
+    with open(f"data_obs/{info[0]}|{int(time.time())}.txt", "w") as f:
+        f.write(obs)
     return
 
 
