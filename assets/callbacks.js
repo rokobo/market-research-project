@@ -1,6 +1,7 @@
 if (!window.dash_clientside) {window.dash_clientside = {}}
 const PRODUCTS = ["acucar","arroz","cafe","farinha","feijao","leite","manteiga","soja","banana","batata","tomate","carne","pao"];
-const FIELDS = ["brand", "price", "quantity", "obs"];
+const FIELDS = ["brand","price","quantity","obs"];
+const PRODUCT_ROWS = {"acucar": 3,"arroz": 3,"cafe": 3,"farinha": 3,"feijao": 3,"leite": 3,"manteiga": 3,"soja": 3,"banana": 2,"batata": 1,"tomate": 1,"carne": 1,"pao": 1};
 const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[i/4]){acc[keys[i/4]]=lists.slice(i,i+4).flat()}return acc},{});
 
 window.dash_clientside.clientside = {
@@ -65,7 +66,7 @@ validate_args: function (_1, name, date, est, ...vals) {
     for (var i = 0; i < validations.length; i += 4) {
         const val = validations.slice(i, i + 4);
         if (val.every(sublist => sublist.every(v => v))) {
-            if (val[1].length > 2) {
+            if (val[1].length >= PRODUCT_ROWS[PRODUCTS[i/4]]) {
                 status1.push("Completo");
                 status2.push("success");
             } else {
