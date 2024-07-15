@@ -106,7 +106,7 @@ def save_products(product_data, info, obs, test=False):
         f"data/{info[1]}|{int(time.time())}|{info[0]}.csv",
         index=False)
     with open(f"data_obs/{info[0]}|{int(time.time())}.txt", "w") as f:
-        f.write(obs)
+        f.write(obs or "")
     return
 
 
