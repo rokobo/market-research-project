@@ -2,16 +2,13 @@ import dash
 from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
 from components import input_form, product_form, add_new_form, ICONS
-from tools import load_establishments, save_products, PRODUCT_ROWS
+from tools import load_establishments, save_products
+from CONFIG import PRODUCT_ROWS, PRODUCTS, FIELDS
 import dash_bootstrap_components as dbc
 import time
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML as InnerHTML
 
 dash.register_page(__name__, path="/")
-PRODUCTS = [
-    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
-    "soja", "banana", "batata", "tomate", "carne", "pao"]
-FIELDS = ["brand", "price", "quantity", "obs"]
 
 
 layout = html.Div([
@@ -119,9 +116,10 @@ layout = html.Div([
             dbc.Button(
                 "Fechar", id="close-send-confirmation", className="ms-auto")),
     ], id="send-confirmed-modal", centered=True, is_open=False),
-    html.Div(id="dummy-div-validation"),  # For calling validation after load
-    html.Div(id="dummy-div-save"),  # For calling save after load
-    html.Div(id="dummy-div-load"),  # For calling load after save products
+    html.Div(id="dummy-div-load"),        # save_products  ->  load
+    html.Div(id="dummy-div-validation"),  # load           ->  validation
+    html.Div(id="dummy-div-progress"),    # validation     ->  progress
+    html.Div(id="dummy-div-save")         # progress       ->  save
 ])
 
 
@@ -141,9 +139,8 @@ clientside_callback(
         namespace='clientside',
         function_name='save_state'
     ),
-    Output('store', 'data', allow_duplicate=True),
+    Output('store', 'data'),
     Input("dummy-div-save", "className"),
-    Input("general_observations", "value"),
     State('load-flag', 'data'),
     State("collector_name", "value"),
     State("collection_date", "value"),
@@ -158,8 +155,9 @@ clientside_callback(
         namespace="clientside",
         function_name="clear_contents"
     ),
-    Output('store', 'data'),
-    Input("confirm-clear", "submit_n_clicks")
+    Output('store', 'data', allow_duplicate=True),
+    Input("confirm-clear", "submit_n_clicks"),
+    prevent_initial_call=True
 )
 
 
@@ -172,12 +170,14 @@ clientside_callback(
     Output("save-products", "disabled"),
     Output("save-products", "color"),
     Output("confirm-send", "message"),
-    Input("dummy-div-save", "className"),
+    Output("dummy-div-save", "className"),
+    Input("dummy-div-progress", "className"),
     Input("collector_name", "className"),
     Input("collection_date", "className"),
     Input("establishment", "className"),
     [Input(f"status-{product}", 'color') for product in PRODUCTS],
-    [State(f"container-{product}", 'children') for product in PRODUCTS]
+    [State(f"container-{product}", 'children') for product in PRODUCTS],
+    prevent_initial_call=True
 )
 
 
@@ -187,43 +187,40 @@ clientside_callback(
     Output("collection_date", "value"),
     Output("establishment", "value"),
     Output("general_observations", "value"),
-    [Output(f"container-{product}", 'children', allow_duplicate=True)
+    [Output(f"container-{product}", 'children')
         for product in PRODUCTS],
     Output("dummy-div-validation", "className"),
-    Output("dummy-div-save", "className"),
     Input("save-products", 'children'),
     Input("dummy-div-load", 'className'),
     State('store', 'data'),
-    prevent_initial_call=True
+    # prevent_initial_call='initial_duplicate'
 )
 def load_state(_1, _2, data):
     if data is None:
+        print("####", data)
         return dash.no_update
 
-    return_data = []
-    return_data.append(True)
+    return_data = [True, None, None, None, None]
     containers = [[] for _ in range(len(PRODUCTS))]
 
     if data == []:
-        return_data.extend([None]*4)
         for idx, product in zip(range(len(PRODUCTS)), PRODUCTS):
             containers[idx].extend([
                 add_new_form(product, idx, [None] * 4)
                 for idx in range(PRODUCT_ROWS[product])
             ])
-        return return_data + containers + ["", ""]
-
-    for item in data:
-        if "first" in item:
-            return_data.extend(item["first"])
-        if "observations" in item:
-            return_data.append(item["observations"])
-        if "container" in item:
-            idx = PRODUCTS.index(item["container"])
-            containers[idx].append(add_new_form(
-                item["container"], item["row_id"], item["values"]
-            ))
-    return return_data + containers + ["", ""]
+    else:
+        for item in data:
+            if "first" in item:
+                return_data[1:4] = item["first"]
+            if "observations" in item:
+                return_data[4] = item["observations"]
+            if "container" in item:
+                idx = PRODUCTS.index(item["container"])
+                containers[idx].append(add_new_form(
+                    item["container"], item["row_id"], item["values"]
+                ))
+    return return_data + containers + [""]
 
 
 clientside_callback(
@@ -276,7 +273,7 @@ clientside_callback(
     Output("collector_name", "className"),
     Output("collection_date", "className"),
     Output("establishment", "className"),
-    Output("dummy-div-save", "className", allow_duplicate=True),
+    Output("dummy-div-progress", "className"),
     Input("dummy-div-validation", "className"),
     Input("collector_name", "value"),
     Input("collection_date", "value"),
@@ -296,7 +293,7 @@ clientside_callback(
 
 @callback(
     Output('store', 'data', allow_duplicate=True),
-    Output('dummy-div-load', 'className', allow_duplicate=True),
+    Output('dummy-div-load', 'className'),
     Output("send-confirmed-modal", "is_open"),
     Input("confirm-send", "submit_n_clicks"),
     State("collector_name", "value"),

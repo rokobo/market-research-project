@@ -7,14 +7,14 @@ const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[
 window.dash_clientside.clientside = {
 clear_contents: function(click) {
     if (typeof click !== 'number') {return window.dash_clientside.no_update};
-    console.log("CALL clear contents");
+    console.log("CALL clear contents (", dash_clientside.callback_context.triggered_id, ")");
     return [];
 },
 close_modal: function(click) {
     if (typeof click !== 'number') {return window.dash_clientside.no_update};
     return false;
 },
-save_state: function(_1, _2, load_flag, name, date, establishment, observations, ...products) {
+save_state: function(_1, load_flag, name, date, establishment, observations, ...products) {
     if (load_flag === null) {return window.dash_clientside.no_update}
     let data = [];
     data.push({'first': [name, date, establishment]});
@@ -43,12 +43,11 @@ save_state: function(_1, _2, load_flag, name, date, establishment, observations,
             data.push({"container": product_name, "values": row, "row_id": row_id.split("-").slice(-1)[0]});
         }
     };
-    console.log("CALL save data", data);
+    console.log("CALL save data (", dash_clientside.callback_context.triggered_id, ")", data);
     return data;
 },
 validate_args: function (_1, name, date, est, ...vals) {
     var first_args = vals.splice(-3);
-    console.log(first_args);
     var slice_length = vals.length - PRODUCTS.length;
     var second_args = vals.slice(slice_length/2 + PRODUCTS.length);
     var validations = [];
@@ -80,7 +79,7 @@ validate_args: function (_1, name, date, est, ...vals) {
     };
     // Transform to appropriate classnames
     validations = validations.map(sublist => sublist.map(v => v ? "correct" : "wrong"));
-    console.log("CALL validation", groupValidations2(validations, PRODUCTS));
+    console.log("CALL validation (", dash_clientside.callback_context.triggered_id, ")", first_args, groupValidations2(validations, PRODUCTS));
     validations = validations.concat(status1).concat(status2).concat(
         first_args.map(v => (v !== null && v !== "" ? "correct" : "wrong")));
     validations.push("");
@@ -117,8 +116,9 @@ display_progress: function (_1, name, date, est, ...vals) {
     if ([name, date, est].every(v => v == "correct") && badges.every(v => v != "danger")) {
         return_vals = return_vals.concat([false, "success"])}
     else {return_vals = return_vals.concat([true, "danger"])};
-    console.log("CALL progress:", [name, date, est], badges, return_vals);
+    console.log("CALL progress: (", dash_clientside.callback_context.triggered_id, ")", [name, date, est], badges, return_vals);
     return_vals.push(message);
+    return_vals.push("");
     return return_vals;
 }
 }
