@@ -3,7 +3,8 @@
 import dash_bootstrap_components as dbc
 from dash import html
 from typing import Optional
-from tools import load_brands, load_images, PRODUCT_ROWS
+from tools import load_brands, load_images
+from CONFIG import PRODUCT_ROWS
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML as InnerHTML
 
 

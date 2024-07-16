@@ -3,20 +3,9 @@
 from os.path import dirname, join, exists
 from os import makedirs, listdir
 import pandas as pd
-import xlsxwriter
 import time
-
-
-HOME = dirname(dirname(__file__))
-PRODUCTS = [
-    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
-    "soja", "banana", "batata", "tomate", "carne", "pao"]
-QUANTIDADES = {
-    'cafe': 0.5, 'arroz': 5, 'manteiga': 0.2, 'soja': 0.9}
-PRODUCT_ROWS = {
-    "acucar": 3, "arroz": 3, "cafe": 3, "farinha": 3, "feijao": 3,
-    "leite": 3, "manteiga": 3, "soja": 3, "banana": 2, "batata": 1,
-    "tomate": 1, "carne": 1, "pao": 1}
+from typing import Optional
+from CONFIG import HOME, PRODUCT_ROWS, PRODUCTS, QUANTITIES
 
 
 def load_establishments() -> list[dict[str, str]]:
@@ -70,7 +59,7 @@ def check_folder(path):
         makedirs(path, exist_ok=True)
 
 
-def save_products(product_data, info, obs, test=False):
+def save_products(product_data, info, obs: Optional[str], test=False):
     check_folder("data")
     check_folder("data_obs")
     rows = []
@@ -85,8 +74,8 @@ def save_products(product_data, info, obs, test=False):
             data = [prod_name]
             data.extend(row[:-1])
             if not isinstance(data[3], (float, int)):
-                if prod_name in QUANTIDADES:
-                    quantidade = QUANTIDADES[prod_name]
+                if prod_name in QUANTITIES:
+                    quantidade = QUANTITIES[prod_name]
                 else:
                     quantidade = 1
                 data[3] = quantidade
@@ -105,8 +94,9 @@ def save_products(product_data, info, obs, test=False):
     df.to_csv(
         f"data/{info[1]}|{int(time.time())}|{info[0]}.csv",
         index=False)
-    with open(f"data_obs/{info[0]}|{int(time.time())}.txt", "w") as f:
-        f.write(obs or "")
+    if obs is not None:
+        with open(f"data_obs/{info[0]}|{int(time.time())}.txt", "w") as f:
+            f.write(obs)
     return
 
 
