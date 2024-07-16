@@ -4,6 +4,7 @@ tempCodeRunnerFile.py
 *.code-workspace
 .fuse*
 test*.*
+!test_*.py
 .env
 /data
 *.xlsx
