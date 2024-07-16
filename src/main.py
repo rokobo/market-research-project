@@ -14,10 +14,9 @@ load_dotenv()
 
 
 app = Dash(
-    title="ICB", update_title=None,
+    title="ICB", update_title="ICB...",
     external_stylesheets=[dbc.themes.BOOTSTRAP],
-    use_pages=True,
-    assets_folder='../assets',
+    use_pages=True, assets_folder='../assets',
     compress=False
 )
 
@@ -30,12 +29,12 @@ auth = dash_auth.BasicAuth(
     {getenv("APP_USERNAME"): getenv("APP_PASSWORD")}
 )
 
-app.layout = [
+app.layout = html.Div([
     dcc.Store(id="store", storage_type="local"),
     dcc.Store(id="load-flag", storage_type="local", data=False),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dash.page_container,
-]
+])
 
 if __name__ == "__main__":
     app.run_server(
