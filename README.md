@@ -12,6 +12,8 @@
     - [Set up application server](#set-up-application-server)
     - [Set up Nginx](#set-up-nginx)
     - [Changing code, re-deploying and aliases](#changing-code-re-deploying-and-aliases)
+  - [End-to-end testing](#end-to-end-testing)
+    - [Testing environment and fixtures](#testing-environment-and-fixtures)
 
 
 To the next developer that takes over this project, here are some important considerations and guidelines to ensure a smooth setup and maintenance of the infrastructure. This project requires careful attention to detail during the initial setup phase, as well as ongoing management to keep everything running smoothly.
@@ -245,3 +247,15 @@ s5
 ```
 
 If there are any new requirements, remember to update the environment.
+
+## End-to-end testing
+
+End-to-end testing is essential for ensuring that our Dash application works correctly from the user's perspective. This involves testing the complete functionality of the app, including user interactions, data processing, and visual feedback. The goal is to simulate real-world usage and catch any issues that might not be evident through unit tests alone.
+
+### Testing environment and fixtures
+
+To make the testing as realistic as possible, the tests are setup using the same process that is done for the EC2 server. That involves setting up a Gunicorn server and the Selenium configuration. The setup is done using Pytest fixtures, which allow, for example, the server being used by all tests in the module.
+
+To simply using Selenium, we use `chromedriver_autoinstaller` to manage the ChromeDriver automatically. This ensures that the correct version of ChromeDriver is always available. If you manually close a browser window started by the Selenium, it is possible that the `chromedriver` file will be occupied and therefore not available to be used by the tests. To solve this, use `fuser <path-to-chromedriver>`. It will give you a list of processes using the file, which you can then use to find and terminate.
+
+Also note that the `app()` fixture tries to get the website three times. The first is to get authenticated and save the credentials as cookies. The second and third are to get the site as it normally would be like.
