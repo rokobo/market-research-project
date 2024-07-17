@@ -27,7 +27,10 @@ AUTHENTICATED_URL = BASE_URL.replace(
 
 @fixture(scope="module")
 def gunicorn_server():
-    command = ["gunicorn", "src.main:server", "-b", BASE_URL.split("//")[1]]
+    command = [
+        "gunicorn", "src.main:server",
+        "-b", BASE_URL.split("//")[1],
+        "-w", "4"]
     process = subprocess.Popen(command)
 
     timeout = 5
