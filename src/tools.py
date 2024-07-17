@@ -5,12 +5,12 @@ from os import makedirs, listdir
 import pandas as pd
 import time
 from typing import Optional
-from CONFIG import HOME, PRODUCT_ROWS, PRODUCTS, QUANTITIES
+from CONFIG import CFG
 
 
 def load_establishments() -> list[dict[str, str]]:
     establishments = []
-    with open(join(HOME, "config/estabelecimentos.txt"), 'r') as file:
+    with open(join(CFG.home, "config/estabelecimentos.txt"), 'r') as file:
         for line in file:
             est = line.strip()
             establishments.append({
@@ -21,7 +21,7 @@ def load_establishments() -> list[dict[str, str]]:
 
 def load_brands(product: str) -> list[dict[str, str]]:
     brands = []
-    with open(join(HOME, f"config/marcas-{product}.txt"), 'r') as file:
+    with open(join(CFG.home, f"config/marcas-{product}.txt"), 'r') as file:
         for line in file:
             brand = line.strip()
             if brand == "-p":
@@ -44,10 +44,10 @@ def load_brands(product: str) -> list[dict[str, str]]:
 def load_images() -> dict[str, str]:
     icons = {}
 
-    for product in PRODUCTS:
-        path = join(HOME, f"assets/{product}.svg")
+    for product in CFG.products:
+        path = join(CFG.home, f"assets/{product}.svg")
         if not exists(path):
-            path = join(HOME, "assets/tomato.svg")
+            path = join(CFG.home, "assets/tomato.svg")
         with open(path, "r") as file:
             svg_data = file.read()
         icons[product] = svg_data
@@ -64,7 +64,7 @@ def save_products(product_data, info, obs: Optional[str], test=False):
     check_folder("data_obs")
     rows = []
 
-    for product, prod_name in zip(product_data, PRODUCTS):
+    for product, prod_name in zip(product_data, CFG.products):
         size = len(product[1])
         product = [
             col if len(col) == size
@@ -126,7 +126,7 @@ def aggregate_reports(date=["2024", "06"]):
     date_col = f"{date[0]}/{date[1]}"
     balanco = pd.DataFrame([{
         "Data": date_col,
-        "Produto": PRODUCTS[i-2],
+        "Produto": CFG.products[i-2],
         "Média Preço": f"=ROUND(AVERAGEIFS({prc}, {prd}, B{i}), 3)",
         "Média PPK": f"=ROUND(AVERAGEIFS({ppk}, {prd}, B{i}), 3)",
         "Registros": f"=COUNTIF({prd}, B{i})",
@@ -142,7 +142,7 @@ def aggregate_reports(date=["2024", "06"]):
             f'({ppk} > (D{i} + (H{i} * 3)))), "-"))'
         ),
         # "Outliers IQR":
-    } for i in range(2, len(PRODUCTS) + 2)])
+    } for i in range(2, len(CFG.products) + 2)])
 
     # Save
     with pd.ExcelWriter(

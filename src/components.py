@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 from dash import html
 from typing import Optional
 from tools import load_brands, load_images
-from CONFIG import PRODUCT_ROWS
+from CONFIG import CFG
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML as InnerHTML
 
 
@@ -108,7 +108,7 @@ def product_form(
         dbc.Row(row, className="g-0 mt-2"),
         dbc.Row([
             create_product_form(id_name, brand, price, quantity, obs, idx)
-            for idx in range(PRODUCT_ROWS[id_name])
+            for idx in range(CFG.product_rows[id_name])
         ], id=f"container-{id_name}", className="g-0"),
         html.Button("+", id=f"add-{id_name}", className="mb-4")
     ], className="m-2 g-0", id=f"{id_name}-heading")

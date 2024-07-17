@@ -1,7 +1,5 @@
 if (!window.dash_clientside) {window.dash_clientside = {}}
-const PRODUCTS = ["acucar","arroz","cafe","farinha","feijao","leite","manteiga","soja","banana","batata","tomate","carne","pao"];
-const FIELDS = ["brand","price","quantity","obs"];
-const PRODUCT_ROWS = {"acucar": 3,"arroz": 3,"cafe": 3,"farinha": 3,"feijao": 3,"leite": 3,"manteiga": 3,"soja": 3,"banana": 2,"batata": 1,"tomate": 1,"carne": 1,"pao": 1};
+const CFG = JSON.parse(localStorage.getItem('config'));
 const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[i/4]){acc[keys[i/4]]=lists.slice(i,i+4).flat()}return acc},{});
 
 window.dash_clientside.clientside = {
@@ -20,7 +18,7 @@ save_state: function(_1, load_flag, name, date, establishment, observations, ...
     data.push({'first': [name, date, establishment]});
     data.push({'observations': observations});
     for (let i = 0; i < products.length; i++) {
-        let product_name = PRODUCTS[i];
+        let product_name = CFG.products[i];
         let product = products[i];
         for (let prod_row of product) {
             let row_id = prod_row.props.id;
@@ -48,8 +46,8 @@ save_state: function(_1, load_flag, name, date, establishment, observations, ...
 },
 validate_args: function (_1, name, date, est, ...vals) {
     var first_args = vals.splice(-3);
-    var slice_length = vals.length - PRODUCTS.length;
-    var second_args = vals.slice(slice_length/2 + PRODUCTS.length);
+    var slice_length = vals.length - CFG.products.length;
+    var second_args = vals.slice(slice_length/2 + CFG.products.length);
     var validations = [];
     var status1 = [];
     var status2 = [];
@@ -65,7 +63,7 @@ validate_args: function (_1, name, date, est, ...vals) {
     for (var i = 0; i < validations.length; i += 4) {
         const val = validations.slice(i, i + 4);
         if (val.every(sublist => sublist.every(v => v))) {
-            if (val[1].length >= PRODUCT_ROWS[PRODUCTS[i/4]]) {
+            if (val[1].length >= CFG.product_rows[CFG.products[i/4]]) {
                 status1.push("Completo");
                 status2.push("success");
             } else {
@@ -79,7 +77,7 @@ validate_args: function (_1, name, date, est, ...vals) {
     };
     // Transform to appropriate classnames
     validations = validations.map(sublist => sublist.map(v => v ? "correct" : "wrong"));
-    console.log("CALL validation (", dash_clientside.callback_context.triggered_id, ")", first_args, groupValidations2(validations, PRODUCTS));
+    console.log("CALL validation (", dash_clientside.callback_context.triggered_id, ")", first_args, groupValidations2(validations, CFG.products));
     validations = validations.concat(status1).concat(status2).concat(
         first_args.map(v => (v !== null && v !== "" ? "correct" : "wrong")));
     validations.push("");
@@ -87,20 +85,20 @@ validate_args: function (_1, name, date, est, ...vals) {
 },
 delete_product_row: function (...vals) {
     var ctx = dash_clientside.callback_context.triggered_id;
-    if (vals.slice(0, PRODUCTS.length).every(sublist => sublist.every(v => typeof v === "undefined"))) {
+    if (vals.slice(0, CFG.products.length).every(sublist => sublist.every(v => typeof v === "undefined"))) {
         return window.dash_clientside.no_update;}
-    var children_states = vals.slice(PRODUCTS.length);
+    var children_states = vals.slice(CFG.products.length);
     var contextType = ctx.type.slice(7);
     var prop_id = `${contextType}-product-row-${ctx.index}`
-    var index = PRODUCTS.indexOf(contextType);
-    var patched_children = Array(PRODUCTS.length).fill(window.dash_clientside.no_update);
+    var index = CFG.products.indexOf(contextType);
+    var patched_children = Array(CFG.products.length).fill(window.dash_clientside.no_update);
     var children = children_states[index];
     for (let i = 0; i < children.length; i++) {
         var child = children[i];
         // Find row by row index and context index, remove child at index i
         if (child.props.id === prop_id) {children.splice(i, 1);break;}}
     patched_children[index] = children;
-    console.log("CALL delete row:", PRODUCTS[index]);
+    console.log("CALL delete row:", CFG.products[index]);
     return patched_children;
 },
 display_progress: function (_1, name, date, est, ...vals) {

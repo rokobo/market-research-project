@@ -3,7 +3,7 @@ from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
 from components import input_form, product_form, add_new_form, ICONS
 from tools import load_establishments, save_products
-from CONFIG import PRODUCT_ROWS, PRODUCTS, FIELDS
+from CONFIG import CFG
 import dash_bootstrap_components as dbc
 import time
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML as InnerHTML
@@ -18,7 +18,7 @@ layout = html.Div([
                 InnerHTML(ICONS[product]),
                 id=f"icon-{product}",
                 style={"color": "red"}, href=f"#{product}-heading"
-            ) for product in PRODUCTS
+            ) for product in CFG.products
         ], className="g-0 m-0 navigation")
     ], color="white", sticky="top", expand=True),
     dbc.Alert([
@@ -146,7 +146,7 @@ clientside_callback(
     State("collection_date", "value"),
     State("establishment", "value"),
     State("general_observations", "value"),
-    [State(f"container-{product}", 'children') for product in PRODUCTS],
+    [State(f"container-{product}", 'children') for product in CFG.products],
     prevent_initial_call=True
 )
 
@@ -166,7 +166,7 @@ clientside_callback(
         namespace="clientside",
         function_name="display_progress"
     ),
-    [Output(f"icon-{product}", 'style') for product in PRODUCTS],
+    [Output(f"icon-{product}", 'style') for product in CFG.products],
     Output("save-products", "disabled"),
     Output("save-products", "color"),
     Output("confirm-send", "message"),
@@ -175,8 +175,8 @@ clientside_callback(
     Input("collector_name", "className"),
     Input("collection_date", "className"),
     Input("establishment", "className"),
-    [Input(f"status-{product}", 'color') for product in PRODUCTS],
-    [State(f"container-{product}", 'children') for product in PRODUCTS],
+    [Input(f"status-{product}", 'color') for product in CFG.products],
+    [State(f"container-{product}", 'children') for product in CFG.products],
     prevent_initial_call=True
 )
 
@@ -188,26 +188,20 @@ clientside_callback(
     Output("establishment", "value"),
     Output("general_observations", "value"),
     [Output(f"container-{product}", 'children')
-        for product in PRODUCTS],
+        for product in CFG.products],
     Output("dummy-div-validation", "className"),
-    Input("save-products", 'children'),
-    Input("dummy-div-load", 'className'),
+    Input("dummy-div-load", "data"),
     State('store', 'data'),
-    # prevent_initial_call='initial_duplicate'
 )
-def load_state(_1, _2, data):
-    if data is None:
-        print("####", data)
-        return dash.no_update
-
+def load_state(_1, data):
     return_data = [True, None, None, None, None]
-    containers = [[] for _ in range(len(PRODUCTS))]
+    containers = [[] for _ in range(len(CFG.products))]
 
     if data == []:
-        for idx, product in zip(range(len(PRODUCTS)), PRODUCTS):
+        for idx, product in enumerate(CFG.products):
             containers[idx].extend([
                 add_new_form(product, idx, [None] * 4)
-                for idx in range(PRODUCT_ROWS[product])
+                for idx in range(CFG.product_rows[product])
             ])
     else:
         for item in data:
@@ -216,7 +210,7 @@ def load_state(_1, _2, data):
             if "observations" in item:
                 return_data[4] = item["observations"]
             if "container" in item:
-                idx = PRODUCTS.index(item["container"])
+                idx = CFG.products.index(item["container"])
                 containers[idx].append(add_new_form(
                     item["container"], item["row_id"], item["values"]
                 ))
@@ -229,32 +223,32 @@ clientside_callback(
         function_name='delete_product_row'
     ),
     [Output(f"container-{product}", 'children', allow_duplicate=True)
-        for product in PRODUCTS],
+        for product in CFG.products],
     [Input({"type": f"delete-{product}", "index": ALL}, 'n_clicks')
-        for product in PRODUCTS],
-    [State(f"container-{product}", 'children') for product in PRODUCTS],
+        for product in CFG.products],
+    [State(f"container-{product}", 'children') for product in CFG.products],
     prevent_initial_call=True
 )
 
 
 @callback(
     [Output(f"container-{product}", 'children', allow_duplicate=True)
-        for product in PRODUCTS],
-    [Input(f"add-{product}", 'n_clicks') for product in PRODUCTS],
-    [State(f"container-{product}", 'children') for product in PRODUCTS],
+        for product in CFG.products],
+    [Input(f"add-{product}", 'n_clicks') for product in CFG.products],
+    [State(f"container-{product}", 'children') for product in CFG.products],
     prevent_initial_call=True
 )
 def add_new_row(*values):
     context = ctx.triggered_id
     if context is None:
         return dash.no_update
-    if all(n is None for n in values[:len(PRODUCTS)]):
+    if all(n is None for n in values[:len(CFG.products)]):
         return dash.no_update
 
     context = context[4:]
-    index = PRODUCTS.index(context)
+    index = CFG.products.index(context)
     new_row = add_new_form(context, int(time.time() * 10))
-    patched_children = [dash.no_update] * len(PRODUCTS)
+    patched_children = [dash.no_update] * len(CFG.products)
     patch = Patch()
     patch.append(new_row)
     patched_children[index] = patch
@@ -267,9 +261,9 @@ clientside_callback(
         function_name='validate_args'
     ),
     [Output({"type": f"{field}-{product}", "index": ALL}, "className")
-        for product in PRODUCTS for field in FIELDS],
-    [Output(f"status-{product}", 'children') for product in PRODUCTS],
-    [Output(f"status-{product}", 'color') for product in PRODUCTS],
+        for product in CFG.products for field in CFG.fields],
+    [Output(f"status-{product}", 'children') for product in CFG.products],
+    [Output(f"status-{product}", 'color') for product in CFG.products],
     Output("collector_name", "className"),
     Output("collection_date", "className"),
     Output("establishment", "className"),
@@ -279,11 +273,11 @@ clientside_callback(
     Input("collection_date", "value"),
     Input("establishment", "value"),
     [Input({"type": f"{field}-{product}", "index": ALL}, "value")
-        for product in PRODUCTS for field in FIELDS],
+        for product in CFG.products for field in CFG.fields],
     [Input(f"container-{product}", 'children')
-        for product in PRODUCTS],
+        for product in CFG.products],
     [State({"type": f"{field}-{product}", "index": ALL}, "value")
-        for product in PRODUCTS for field in FIELDS],
+        for product in CFG.products for field in CFG.fields],
     State("collector_name", "value"),
     State("collection_date", "value"),
     State("establishment", "value"),
@@ -301,7 +295,7 @@ clientside_callback(
     State("establishment", "value"),
     State("general_observations", "value"),
     [State({"type": f"{field}-{product}", "index": ALL}, "value")
-        for product in PRODUCTS for field in FIELDS],
+        for product in CFG.products for field in CFG.fields],
     prevent_initial_call=True
 )
 def save_args(clicks, name, date, establishment, obs, *values):

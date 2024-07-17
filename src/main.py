@@ -7,9 +7,9 @@ from os.path import join, dirname
 from os import getenv
 from dotenv import load_dotenv
 
-
 sys.path.append(join(dirname(__file__), "pages"))
 sys.path.append(dirname(__file__))
+from CONFIG import CFG
 load_dotenv()
 
 
@@ -30,10 +30,11 @@ auth = dash_auth.BasicAuth(
 )
 
 app.layout = html.Div([
-    dcc.Store(id="store", storage_type="local"),
+    dcc.Store(id="store", storage_type="local", data=[]),
     dcc.Store(id="load-flag", storage_type="local", data=False),
+    dcc.Store(id="config", storage_type="local", data=vars(CFG)),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
-    dash.page_container,
+    dash.page_container
 ])
 
 if __name__ == "__main__":

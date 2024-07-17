@@ -7,17 +7,12 @@ import pandas as pd
 sys.path.append(join(dirname(dirname(__file__)), "src"))
 
 from tools import save_products
-
-
-PRODUCTS = [
-    "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
-    "soja", "banana", "batata", "tomate", "carne", "pao"]
-
+from CONFIG import CFG
 
 
 def test_one_line() -> None:
     """"Dataframes with one line."""
-    for i, product in zip(range(len(PRODUCTS)), PRODUCTS):
+    for i, product in enumerate(CFG.products):
         product_data = [([], [], [], [])] * 13
         product_data[i] = ([f"marca{i}"], [i], [i], [])
         info = ["name", "date", "establishment"]
