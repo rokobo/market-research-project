@@ -1,64 +1,101 @@
 import sys
 from os.path import join, dirname
 from os import getenv
-from itertools import zip_longest
-import chromedriver_autoinstaller
+import time
 from dotenv import load_dotenv
+import chromedriver_autoinstaller
+from pytest import fixture, fail
+import requests
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
+import subprocess
 
 sys.path.append(join(dirname(dirname(__file__)), "src"))
 
-from CONFIG import PRODUCT_ROWS, PRODUCTS, FIELDS
+from CONFIG import CFG
 
-# Update/download chrome driver automatically, then add chromedriver to path
 chromedriver_autoinstaller.install()
 load_dotenv()
 
-# Do note that you cannot get authenticated directly. TODO add to readme
-# You need to try authentication, then re-load the page.
-# That is because the browser saves the credentials as cookies.
-
 FIRST_IDS = ["collector_name", "collection_date", "establishment"]
-PROCESS_ARGS = dict(
-    app_module="src.main", application_name="app", port=8060, start_timeout=10)
-BASE_URL = "http://localhost:8060"
+BASE_URL = "http://127.0.0.1:8060"
 AUTHENTICATED_URL = BASE_URL.replace(
     "//", f"//{getenv("APP_USERNAME")}:{getenv("APP_PASSWORD")}@")
-import time
 
 
-def set_server(dash_br, dash_process_server):
-    dash_process_server(**PROCESS_ARGS)
-    dash_br.driver.get(AUTHENTICATED_URL)
-    dash_br.driver.get(BASE_URL)
-    dash_br.driver.set_window_position(10**4, 0)
-    time.sleep(1)
-    dash_br.wait_for_page(BASE_URL)
-    dash_br.driver.get(BASE_URL)
+@fixture(scope="module")
+def gunicorn_server():
+    command = ["gunicorn", "src.main:server", "-b", BASE_URL.split("//")[1]]
+    process = subprocess.Popen(command)
+
+    timeout = 5
+    response = "Did not send response"
+    while timeout > 0:
+        try:
+            response = requests.get(AUTHENTICATED_URL)
+            if response.status_code == 200:
+                break
+        except requests.ConnectionError:
+            time.sleep(1)
+            timeout -= 1
+
+    if timeout == 0:
+        response = requests.get(AUTHENTICATED_URL)
+        process.terminate()
+        process.wait()
+        fail(f"Gunicorn server error: {response.status_code}")
+
+    yield process
+
+    process.terminate()
+    process.wait()
+    return
 
 
-def test_initial_first_section(dash_br, dash_process_server):
-    set_server(dash_br, dash_process_server)
+@fixture(scope="function")
+def app():
+    options = webdriver.ChromeOptions()
+    driver = webdriver.Chrome(options=options)
 
-    for id in FIRST_IDS:
-        dash_br.wait_for_element_by_id(id)
-    elements = [dash_br.driver.find_element_by_id(id) for id in FIRST_IDS]
+    driver.get(AUTHENTICATED_URL)
+    WebDriverWait(driver, 10).until(EC.title_is("ICB"))
+    driver.get(BASE_URL)
+    WebDriverWait(driver, 10).until(EC.title_is("ICB"))
+    driver.get(BASE_URL)
+    WebDriverWait(driver, 10).until(EC.title_is("ICB"))
+
+    yield driver
+
+    driver.quit()
+    return
+
+
+def get_by_cond(driver, id, cond=By.ID, all=False):
+    if all:
+        return WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((cond, id)))
+    return WebDriverWait(driver, 5).until(
+        EC.presence_of_element_located((cond, id)))
+
+
+def test_initial_first_section(gunicorn_server, app):
+    elements = [get_by_cond(app, id, By.ID) for id in FIRST_IDS]
 
     for element in elements:
         assert element.get_attribute("value") == ""
         assert "wrong" in element.get_attribute("class")
 
 
-def test_interaction_first_section(dash_br, dash_process_server):
-    set_server(dash_br, dash_process_server)
-
-    for id in FIRST_IDS:
-        dash_br.wait_for_element_by_id(id)
-    elements = [dash_br.driver.find_element_by_id(id) for id in FIRST_IDS]
+def test_interaction_first_section(gunicorn_server, app):
+    elements = [get_by_cond(app, id, By.ID) for id in FIRST_IDS]
     inputs = ["Name", "02112020", "AAA_TESTE"]
 
     for idx in range(3):
         elements[idx].send_keys(inputs[idx])
-        dash_br.wait_for_element_by_id(FIRST_IDS[idx])
+        get_by_cond(app, FIRST_IDS[idx], By.ID)
+
         for elem_idx in range(3):
             element = elements[elem_idx]
             if elem_idx > idx:
@@ -69,17 +106,16 @@ def test_interaction_first_section(dash_br, dash_process_server):
                 assert "correct" in element.get_attribute("class")
 
 
-def test_initial_second_section(dash_br, dash_process_server):
-    set_server(dash_br, dash_process_server)
+def test_initial_second_section(gunicorn_server, app):
+    products = [CFG.products[0], CFG.products[-1]]
+    get_by_cond(app, '[id*="price-"]', By.CSS_SELECTOR, True)
 
-    products = [PRODUCTS[0], PRODUCTS[-1]]
     for product in products:
-        section_div = dash_br.driver.find_element_by_id(f"{product}-heading")
-        dash_br.wait_for_element(f'[id*="price-{product}"]')
+        section_div = get_by_cond(app, f"{product}-heading", By.ID)
         productElements = [section_div.find_elements_by_css_selector(
-            f'[id*="{field}-{product}"]') for field in FIELDS]
+            f'[id*="{field}-{product}"]') for field in CFG.fields]
+        assert len(productElements[1]) == CFG.product_rows[product], product
 
-        assert len(productElements[1]) == PRODUCT_ROWS[product], product
         for idx, elements in enumerate(productElements):
             for element in elements:
                 class_name = "wrong" if idx < 2 else "correct"
@@ -87,34 +123,29 @@ def test_initial_second_section(dash_br, dash_process_server):
                 assert class_name in element.get_attribute("class")
 
 
-def test_interaction_second_section(dash_br, dash_process_server):
-    set_server(dash_br, dash_process_server)
-
-    for product in PRODUCTS:
-        dash_br.wait_for_element(f'[id*="price-{product}"]')
-        cells = dash_br.find_elements(f'[id*="price-{product}"]')
-        dash_br.wait_for_element_by_id(f"status-{product}")
-        dash_br.driver.execute_script("arguments[0].scrollIntoView(true);",
-            dash_br.driver.find_element_by_id(f"status-{product}"))
+def test_interaction_second_section(gunicorn_server, app):
+    for product in CFG.products:
+        prices = get_by_cond(
+            app, f'[id*="price-{product}"]', By.CSS_SELECTOR, True)
+        app.execute_script(
+            "arguments[0].scrollIntoView(true);",
+            get_by_cond(app, f"status-{product}", By.ID))
         time.sleep(0.2)
 
-        for idx, cell in enumerate(cells):
-            cell.send_keys(10)
-            for idx2, cell2 in enumerate(cells):
+        for idx, current_price in enumerate(prices):
+            current_price.send_keys(10)
+            for idx2, price in enumerate(prices):
                 class_name = "wrong" if idx2 > idx else "correct"
-                assert class_name in cell2.get_attribute("class")
+                assert class_name in price.get_attribute("class")
 
 
-def test_deletion_second_section(dash_br, dash_process_server):
-    set_server(dash_br, dash_process_server)
-
-    for product in PRODUCTS:
-        dash_br.wait_for_element(f'[id*="delete-{product}"]')
-        elements = dash_br.find_elements(f'[id*="delete-{product}"]')
-        dash_br.wait_for_element_by_id(f"status-{product}")
-        badge = dash_br.driver.find_element_by_id(f"status-{product}")
-        dash_br.driver.execute_script("arguments[0].scrollIntoView(true);", badge)
-        time.sleep(0.15)
+def test_deletion_second_section(gunicorn_server, app):
+    for product in CFG.products:
+        elements = get_by_cond(
+            app, f'[id*="delete-{product}"]', By.CSS_SELECTOR, True)
+        badge = get_by_cond(app, f"status-{product}", By.ID)
+        app.execute_script("arguments[0].scrollIntoView(true);", badge)
+        time.sleep(0.2)
 
         assert "danger" in badge.get_attribute("class")
         for element in elements:
@@ -122,16 +153,13 @@ def test_deletion_second_section(dash_br, dash_process_server):
         assert "warning" in badge.get_attribute("class")
 
 
-def test_correct_second_section(dash_br, dash_process_server):
-    set_server(dash_br, dash_process_server)
+def test_correct_second_section(gunicorn_server, app):
+    for idx, product in enumerate(CFG.products):
+        section_div = get_by_cond(app, f"{product}-heading", By.ID)
+        badge = get_by_cond(app, f"status-{product}", By.ID)
+        app.execute_script("arguments[0].scrollIntoView(true);", badge)
+        time.sleep(0.2)
 
-    for idx, product in enumerate(PRODUCTS):
-        section_div = dash_br.driver.find_element_by_id(f"{product}-heading")
-        dash_br.wait_for_element(f'[id*="price-{product}"]')
-        badge = section_div.find_element_by_id(f"status-{product}")
-        dash_br.driver.execute_script("arguments[0].scrollIntoView(true);",
-            badge)
-        time.sleep(0.15)
         assert "danger" in badge.get_attribute("class")
         selector = [
             f'[id*="brand-{product}"]', f'[id*="price-{product}"]',
