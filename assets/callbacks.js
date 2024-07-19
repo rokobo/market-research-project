@@ -26,13 +26,13 @@ save_state: function(_1, load_flag, name, date, establishment, observations, ...
             let vals = {};
             for (let idx = 0; idx < val.length; idx++) {
                 try {vals[idx] = val[idx].props.children.props.value} catch (error) {}}
-            let row;
+            let row = [null, null, null, null];
             switch (val.length) {
                 case 4:
                     row = [vals[1], vals[2], vals[3], null];
                     break;
                 case 3:
-                    if (typeof vals[1] === 'string') {vals = [vals[1], vals[2], null, null]}
+                    if (product_name == 'banana') {row = [vals[1], vals[2], null, null]}
                     else {row = [null, vals[1], null, vals[2]]}
                     break;
                 default:

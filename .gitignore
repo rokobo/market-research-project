@@ -12,3 +12,4 @@ test*.*
 .vscode
 *.pem
 /data_obs
+gunicorn.log

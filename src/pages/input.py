@@ -190,12 +190,16 @@ clientside_callback(
     [Output(f"container-{product}", 'children')
         for product in CFG.products],
     Output("dummy-div-validation", "className"),
-    Input("dummy-div-load", "data"),
+    Input("dummy-div-load", "className"),
+    Input("confetti", "className"),
     State('store', 'data'),
 )
-def load_state(_1, data):
-    return_data = [True, None, None, None, None]
+def load_state(_1, _2, data):
+    return_data = [True, "", "", "", ""]
     containers = [[] for _ in range(len(CFG.products))]
+    print("DATA:")
+    for item in data:
+        print(item)
 
     if data == []:
         for idx, product in enumerate(CFG.products):
