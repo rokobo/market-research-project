@@ -26,8 +26,8 @@ def input_form(
             ))
         elif input_type == "textarea":
             elements.append(dcc.Textarea(
-                placeholder=placeholder, id=id_name, style={'width': '100%'},
-                className="form-control"
+                placeholder=placeholder, id=id_name, className="form-control",
+                style={'width': '100%', 'height': '150px'}
             ))
         else:
             elements.append(dbc.Input(
