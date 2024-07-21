@@ -102,12 +102,12 @@ layout = html.Div([
         "Algo que tenha ocorrido ou marcas não listadas",
         "Opcional: relatar algo relevante"
     ),
-    dcc.ConfirmDialogProvider(
+    html.Div(dcc.ConfirmDialogProvider(
         html.Div(dbc.Button(
             "Enviar", color="success", id="save-products"
         ), className="d-grid m-5"),
         id="confirm-send"
-    ),
+    ), id="save-container"),
     dbc.Modal([
         dbc.ModalHeader(
             dbc.ModalTitle("RELATÓRIO ENVIADO"), close_button=False),
@@ -167,8 +167,8 @@ clientside_callback(
         function_name="display_progress"
     ),
     [Output(f"icon-{product}", 'style') for product in CFG.products],
-    Output("save-products", "disabled"),
     Output("save-products", "color"),
+    Output("save-container", "className"),
     Output("confirm-send", "message"),
     Output("dummy-div-save", "className"),
     Input("dummy-div-progress", "className"),

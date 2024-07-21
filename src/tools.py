@@ -1,6 +1,6 @@
 """Tools for the pages."""
 
-from os.path import dirname, join, exists
+from os.path import join, exists
 from os import makedirs, listdir
 import pandas as pd
 import time
@@ -74,8 +74,8 @@ def save_products(product_data, info, obs: Optional[str], test=False):
             data = [prod_name]
             data.extend(row[:-1])
             if not isinstance(data[3], (float, int)):
-                if prod_name in QUANTITIES:
-                    quantidade = QUANTITIES[prod_name]
+                if prod_name in CFG.quantities:
+                    quantidade = CFG.quantities[prod_name]
                 else:
                     quantidade = 1
                 data[3] = quantidade
@@ -94,7 +94,7 @@ def save_products(product_data, info, obs: Optional[str], test=False):
     df.to_csv(
         f"data/{info[1]}|{int(time.time())}|{info[0]}.csv",
         index=False)
-    if obs is not None:
+    if (obs is not None) and (obs != ""):
         with open(f"data_obs/{info[0]}|{int(time.time())}.txt", "w") as f:
             f.write(obs)
     return

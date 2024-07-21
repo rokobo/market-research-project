@@ -112,8 +112,8 @@ display_progress: function (_1, name, date, est, ...vals) {
         else {return {"color": "#FCAE1E"}}});
     // Update save button status
     if ([name, date, est].every(v => v == "correct") && badges.every(v => v != "danger")) {
-        return_vals = return_vals.concat([false, "success"])}
-    else {return_vals = return_vals.concat([true, "danger"])};
+        return_vals = return_vals.concat(["success", ""])}
+    else {return_vals = return_vals.concat(["danger", "unclickable"])};
     console.log("CALL progress: (", dash_clientside.callback_context.triggered_id, ")", [name, date, est], badges, return_vals);
     return_vals.push(message);
     return_vals.push("");
