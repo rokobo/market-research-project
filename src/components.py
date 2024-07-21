@@ -1,7 +1,7 @@
 """Components for the pages."""
 
 import dash_bootstrap_components as dbc
-from dash import html
+from dash import html, dcc
 from typing import Optional
 from tools import load_brands, load_images
 from CONFIG import CFG
@@ -21,27 +21,19 @@ def input_form(
 
     if input_type:
         if input_type == "date":
-            elements.append(
-                dbc.Input(
-                    type=input_type, id=id_name, placeholder=placeholder
-                )
-            )
+            elements.append(dbc.Input(
+                type=input_type, id=id_name, placeholder=placeholder
+            ))
         elif input_type == "textarea":
-            elements.append(
-                dbc.Textarea(
-                    placeholder=placeholder, id=id_name,
-                )
-            )
+            elements.append(dcc.Textarea(
+                placeholder=placeholder, id=id_name, style={'width': '100%'}
+            ))
         else:
-            elements.append(
-                dbc.Input(
-                    type=input_type, id=id_name, placeholder=placeholder
-                )
-            )
+            elements.append(dbc.Input(
+                type=input_type, id=id_name, placeholder=placeholder
+            ))
     elif selection:
-        elements.append(
-            dbc.Select(id=id_name, options=selection)
-        )
+        elements.append(dbc.Select(id=id_name, options=selection))
 
     if formtext:
         elements.append(dbc.FormText(formtext, color="secondary"))
