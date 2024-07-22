@@ -74,6 +74,7 @@ validate_args: function (_1, name, date, est, ...vals) {
     console.log("CALL validation (",dash_clientside.callback_context.triggered_id,")",firsts,groupValidations2(valids,CFG.products));
     valids=valids.concat(status1).concat(status2).concat(firsts.map(v=>(v!==null&&v!==""?"correct":"wrong")));
     valids.push("");
+    valids.push(false);
     // Add scroll on focus event listeners
     document.querySelectorAll('.form-control').forEach(function(input) {
         if (!input.hasEventListener) {

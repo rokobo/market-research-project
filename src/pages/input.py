@@ -124,7 +124,7 @@ layout = html.Div([
         dbc.ModalHeader(
             dbc.ModalTitle("Aplicativo iniciando..."), close_button=False),
         dbc.ModalBody("Se nada acontecer, atualize a página"),
-    ], id="page-loading-modal", centered=True, is_open=True),
+    ], id="page-loading-modal", centered=True, is_open=True, backdrop="static"),
 ])
 
 
@@ -195,7 +195,6 @@ clientside_callback(
     [Output(f"container-{product}", 'children')
         for product in CFG.products],
     Output("dummy-div-validation", "className"),
-    Output("page-loading-modal", "is_open"),
     Input("dummy-div-load", "className"),
     Input("confetti", "className"),
     State('store', 'data'),
@@ -278,6 +277,7 @@ clientside_callback(
     Output("collection_date", "className"),
     Output("establishment", "className"),
     Output("dummy-div-progress", "className"),
+    Output("page-loading-modal", "is_open"),
     Input("dummy-div-validation", "className"),
     Input("collector_name", "value"),
     Input("collection_date", "value"),
