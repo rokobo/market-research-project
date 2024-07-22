@@ -220,6 +220,11 @@ class Test002SecondSection:
             badge = get_by_cond(self.app, f"status-{product}", By.ID)
             assert check_in_attr(badge, "class", "danger")
 
+    def test_red_icon(self):
+        for product in CFG.products:
+            icon = get_by_cond(self.app, f"icon-{product}", By.ID)
+            assert check_in_attr(icon, "style", "red")
+
     def test_interaction(self):
         for idx0, product in enumerate(CFG.products):
             scroll_to_product(self.app, product, 2 if idx0 == 0 else 0)
@@ -255,6 +260,11 @@ class Test002SecondSection:
                 for obs in section.find_elements(By.CSS_SELECTOR, selector[2]):
                     obs.send_keys(f"observation-{idx}")
             assert check_in_attr(badge, "class", "success")
+
+    def test_green_icon(self):
+        for product in CFG.products:
+            icon = get_by_cond(self.app, f"icon-{product}", By.ID)
+            assert check_in_attr(icon, "style", "green")
 
     def test_invalid_save(self):
         button = get_by_cond(self.app, "save-products", By.ID)
@@ -419,6 +429,11 @@ class Test003SaveProducts:
             for element in elements:
                 element.click()
             assert check_in_attr(badge, "class", "warning")
+
+    def test_yellow_icon(self):
+        for product in CFG.products:
+            icon = get_by_cond(self.app, f"icon-{product}", By.ID)
+            assert check_in_attr(icon, "style", "rgb(252, 174, 30)")
 
     def test_load_deletion(self):
         self.app.refresh()
