@@ -140,20 +140,10 @@ def check_logs(driver, message):
     return False
 
 
-def test_navigation(gunicorn_server, app_f):
-    scroll_command = "return document.documentElement.scrollTop;"
-    app_f.set_window_size(app_f.get_window_size()["width"], 400)
-    old_posY = app_f.execute_script(scroll_command)
-    old_url = app_f.current_url
-    for product in CFG.products:
-        icon: WebElement = get_by_cond(app_f, f"icon-{product}", By.ID)
-        icon.click()
-        time.sleep(1)
-        posY = app_f.execute_script(scroll_command)
-        url = app_f.current_url
-        assert posY > old_posY, product
-        assert url != old_url, product
-        old_posY, old_url = posY, url
+def fill_first_section(driver):
+    elements = [get_by_cond(driver, id, By.ID) for id in FIRST_IDS]
+    for idx, element in enumerate(elements):
+        element.send_keys(RAW_INPUTS[idx])
 
 
 @mark.incremental
@@ -306,11 +296,6 @@ class Test003SaveProducts:
     def setup_class(self, gunicorn_server, app_c):
         self.app = app_c
 
-    def fill_first_section(self):
-        elements = [get_by_cond(self.app, id, By.ID) for id in FIRST_IDS]
-        for idx in range(3):
-            elements[idx].send_keys(RAW_INPUTS[idx])
-
     def perform_save(self):
         button = get_by_cond(self.app, "save-products", By.ID)
         button.click()
@@ -330,7 +315,7 @@ class Test003SaveProducts:
         return file_path
 
     def test_valid_save(self):
-        self.fill_first_section()
+        fill_first_section(self.app)
 
         for idx, product in enumerate(CFG.products):
             scroll_to_product(self.app, product)
@@ -419,7 +404,7 @@ class Test003SaveProducts:
 
     def test_yellow_badge(self):
         scroll_to_product(self.app, CFG.products[0], 2)
-        self.fill_first_section()
+        fill_first_section(self.app)
 
         for product in CFG.products:
             scroll_to_product(self.app, product)
@@ -460,3 +445,53 @@ class Test003SaveProducts:
         assert dataframe.empty, dataframe
         assert list(dataframe.columns) == CSV_COLUMNS, dataframe.columns
         remove(file_path)
+
+
+@mark.incremental
+class Test004AuxiliaryFunctionalities:
+    @fixture(autouse=True)
+    def setup_class(self, gunicorn_server, app_c):
+        self.app = app_c
+
+    def test_clear_contents(self):
+        for idx, product in enumerate(CFG.products):
+            scroll_to_product(self.app, product)
+            prices = get_all_by_cond(
+                self.app, f'[id*="price-{product}"]', By.CSS_SELECTOR)
+            for price in prices:
+                price.send_keys("1")
+
+        fill_first_section(self.app)
+        time.sleep(2)
+
+        button = get_by_cond(self.app, "clear-products", By.ID)
+        button.click()
+        alert = WebDriverWait(self.app, 5).until(EC.alert_is_present())
+        alert.accept()
+        self.app.refresh()
+        WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
+
+        for idx, product in enumerate(CFG.products):
+            scroll_to_product(self.app, product, 2 if idx == 0 else 0)
+            prices = get_all_by_cond(
+                self.app, f'[id*="price-{product}"]', By.CSS_SELECTOR)
+            for price in prices:
+                assert price.get_attribute("value") == ""
+
+    def test_navigation(self):
+        scroll_command = "return document.documentElement.scrollTop;"
+        self.app.set_window_size(self.app.get_window_size()["width"], 500)
+        old_posY = self.app.execute_script(scroll_command)
+        old_url = self.app.current_url
+        for product in CFG.products:
+            icon: WebElement = get_by_cond(self.app, f"icon-{product}", By.ID)
+            icon.click()
+            time.sleep(1)
+            posY = self.app.execute_script(scroll_command)
+            url = self.app.current_url
+            assert posY > old_posY, product
+            assert url != old_url, product
+            old_posY, old_url = posY, url
+
+
+# TODO test observation
