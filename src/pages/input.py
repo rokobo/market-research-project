@@ -119,7 +119,12 @@ layout = html.Div([
     html.Div(id="dummy-div-load"),        # save_products  ->  load
     html.Div(id="dummy-div-validation"),  # load           ->  validation
     html.Div(id="dummy-div-progress"),    # validation     ->  progress
-    html.Div(id="dummy-div-save")         # progress       ->  save
+    html.Div(id="dummy-div-save"),        # progress       ->  save
+    dbc.Modal([
+        dbc.ModalHeader(
+            dbc.ModalTitle("Aplicativo iniciando..."), close_button=False),
+        dbc.ModalBody("Se nada acontecer, atualize a página"),
+    ], id="page-loading-modal", centered=True, is_open=True),
 ])
 
 
@@ -190,6 +195,7 @@ clientside_callback(
     [Output(f"container-{product}", 'children')
         for product in CFG.products],
     Output("dummy-div-validation", "className"),
+    Output("page-loading-modal", "is_open"),
     Input("dummy-div-load", "className"),
     Input("confetti", "className"),
     State('store', 'data'),
@@ -218,7 +224,7 @@ def load_state(_1, _2, data):
                 containers[idx].append(add_new_form(
                     item["container"], item["row_id"], item["values"]
                 ))
-    return return_data + containers + [""]
+    return return_data + containers + [""] + [False]
 
 
 clientside_callback(

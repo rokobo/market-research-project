@@ -7,4 +7,4 @@ h1{text-align:center}
 .navigation > *{flex:1 0 calc(100%/7);text-align:center}
 .icon {max-height:20px;}
 .unclickable {pointer-events:none;cursor:not-allowed;}
-.form-control:focus {scale: 1.01;box-shadow: 0 0 20px #cc00ff;}
+.form-control:focus {scale:1.01;box-shadow: 0 0 20px #cc00ff;}
