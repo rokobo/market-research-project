@@ -120,11 +120,11 @@ layout = html.Div([
     html.Div(id="dummy-div-validation"),  # load           ->  validation
     html.Div(id="dummy-div-progress"),    # validation     ->  progress
     html.Div(id="dummy-div-save"),        # progress       ->  save
-    dbc.Modal([
-        dbc.ModalHeader(
-            dbc.ModalTitle("Aplicativo iniciando..."), close_button=False),
-        dbc.ModalBody("Se nada acontecer, atualize a página"),
-    ], id="page-loading-modal", centered=True, is_open=True, backdrop="static"),
+    dbc.Popover([
+        dbc.PopoverHeader("Aplicativo iniciando..."),
+        dbc.PopoverBody("Se nada acontecer, atualize a página")
+    ], target="input-form-collector_name", is_open=True, id="page-loading-modal", placement='bottom'
+    )
 ])
 
 
@@ -223,7 +223,7 @@ def load_state(_1, _2, data):
                 containers[idx].append(add_new_form(
                     item["container"], item["row_id"], item["values"]
                 ))
-    return return_data + containers + [""] + [False]
+    return return_data + containers + [""]
 
 
 clientside_callback(
