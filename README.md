@@ -259,3 +259,5 @@ To make the testing as realistic as possible, the tests are setup using the same
 To simply using Selenium, we use `chromedriver_autoinstaller` to manage the ChromeDriver automatically. This ensures that the correct version of ChromeDriver is always available. If you manually close a browser window started by the Selenium, it is possible that the `chromedriver` file will be occupied and therefore not available to be used by the tests. To solve this, use `fuser <path-to-chromedriver>`. It will give you a list of processes using the file, which you can then use to find and terminate.
 
 Also note that the `app()` fixture tries to get the website three times. The first is to get authenticated and save the credentials as cookies. The second and third are to get the site as it normally would be like.
+
+The `@mark.incremental` fixture works by performing the tests in a class sequentially. If a test fails, all further tests get skipped, due to their incremental nature. While this is not how PyTest is usually used, it is a good way to test how the app behaves in a scenario where multiple actions happen sequentially.
