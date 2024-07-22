@@ -5,7 +5,7 @@ from dash import html, dcc
 from typing import Optional
 from tools import load_brands, load_images
 from CONFIG import CFG
-from dash_dangerously_set_inner_html import DangerouslySetInnerHTML as InnerHTML
+from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 
 
 ICONS = load_images()
@@ -92,8 +92,8 @@ def product_form(
         row.append(dbc.Col(dbc.Label("Obs.", style=style)))
     return dbc.Row([
         dbc.Col([
-            html.Div(
-                InnerHTML(ICONS[id_name]), style={"display": "inline-block"}),
+            html.Div(DangerouslySetInnerHTML(
+                ICONS[id_name]), style={"display": "inline-block"}),
             dbc.Label(
                 label, style={'fontWeight': 'bold'}, className="mx-2 mb-0"),
             dbc.Badge("", pill=True, id=f"status-{id_name}"),

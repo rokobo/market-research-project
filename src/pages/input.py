@@ -6,7 +6,7 @@ from tools import load_establishments, save_products
 from CONFIG import CFG
 import dash_bootstrap_components as dbc
 import time
-from dash_dangerously_set_inner_html import DangerouslySetInnerHTML as InnerHTML
+from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 
 dash.register_page(__name__, path="/")
 
@@ -15,7 +15,7 @@ layout = html.Div([
     dbc.Navbar([
         dbc.Row([
             html.A(
-                InnerHTML(ICONS[product]),
+                DangerouslySetInnerHTML(ICONS[product]),
                 id=f"icon-{product}",
                 style={"color": "red"}, href=f"#{product}-heading"
             ) for product in CFG.products
@@ -121,10 +121,15 @@ layout = html.Div([
     html.Div(id="dummy-div-progress"),    # validation     ->  progress
     html.Div(id="dummy-div-save"),        # progress       ->  save
     dbc.Popover([
-        dbc.PopoverHeader("Aplicativo iniciando..."),
-        dbc.PopoverBody("Se nada acontecer, atualize a página")
-    ], target="input-form-collector_name", is_open=True, id="page-loading-modal", placement='bottom'
-    )
+            dbc.PopoverHeader(html.H1("Aplicativo iniciando...")),
+            dbc.PopoverBody(html.H4(
+                "Se nada acontecer, atualize a página",
+                style={"text-align": "center"}))
+        ],
+        target="input-form-collector_name", is_open=True, hide_arrow=True,
+        id="page-loading-modal", placement='bottom',
+        className="foregroundAbsolute loading-modal"
+    ),
 ])
 
 

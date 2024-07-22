@@ -42,16 +42,15 @@ save_state: function(_1, load, name, date, estab, obs, ...prdc) {
 validate_args: function (_1, name, date, est, ...vals) {
     var firsts = vals.splice(-3);
     var seconds = vals.slice((vals.length - CFG.products.length)/2 + CFG.products.length);
-    var valids = [];
-    var status1 = [];
-    var status2 = [];
+    var valids=[],status1=[],status2=[];
     // Individual validations
     for (var i = 0; i < seconds.length; i += 4) {
         var [br, pr, qn, obs] = seconds.slice(i, i + 4);
-        valids.push(br.map(brand => typeof brand == 'string'));
-        valids.push(pr.map(price => typeof price === 'number' && !isNaN(price)));
-        valids.push(qn.map(() => true));
-        valids.push(obs.map(() => true));
+        valids=valids.concat([
+            br.map((a=>"string"==typeof a)),
+            pr.map((a=>"number"==typeof a&&!isNaN(a))),
+            qn.map((()=>!0)),
+            obs.map((()=>!0))]);
     };
     // Section validations
     for (var i = 0; i < valids.length; i += 4) {
@@ -73,14 +72,11 @@ validate_args: function (_1, name, date, est, ...vals) {
     valids=valids.map(sublist=>sublist.map(v=>v?"correct":"wrong"));
     console.log("CALL validation (",dash_clientside.callback_context.triggered_id,")",firsts,groupValidations2(valids,CFG.products));
     valids=valids.concat(status1).concat(status2).concat(firsts.map(v=>(v!==null&&v!==""?"correct":"wrong")));
-    valids.push("");
-    valids.push(false);
+    valids.push("");valids.push(false);
     // Add scroll on focus event listeners
     document.querySelectorAll('.form-control').forEach(function(input) {
         if (!input.hasEventListener) {
-            input.addEventListener('focus', function() {
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            });
+            input.addEventListener('focus',function(){input.scrollIntoView({behavior:'smooth',block:'center'})});
             input.hasEventListener = true;
         }
     })
