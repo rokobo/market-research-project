@@ -74,6 +74,15 @@ validate_args: function (_1, name, date, est, ...vals) {
     console.log("CALL validation (",dash_clientside.callback_context.triggered_id,")",firsts,groupValidations2(valids,CFG.products));
     valids=valids.concat(status1).concat(status2).concat(firsts.map(v=>(v!==null&&v!==""?"correct":"wrong")));
     valids.push("");
+    // Add scroll on focus event listeners
+    document.querySelectorAll('.form-control').forEach(function(input) {
+        if (!input.hasEventListener) {
+            input.addEventListener('focus', function() {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+            input.hasEventListener = true;
+        }
+    })
     return valids;
 },
 delete_product_row: function (...vals) {
@@ -101,7 +110,7 @@ display_progress: function (_1, name, date, est, ...vals) {
     output = badges.map(v => {
         if (v === "success") {return {"color": "green"}}
         else if (v === "danger") {return {"color": "red"}}
-        else {return {"color": "#FCAE1E"}}});
+        else {return {"color": "rgb(252, 174, 30)"}}});
     // Update save button status
     if ([name, date, est].every(v => v == "correct") && badges.every(v => v != "danger")) {
         output = output.concat(["success", ""])}

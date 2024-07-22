@@ -29,11 +29,11 @@ layout = html.Div([
             "Só é necessário especificar a Quant. se ela for diferente "
             "da quantidade padrão. \n\n"
             "O envio é liberado se todas as seções estiverem completas. "
-            "Caso queira não enviar alguma seção, delete a "
-            "fileira clicando no botão com X.\n\n"
+            "Caso queira não enviar alguma seção, delete as "
+            "fileiras clicando no botão com X.\n\n"
             "Os ícones mostram se as informações de cada seção estão "
-            "válidas. Amarelo indica 2 ou menos items na seção. Clicar "
-            "no ícone te leva para a seção."
+            "válidas. Amarelo indica menos items na seção do que o desejado."
+            " Clicar no ícone te leva para a seção."
         ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=True, color="warning"),
     dbc.Stack([

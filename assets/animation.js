@@ -1,7 +1,5 @@
-// Inspired bv https://codepen.io/uiswarup/pen/YzJEPNe
-const gravity = 0.5;
-const terminalVelocity = 5;
-const drag = 0.075;
+// Confetti animation, inspired bv https://codepen.io/uiswarup/pen/YzJEPNe
+const gravity = 0.5;const terminalVelocity = 5;const drag = 0.075;const confettiQuantityRatio = 5000;
 const colors = [
     { front: '#FF0000', back: '#8B0000' },
     { front: '#00cc00', back: '#006400' },
@@ -11,8 +9,6 @@ const colors = [
     { front: '#FFC0CB', back: '#800015' },
     { front: '#990099', back: '#660066' },
     { front: '#40E0D0', back: '#126e64' }];
-const confettiQuantityRatio = 5000;
-
 randomRange = (min, max) => Math.random() * (max - min) + min;
 
 function animateConfetti() {
@@ -20,11 +16,9 @@ function animateConfetti() {
     var retryInterval = setInterval(function() {
         console.log("Began confetti animation");
         const canvas = document.getElementById("confetti");
-
         if (canvas) {
             clearInterval(retryInterval);
             const ctx = canvas.getContext("2d");
-
             function setCanvasSize() {
                 canvas.width = window.innerWidth;
                 canvas.height = Math.max(document.body.scrollHeight, window.innerHeight);
@@ -32,9 +26,7 @@ function animateConfetti() {
                 console.log("Canvas set to " + canvas.width + "x" + canvas.height);
                 console.log("Using " + confettiCount + " units of confetti");
             }
-
             setCanvasSize();
-
             class Confetti {
                 constructor() {
                     this.x = Math.random() * canvas.width;
@@ -68,9 +60,7 @@ function animateConfetti() {
 
                     // Apply rotation along the z axis
                     this.rotation = this.rotation + this.rotation_speed_z;
-                    if (this.rotation > Math.PI * 2) {
-                        this.rotation = 0;
-                    }
+                    if (this.rotation > Math.PI * 2) {this.rotation = 0;}
                 }
                 draw() {
                     this.width = this.size_x * this.scale_x;
@@ -87,34 +77,19 @@ function animateConfetti() {
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
                 }
             }
-
-            function createConfetti() {
-                for (let i = 0; i < confettiCount; i++) {
-                    confetti.push(new Confetti());
-                }
-            }
-
+            function createConfetti() {for (let i = 0; i < confettiCount; i++) {confetti.push(new Confetti());}}
             function animate() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 confetti.forEach((confetto, index) => {
                     confetto.update();
-
                     // Delete confetti when out of frame, else draw
-                    if (confetto.y >= canvas.height) {
-                        confetti.splice(index, 1);
-                    } else {
-                        confetto.draw();
-                    }
+                    if (confetto.y >= canvas.height) {confetti.splice(index, 1);}
+                    else {confetto.draw();}
                 });
-                if (confetti.length > 0) {
-                    requestAnimationFrame(animate);
-                } else {
-                    console.log("Finished confetti animation")
-                }
+                if (confetti.length > 0) {requestAnimationFrame(animate);}
+                else {console.log("Finished confetti animation")}
             }
-
-            createConfetti();
-            animate();
+            createConfetti();animate();
         }
     }, 500)
 };
