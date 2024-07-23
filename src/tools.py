@@ -91,11 +91,12 @@ def save_products(product_data, info, obs: Optional[str], test=False):
         "Marca", "Preço", "Quantidade"]]
     if test:
         return df
+    file_name = f"{info[1]}|{int(time.time())}|{info[0]}|{info[2]}"
     df.to_csv(
-        f"data/{info[1]}|{int(time.time())}|{info[0]}.csv",
+        f"data/{file_name}.csv",
         index=False)
     if (obs is not None) and (obs != ""):
-        with open(f"data_obs/{info[0]}|{int(time.time())}.txt", "w") as f:
+        with open(f"data_obs/{file_name}.txt", "w") as f:
             f.write(obs)
     return
 
