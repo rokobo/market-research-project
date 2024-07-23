@@ -26,6 +26,7 @@ def test_one_line() -> None:
             'Preço': [i],
             'Quantidade': [i]
         })
+        assert df1 is not None
         assert df1.equals(df2)
 
 
@@ -45,4 +46,5 @@ def test_two_lines() -> None:
         'Preço': [2, 4],
         'Quantidade': [3, 5]
     })
+    assert df1 is not None
     assert df1.equals(df2)
