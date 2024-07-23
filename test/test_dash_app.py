@@ -305,13 +305,15 @@ class Test003SaveProducts:
         button = get_by_cond(self.app, "close-send-confirmation", By.ID)
         return message
 
-    def find_save_file(self):
+    def find_saved_file(self, path="data"):
         file_path = None
-        path = join(CFG.home, "data")
+        path = join(CFG.home, path)
         for file in listdir(path):
-            if (STORED_INPUTS[0] in file) and (STORED_INPUTS[1] in file):
-                file_path = join(path, file)
-                break
+            for substring in STORED_INPUTS:
+                if substring not in file:
+                    continue
+            file_path = join(path, file)
+            break
         return file_path
 
     def test_valid_save(self):
@@ -339,15 +341,20 @@ class Test003SaveProducts:
             for obs in section.find_elements(By.CSS_SELECTOR, selector[3]):
                 obs.send_keys(f"observation-{idx}")
 
-        path = join(CFG.home, "data")
-        for file in listdir(path):
-            if (STORED_INPUTS[0] in file) and (STORED_INPUTS[1] in file):
-                remove(join(path, file))
+        for path in ["data", "data_obs"]:
+            file_path = self.find_saved_file(path)
+            while file_path is not None:
+                remove(file_path)
+                file_path = self.find_saved_file(path)
 
         button = get_by_cond(self.app, "save-products", By.ID)
         container = get_by_cond(self.app, "save-container", By.ID)
         assert check_in_attr(button, "class", "success")
         assert check_in_attr(container, "class", "unclickable", True)
+
+        observation = get_by_cond(self.app, "general_observations", By.ID)
+        observation.send_keys("Test observation")
+        assert check_in_attr(observation, "value", "Test observation")
 
     def test_full_save(self):
         message = self.perform_save()
@@ -356,7 +363,7 @@ class Test003SaveProducts:
                 continue
             assert int(line.split(":")[-1].strip()) == 0, line
             break
-        file_path = self.find_save_file()
+        file_path = self.find_saved_file("data")
         assert file_path is not None
         dataframe = pd.read_csv(file_path)
 
@@ -373,6 +380,13 @@ class Test003SaveProducts:
         assert float(dataframe.Quantidade.min()) == 0.0, dataframe
         assert float(dataframe.Quantidade.max()) == 1.0, dataframe
         remove(file_path)
+
+        obs_path = self.find_saved_file("data_obs")
+        assert obs_path is not None
+        with open(obs_path, 'r') as file:
+            observations = file.read()
+        assert observations == "Test observation"
+        remove(obs_path)
 
     def test_animation(self):
         button = get_by_cond(self.app, "close-send-confirmation", By.ID)
@@ -439,12 +453,13 @@ class Test003SaveProducts:
                 continue
             assert int(line.split(":")[-1].strip()) == len(CFG.products), line
             break
-        file_path = self.find_save_file()
+        file_path = self.find_saved_file("data")
         assert file_path is not None
         dataframe = pd.read_csv(file_path)
         assert dataframe.empty, dataframe
         assert list(dataframe.columns) == CSV_COLUMNS, dataframe.columns
         remove(file_path)
+        assert self.find_saved_file("data_obs") is None
 
 
 @mark.incremental
@@ -492,6 +507,3 @@ class Test004AuxiliaryFunctionalities:
             assert posY > old_posY, product
             assert url != old_url, product
             old_posY, old_url = posY, url
-
-
-# TODO test observation
