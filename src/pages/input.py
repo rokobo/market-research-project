@@ -147,7 +147,7 @@ layout = html.Div([
         id="page-loading-modal", placement='bottom',
         className="foregroundAbsolute loading-modal"
     ),
-    dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=False)
+    dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True)
 ])
 
 
