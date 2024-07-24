@@ -65,7 +65,7 @@ layout = html.Div([
         dbc.Label("Estabelecimento", style={'fontWeight': 'bold'}),
         dbc.Stack([
             dbc.Select(id="establishment", options=load_establishments()),
-            dbc.Button("Preencher", id="fill-establishment")
+            dbc.Button("Localizar", id="fill-establishment")
         ], direction="horizontal", gap=1),
         dbc.FormText(
             "...", id="establishment-formtext",
