@@ -11,36 +11,6 @@ from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 ICONS = load_images()
 
 
-def input_form(
-    label: str, id_name: str, input_type: Optional[str] = None,
-    placeholder: Optional[str] = None, formtext: Optional[str] = None,
-    selection: Optional[list[dict[str, str]]] = None
-) -> html.Div:
-    elements = []
-    elements.append(dbc.Label(label, style={'fontWeight': 'bold'}))
-
-    if input_type:
-        if input_type == "date":
-            elements.append(dbc.Input(
-                type=input_type, id=id_name, placeholder=placeholder
-            ))
-        elif input_type == "textarea":
-            elements.append(dcc.Textarea(
-                placeholder=placeholder, id=id_name, className="form-control",
-                style={'width': '100%', 'height': '150px'}
-            ))
-        else:
-            elements.append(dbc.Input(
-                type=input_type, id=id_name, placeholder=placeholder
-            ))
-    elif selection:
-        elements.append(dbc.Select(id=id_name, options=selection))
-
-    if formtext:
-        elements.append(dbc.FormText(formtext, color="secondary"))
-    return html.Div(elements, className="m-2", id=f"input-form-{id_name}")
-
-
 def create_product_form(
     id_name: str, brand=False, price=False,
     quantity=False, obs=False, idx: int = 0, values=None

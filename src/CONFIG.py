@@ -1,5 +1,6 @@
-from os.path import dirname
+from os.path import dirname, join
 from types import SimpleNamespace
+import pandas as pd
 
 
 CFG = SimpleNamespace(**dict(
@@ -15,3 +16,7 @@ CFG = SimpleNamespace(**dict(
         "tomate": 1, "carne": 1, "pao": 1},
     fields=["brand", "price", "quantity", "obs"],
 ))
+
+COORDINATES = pd.read_csv(
+    join(CFG.home, "config/estabelecimentos.csv")
+).set_index("Estabelecimento").transpose().to_dict()

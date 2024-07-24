@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 sys.path.append(join(dirname(__file__), "pages"))
 sys.path.append(dirname(__file__))
-from CONFIG import CFG
+from CONFIG import CFG, COORDINATES
 load_dotenv()
 
 
@@ -33,6 +33,7 @@ app.layout = html.Div([
     dcc.Store(id="store", storage_type="local", data=[]),
     dcc.Store(id="load-flag", storage_type="local", data=False),
     dcc.Store(id="config", storage_type="local", data=vars(CFG)),
+    dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dash.page_container
 ])

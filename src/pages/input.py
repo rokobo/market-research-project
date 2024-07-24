@@ -1,7 +1,7 @@
 import dash
 from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
-from components import input_form, product_form, add_new_form, ICONS
+from components import product_form, add_new_form, ICONS
 from tools import load_establishments, save_products
 from CONFIG import CFG
 import dash_bootstrap_components as dbc
@@ -50,13 +50,28 @@ layout = html.Div([
             )
         )
     ], direction="horizontal"),
-    input_form("Nome do coletor", "collector_name", "text"),
-    input_form(
-        "Data de coleta", "collection_date", "date",
-        formtext="Selecione a data do dia em que a coleta foi feita"),
-    input_form(
-        "Estabelecimento", "establishment",
-        formtext="Supermercado por código", selection=load_establishments()),
+    html.Div([
+        dbc.Label("Nome do coletor", style={'fontWeight': 'bold'}),
+        dbc.Input(type="text", id="collector_name"),
+    ], className="m-2"),
+    html.Div([
+        dbc.Label("Data de coleta", style={'fontWeight': 'bold'}),
+        dbc.Input(type="date", id="collection_date"),
+        dbc.FormText(
+            "Selecione a data do dia em que a coleta foi feita",
+            color="secondary")
+    ], className="m-2"),
+    html.Div([
+        dbc.Label("Estabelecimento", style={'fontWeight': 'bold'}),
+        dbc.Stack([
+            dbc.Select(id="establishment", options=load_establishments()),
+            dbc.Button("Preencher", id="fill-establishment")
+        ], direction="horizontal", gap=1),
+        dbc.FormText(
+            "...", id="establishment-formtext",
+            color="secondary", className="unwrap"),
+        dbc.FormText("", id="establishment-formtext2", color="secondary")
+    ], className="m-2"),
     product_form(
         "Açúcar - 1kg", "acucar",
         brand=True, price=True, quantity=True),
@@ -96,12 +111,14 @@ layout = html.Div([
     product_form(
         "Pão Francês - 1kg", "pao",
         price=True, obs=True),
-    input_form(
-        "Observações gerais",
-        "general_observations", "textarea",
-        "Algo que tenha ocorrido ou marcas não listadas",
-        "Opcional: relatar algo relevante"
-    ),
+    html.Div([
+        dbc.Label("Observações gerais", style={'fontWeight': 'bold'}),
+        dbc.Textarea(
+            id="general_observations", className="form-control",
+            style={'width': '100%', 'height': '150px'},
+            placeholder="Algo que tenha ocorrido ou marcas não listadas"),
+        dbc.FormText("Opcional: relatar algo relevante", color="secondary")
+    ], className="m-2"),
     html.Div(dcc.ConfirmDialogProvider(
         html.Div(dbc.Button(
             "Enviar", color="success", id="save-products"
@@ -130,7 +147,44 @@ layout = html.Div([
         id="page-loading-modal", placement='bottom',
         className="foregroundAbsolute loading-modal"
     ),
+    dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=False)
 ])
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='update_location'
+    ),
+    Output("geolocation", "update_now"),
+    Input("fill-establishment", "n_clicks"),
+    prevent_initial_call=True
+)
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='locate_establishment'
+    ),
+    Output('establishment', 'value', allow_duplicate=True),
+    Output("establishment-formtext2", "children"),
+    Input('geolocation', 'position'),
+    Input("geolocation", "local_date"),
+    State("fill-establishment", "n_clicks"),
+    prevent_initial_call=True
+)
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='establishment_address'
+    ),
+    Output("establishment-formtext", "children"),
+    Input("establishment", "value"),
+    prevent_initial_call=True
+)
 
 
 clientside_callback(
@@ -207,9 +261,6 @@ clientside_callback(
 def load_state(_1, _2, data):
     return_data = [True, "", "", "", ""]
     containers = [[] for _ in range(len(CFG.products))]
-    print("DATA:")
-    for item in data:
-        print(item)
 
     if data == []:
         for idx, product in enumerate(CFG.products):
