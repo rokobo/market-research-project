@@ -117,6 +117,7 @@ establishment_address:function(est){
 },
 update_location:function(clicks){
     console.log("CALL update_location", clicks);
+    if (clk >= 1) {} else {return window.dash_clientside.no_update}
     return true;
 },
 locate_establishment:function(pos,dt,clk){
