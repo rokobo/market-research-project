@@ -112,6 +112,14 @@ def get_all_by_cond(driver: webdriver.Chrome, id: str, cond) -> list[WebElement]
         EC.presence_of_all_elements_located((cond, id)))
 
 
+def wait_substring(
+    driver: webdriver.Chrome, id: str, cond, substring: str
+) -> WebElement:
+    WebDriverWait(driver, 10).until(
+        EC.text_to_be_present_in_element((cond, id), substring))
+    return get_by_cond(driver, id, cond)
+
+
 def check_in_attr(element: WebElement, attribute, substring, reverse=False):
     value = element.get_attribute(attribute)
     if value is None:
@@ -174,6 +182,17 @@ class Test001FirstSection:
 
     def test_load(self):
         self.app.refresh()
+        WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
+
+        self.elements = [get_by_cond(self.app, id, By.ID) for id in FIRST_IDS]
+        for element, value in zip(self.elements, STORED_INPUTS):
+            assert check_in_attr(element, "class", "correct")
+            assert element.get_attribute("value") == value
+
+    def test_mass_load(self):
+        for _ in range(5):
+            self.app.refresh()
+            time.sleep(0.1)
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
 
         self.elements = [get_by_cond(self.app, id, By.ID) for id in FIRST_IDS]
@@ -463,7 +482,7 @@ class Test003SaveProducts:
 
 
 @mark.incremental
-class Test004AuxiliaryFunctionalities:
+class Test004AuxiliaryFunctions:
     @fixture(autouse=True)
     def setup_class(self, gunicorn_server, app_c):
         self.app = app_c
@@ -507,3 +526,38 @@ class Test004AuxiliaryFunctionalities:
             assert posY > old_posY, product
             assert url != old_url, product
             old_posY, old_url = posY, url
+
+
+@mark.incremental
+class Test005Geolocation:
+    @fixture(autouse=True)
+    def setup_class(self, gunicorn_server, app_c):
+        self.app = app_c
+
+    def test_no_error(self):
+        self.app.execute_cdp_cmd("Emulation.setGeolocationOverride", {
+            "latitude": -22.84858326747608,
+            "longitude": -47.018732241496316,
+            "accuracy": 1
+        })
+        button = get_by_cond(self.app, "fill-establishment", By.ID)
+        button.click()
+        dist = wait_substring(self.app, "establishment-formtext2", By.ID, "km")
+        dist = float(dist.text.split(":")[1].split("km")[0])
+        assert 0.95 <= dist <= 1.05, dist
+        establishment = get_by_cond(self.app, FIRST_IDS[2], By.ID)
+        assert check_in_attr(establishment, "value", "CRF-DPE")
+
+    def test_50m_error(self):
+        self.app.execute_cdp_cmd("Emulation.setGeolocationOverride", {
+            "latitude": -22.90941581120983,
+            "longitude": -47.09562084004908,
+            "accuracy": 1
+        })
+        button = get_by_cond(self.app, "fill-establishment", By.ID)
+        button.click()
+        dist = wait_substring(self.app, "establishment-formtext2", By.ID, "km")
+        dist = float(dist.text.split(":")[1].split("km")[0])
+        assert 0.01 <= dist <= 0.09, dist
+        establishment = get_by_cond(self.app, FIRST_IDS[2], By.ID)
+        assert check_in_attr(establishment, "value", "ENX-JB")
