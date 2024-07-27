@@ -147,7 +147,8 @@ layout = html.Div([
         id="page-loading-modal", placement='bottom',
         className="foregroundAbsolute loading-modal"
     ),
-    dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True)
+    dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
+    dcc.Interval(id="geolocation-interval", interval=15*1000),
 ])
 
 
@@ -157,7 +158,7 @@ clientside_callback(
         function_name='update_location'
     ),
     Output("geolocation", "update_now"),
-    Input("fill-establishment", "n_clicks"),
+    Input("geolocation-interval", "n_intervals"),
     prevent_initial_call=True
 )
 
@@ -169,9 +170,9 @@ clientside_callback(
     ),
     Output('establishment', 'value', allow_duplicate=True),
     Output("establishment-formtext2", "children"),
-    Input('geolocation', 'position'),
-    Input("geolocation", "local_date"),
-    State("fill-establishment", "n_clicks"),
+    Input("fill-establishment", "n_clicks"),
+    State('geolocation', 'position'),
+    State("geolocation", "local_date"),
     prevent_initial_call=True
 )
 

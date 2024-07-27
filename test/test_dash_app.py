@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 import chromedriver_autoinstaller
 from pytest import fixture, fail, mark
 import requests
+from datetime import  datetime
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support.select import Select
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -21,7 +23,6 @@ from CONFIG import CFG
 
 chromedriver_autoinstaller.install()
 load_dotenv()
-
 FIRST_IDS = ["collector_name", "collection_date", "establishment"]
 RAW_INPUTS = ["NameName", "02212020", "AAA_TESTE"]
 STORED_INPUTS = ["NameName", "2020-02-21", "AAA_TESTE (para Teste)"]
@@ -67,7 +68,8 @@ def gunicorn_server():
     return
 
 
-def selenium_driver():
+@fixture(scope="class")
+def selenium_driver(request):
     options = webdriver.ChromeOptions()
     options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
     driver = webdriver.Chrome(options=options)
@@ -83,23 +85,6 @@ def selenium_driver():
 
     driver.quit()
     return
-
-
-@fixture(scope="function")
-def app_f():
-    yield from selenium_driver()
-
-
-@fixture(scope="class")
-def app_c():
-    yield from selenium_driver()
-
-
-@fixture(scope="class")
-def app_and_gunicorn_server(request):
-    app = request.getfixturevalue('app')
-    gunicorn_server = request.getfixturevalue('gunicorn_server')
-    return app, gunicorn_server
 
 
 def get_by_cond(driver: webdriver.Chrome, id: str, cond) -> WebElement:
@@ -157,8 +142,8 @@ def fill_first_section(driver):
 @mark.incremental
 class Test001FirstSection:
     @fixture(autouse=True)
-    def setup_class(self, gunicorn_server, app_c):
-        self.app = app_c
+    def setup_class(self, gunicorn_server, selenium_driver):
+        self.app = selenium_driver
         self.elements = [get_by_cond(self.app, id, By.ID) for id in FIRST_IDS]
 
     def test_initial_state(self):
@@ -170,14 +155,17 @@ class Test001FirstSection:
         for idx in range(3):
             self.elements[idx].send_keys(RAW_INPUTS[idx])
             get_by_cond(self.app, FIRST_IDS[idx], By.ID)
+            value = self.elements[idx].get_attribute("value")
+            assert value == STORED_INPUTS[idx], value
 
             for elem_idx in range(3):
                 element = self.elements[elem_idx]
+                value = element.get_attribute("value")
                 if elem_idx > idx:
-                    assert element.get_attribute("value") == ""
+                    assert value == "", value
                     assert check_in_attr(element, "class", "wrong")
                 else:
-                    assert element.get_attribute("value") != ""
+                    assert value != ""
                     assert check_in_attr(element, "class", "correct")
 
     def test_load(self):
@@ -204,8 +192,8 @@ class Test001FirstSection:
 @mark.incremental
 class Test002SecondSection:
     @fixture(autouse=True)
-    def setup_class(self, gunicorn_server, app_c):
-        self.app = app_c
+    def setup_class(self, gunicorn_server, selenium_driver):
+        self.app = selenium_driver
 
     def test_initial_state(self):
         products = [CFG.products[0], CFG.products[-1]]
@@ -312,8 +300,8 @@ class Test002SecondSection:
 @mark.incremental
 class Test003SaveProducts:
     @fixture(autouse=True)
-    def setup_class(self, gunicorn_server, app_c):
-        self.app = app_c
+    def setup_class(self, gunicorn_server, selenium_driver):
+        self.app = selenium_driver
 
     def perform_save(self):
         button = get_by_cond(self.app, "save-products", By.ID)
@@ -484,8 +472,8 @@ class Test003SaveProducts:
 @mark.incremental
 class Test004AuxiliaryFunctions:
     @fixture(autouse=True)
-    def setup_class(self, gunicorn_server, app_c):
-        self.app = app_c
+    def setup_class(self, gunicorn_server, selenium_driver):
+        self.app = selenium_driver
 
     def test_clear_contents(self):
         for idx, product in enumerate(CFG.products):
@@ -515,6 +503,8 @@ class Test004AuxiliaryFunctions:
     def test_navigation(self):
         scroll_command = "return document.documentElement.scrollTop;"
         self.app.set_window_size(self.app.get_window_size()["width"], 500)
+        self.app.refresh()
+        WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         old_posY = self.app.execute_script(scroll_command)
         old_url = self.app.current_url
         for product in CFG.products:
@@ -531,8 +521,8 @@ class Test004AuxiliaryFunctions:
 @mark.incremental
 class Test005Geolocation:
     @fixture(autouse=True)
-    def setup_class(self, gunicorn_server, app_c):
-        self.app = app_c
+    def setup_class(self, gunicorn_server, selenium_driver):
+        self.app = selenium_driver
 
     def test_no_error(self):
         self.app.execute_cdp_cmd("Emulation.setGeolocationOverride", {
@@ -540,6 +530,8 @@ class Test005Geolocation:
             "longitude": -47.018732241496316,
             "accuracy": 1
         })
+        self.app.refresh()
+        WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
         dist = wait_substring(self.app, "establishment-formtext2", By.ID, "km")
@@ -554,6 +546,8 @@ class Test005Geolocation:
             "longitude": -47.09562084004908,
             "accuracy": 1
         })
+        self.app.refresh()
+        WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
         dist = wait_substring(self.app, "establishment-formtext2", By.ID, "km")

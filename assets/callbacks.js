@@ -115,12 +115,10 @@ establishment_address:function(est){
     if(est in COORDINATES){loc=COORDINATES[est].Endereço}else{loc="Sem endereço"}
     console.log("CALL address:",est,loc);return loc;
 },
-update_location:function(clicks){
-    console.log("CALL update_location", clicks);
-    if (clk >= 1) {} else {return window.dash_clientside.no_update}
+update_location:function(_){
     return true;
 },
-locate_establishment:function(pos,dt,clk){
+locate_establishment:function(clk, pos,dt){
     if (clk >= 1) {} else {return window.dash_clientside.no_update}
     smallestDist = [Infinity, ""];
     for (est in COORDINATES) {
