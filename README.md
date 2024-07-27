@@ -10,7 +10,7 @@
     - [Launch instance and get key pair credential](#launch-instance-and-get-key-pair-credential)
     - [Configure network settings](#configure-network-settings)
     - [Set up application server](#set-up-application-server)
-    - [Set up Nginx](#set-up-nginx)
+    - [Set up Nginx with SSL certificate](#set-up-nginx-with-ssl-certificate)
     - [Changing code, re-deploying and aliases](#changing-code-re-deploying-and-aliases)
   - [End-to-end testing](#end-to-end-testing)
     - [Testing environment and fixtures](#testing-environment-and-fixtures)
@@ -110,7 +110,7 @@ Update system packages and install dependencies:
 ```sh
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y git python3.12 python3-pip python3.12-venv nginx
+sudo apt-get install -y git python3.12 python3-pip python3.12-venv nginx certbot python3-certbot-nginx
 ```
 
 Clone your application, set up virtual environment and install python dependencies:
@@ -149,33 +149,95 @@ If Gunicorn is not found, use `which gunicorn` to get the path from the virtual 
 <path-to-gunicorn> src.main:server --daemon -b 127.0.0.1:<application-port>
 ```
 
-### Set up Nginx
+### Set up Nginx with SSL certificate
+
+This step will have two options. I recommend doing with a custom domain, which needs to be purchased (although as a developer, it is interesting to have a domain for portfolio's and projects). To do this step, interpret `<your-domain>` as either your EC2 ip address or custom domain:
+
+<details>
+  <summary>Self-signed SSL certificate with EC2 ip configuration.</summary>
+
+  Set up self-signed SSL certificate. You will be asked some questions, the only mandatory one to add is the Common Name (use the EC2 ip address):
+
+  ```sh
+  sudo mkdir -p /etc/nginx/ssl
+  sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/self-signed.key -out /etc/nginx/ssl/self-signed.crt
+  ```
+
+  You can choose any location for saving the `.key` and `.crt` files.
+
+</details>
+
+<details>
+  <summary>Let's Encrypt-signed SSL certificate with custom domain configuration</summary>
+
+  Set up Let's Encrypt-signed SSL certificate. You will be asked some questions, the only mandatory one to add is the Common Name (use the EC2 ip address):
+
+  ```sh
+  sudo certbot --nginx -d <your-domain>
+  ```
+
+</details>
 
 Navigate to Nginx sites configuration file:
 
 ```sh
-sudo nano /etc/nginx/sites-available/<your-ec2-ip>
+sudo nano /etc/nginx/sites-available/default
 ```
 
 Type the following into the file to configure the reverse proxy:
 
 ```nginx
 server {
-   listen 80;
-   listen [::]:80;
-   server_name <your-ec2-ip>;
+    listen 80;
+    listen [::]:80;
+    server_name <your-domain>;
 
-   location / {
-      proxy_pass http://127.0.0.1:<application-port>;
-      include proxy_params;
-   }
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name <your-domain> www.<your-domain>;
+    keepalive_timeout 70;
+
+    ssl_certificate <.crt-file-location>;
+    ssl_certificate_key <.key-file-location>;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
+
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    location / {
+        proxy_pass http://127.0.0.1:<application-port>;
+        include proxy_params;
+    }
+}
+```
+
+If you are using a domain, it is also interesting to re-route the EC2 ip address to your domain name:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name <your-ec2-ip>;
+
+    location / {
+        return 301 https://<your-domain>$request_uri;
+    }
 }
 ```
 
 Then create a symbolic link with the enabled sites file:
 
 ```sh
-sudo ln -s /etc/nginx/sites-available/<your-ec2-ip> /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 ```
 
 Navigate to Nginx main configuration file:
@@ -187,6 +249,7 @@ sudo nano /etc/nginx/nginx.conf
 Ensure the following lines are in the file (uncomment or add) to enable asset compression:
 
 ```nginx
+  server_names_hash_bucket_size 128;
   gzip on;
   gzip_disable "msie6";
   gzip_vary on;
