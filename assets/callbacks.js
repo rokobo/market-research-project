@@ -119,8 +119,9 @@ update_location:function(_){
     return true;
 },
 locate_establishment:function(clk, pos,dt){
-    if (clk >= 1) {} else {return window.dash_clientside.no_update}
+    if(clk>=1){}else{return window.dash_clientside.no_update}
     smallestDist = [Infinity, ""];
+    if(pos==null){return [window.dash_clientside.no_update,"Tente novamente ou permita o uso de localização!"]}
     for (est in COORDINATES) {
         vals = COORDINATES[est];
         dist = haversineDistance(pos.lat, pos.lon, vals.Latitude, vals.Longitude);

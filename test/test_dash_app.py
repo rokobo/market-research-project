@@ -534,7 +534,7 @@ class Test005Geolocation:
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
-        dist = wait_substring(self.app, "establishment-formtext2", By.ID, "km")
+        dist = wait_substring(self.app, "establishment-subformtext", By.ID, "km")
         dist = float(dist.text.split(":")[1].split("km")[0])
         assert 0.95 <= dist <= 1.05, dist
         establishment = get_by_cond(self.app, FIRST_IDS[2], By.ID)
@@ -550,7 +550,7 @@ class Test005Geolocation:
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
-        dist = wait_substring(self.app, "establishment-formtext2", By.ID, "km")
+        dist = wait_substring(self.app, "establishment-subformtext", By.ID, "km")
         dist = float(dist.text.split(":")[1].split("km")[0])
         assert 0.01 <= dist <= 0.09, dist
         establishment = get_by_cond(self.app, FIRST_IDS[2], By.ID)

@@ -70,7 +70,7 @@ layout = html.Div([
         dbc.FormText(
             "...", id="establishment-formtext",
             color="secondary", className="unwrap"),
-        dbc.FormText("", id="establishment-formtext2", color="secondary")
+        dbc.FormText("", id="establishment-subformtext", color="secondary")
     ], className="m-2"),
     product_form(
         "Açúcar - 1kg", "acucar",
@@ -168,7 +168,7 @@ clientside_callback(
         function_name='locate_establishment'
     ),
     Output('establishment', 'value', allow_duplicate=True),
-    Output("establishment-formtext2", "children"),
+    Output("establishment-subformtext", "children"),
     Input("fill-establishment", "n_clicks"),
     State('geolocation', 'position'),
     State("geolocation", "local_date"),
