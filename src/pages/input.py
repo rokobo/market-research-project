@@ -158,8 +158,7 @@ clientside_callback(
         function_name='update_location'
     ),
     Output("geolocation", "update_now"),
-    Input("geolocation-interval", "n_intervals"),
-    prevent_initial_call=True
+    Input("geolocation-interval", "n_intervals")
 )
 
 
