@@ -203,15 +203,10 @@ server {
     server_name <your-domain> www.<your-domain>;
     keepalive_timeout 70;
 
-    ssl_certificate <.crt-file-location>;
-    ssl_certificate_key <.key-file-location>;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_prefer_server_ciphers on;
-    ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
-
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
+    ssl_certificate <.crt-file-location>; # managed by Certbot
+    ssl_certificate_key <.key-file-location>; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
     location / {
         proxy_pass http://127.0.0.1:<application-port>;
@@ -230,6 +225,22 @@ server {
 
     location / {
         return 301 https://<your-domain>$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name <your-ec2-ip>;
+    keepalive_timeout 70;
+
+    ssl_certificate <.crt-file-location>; # managed by Certbot
+    ssl_certificate_key <.key-file-location>; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+    location / {
+        return 301 https://icb.pedrokobori.dev$request_uri;
     }
 }
 ```
