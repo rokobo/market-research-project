@@ -98,9 +98,9 @@ def get_all_by_cond(driver: webdriver.Chrome, id: str, cond) -> list[WebElement]
 
 
 def wait_substring(
-    driver: webdriver.Chrome, id: str, cond, substring: str
+    driver: webdriver.Chrome, id: str, cond, substring: str, wait=10
 ) -> WebElement:
-    WebDriverWait(driver, 10).until(
+    WebDriverWait(driver, wait).until(
         EC.text_to_be_present_in_element((cond, id), substring))
     return get_by_cond(driver, id, cond)
 
@@ -524,6 +524,15 @@ class Test005Geolocation:
     def setup_class(self, gunicorn_server, selenium_driver):
         self.app = selenium_driver
 
+    def test_no_permission(self):
+        self.app.execute_cdp_cmd("Emulation.setGeolocationOverride", {})
+        self.app.refresh()
+        WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
+        button = get_by_cond(self.app, "fill-establishment", By.ID)
+        button.click()
+        wait_substring(
+            self.app, "establishment-subformtext", By.ID, "Tente novamente", 5)
+
     def test_no_error(self):
         self.app.execute_cdp_cmd("Emulation.setGeolocationOverride", {
             "latitude": -22.84858326747608,
@@ -534,7 +543,8 @@ class Test005Geolocation:
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
-        dist = wait_substring(self.app, "establishment-subformtext", By.ID, "km")
+        dist = wait_substring(
+            self.app, "establishment-subformtext", By.ID, "km", 5)
         dist = float(dist.text.split(":")[1].split("km")[0])
         assert 0.95 <= dist <= 1.05, dist
         establishment = get_by_cond(self.app, FIRST_IDS[2], By.ID)
@@ -550,7 +560,8 @@ class Test005Geolocation:
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
-        dist = wait_substring(self.app, "establishment-subformtext", By.ID, "km")
+        dist = wait_substring(
+            self.app, "establishment-subformtext", By.ID, "km", 5)
         dist = float(dist.text.split(":")[1].split("km")[0])
         assert 0.01 <= dist <= 0.09, dist
         establishment = get_by_cond(self.app, FIRST_IDS[2], By.ID)

@@ -121,12 +121,12 @@ update_location:function(_){
 locate_establishment:function(clk, pos,dt){
     if(clk>=1){}else{return window.dash_clientside.no_update}
     smallestDist = [Infinity, ""];
-    if(pos==null){return [window.dash_clientside.no_update,"Tente novamente ou permita o uso de localização!"]}
+    if(pos==null){return [window.dash_clientside.no_update,"Tente novamente ou permita o uso de localização!",true]}
     for (est in COORDINATES) {
         vals = COORDINATES[est];
         dist = haversineDistance(pos.lat, pos.lon, vals.Latitude, vals.Longitude);
         if (dist < smallestDist[0]) {smallestDist = [dist, est]}}
     console.log("CALL locate:", smallestDist, dt);
-    return [smallestDist[1], "Distância estimada: "+smallestDist[0].toFixed(2)+"km,"+dt.split(",")[1]];
+    return [smallestDist[1], "Distância estimada: "+smallestDist[0].toFixed(2)+"km,"+dt.split(",")[1],true];
 }
 }

@@ -39,7 +39,7 @@ layout = html.Div([
     dbc.Stack([
         html.H1(
             "Coleta de preços", className="b-3 mx-auto",
-            style={'fontWeight': 'bold'}),
+            style={'fontWeight': 'bold', "text-align": "center"}),
         dcc.ConfirmDialogProvider(
             dbc.Button("Limpar", color="warning", id="clear-products"),
             id="confirm-clear",
@@ -70,8 +70,11 @@ layout = html.Div([
         dbc.FormText(
             "...", id="establishment-formtext",
             color="secondary", className="unwrap"),
-        dbc.FormText("", id="establishment-subformtext", color="secondary")
-    ], className="m-2"),
+        html.Hr(className="m-1"),
+        dbc.FormText(
+            "Geolocalização não usada",
+            id="establishment-subformtext", color="secondary")
+    ], className="m-2 unwrap"),
     product_form(
         "Açúcar - 1kg", "acucar",
         brand=True, price=True, quantity=True),
@@ -137,18 +140,20 @@ layout = html.Div([
     html.Div(id="dummy-div-validation"),  # load           ->  validation
     html.Div(id="dummy-div-progress"),    # validation     ->  progress
     html.Div(id="dummy-div-save"),        # progress       ->  save
-    dbc.Popover([
-            dbc.PopoverHeader(html.H1("Aplicativo iniciando...")),
-            dbc.PopoverBody(html.H4(
-                "Se nada acontecer, atualize a página",
-                style={"text-align": "center"}))
+    dbc.Modal(
+        [
+            dbc.ModalHeader(dbc.Stack([
+                html.H2("Esperando validação..."),
+                dbc.Spinner(color="secondary"),
+            ], direction="horizontal", gap=3), close_button=False),
+            dbc.ModalBody(html.H6(
+                "Se nada acontecer, atualize a página.",
+                style={"text-align": "center"})),
         ],
-        target="input-form-collector_name", is_open=True, hide_arrow=True,
-        id="page-loading-modal", placement='bottom',
-        className="foregroundAbsolute loading-modal"
-    ),
+        id="page-loading-modal", is_open=True,
+        centered=True, keyboard=False, backdrop="static"),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
-    dcc.Interval(id="geolocation-interval", interval=15*1000),
+    dcc.Interval(id="geolocation-interval", interval=30*1000),
 ])
 
 
@@ -169,6 +174,7 @@ clientside_callback(
     ),
     Output('establishment', 'value', allow_duplicate=True),
     Output("establishment-subformtext", "children"),
+    Output("geolocation", "update_now", allow_duplicate=True),
     Input("fill-establishment", "n_clicks"),
     State('geolocation', 'position'),
     State("geolocation", "local_date"),
