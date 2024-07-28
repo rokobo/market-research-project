@@ -4,16 +4,18 @@ const COORDINATES=JSON.parse(localStorage.getItem('coordinates'));
 const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[i/4]){acc[keys[i/4]]=lists.slice(i,i+4).flat()}return acc},{});
 function haversineDistance(a,t,h,n){var r=deg2rad(h-a),s=deg2rad(n-t),M=Math.sin(r/2)*Math.sin(r/2)+Math.cos(deg2rad(a))*Math.cos(deg2rad(h))*Math.sin(s/2)*Math.sin(s/2);return 6371*(2*Math.atan2(Math.sqrt(M),Math.sqrt(1-M)))};
 function deg2rad(d){return d*(Math.PI/180)};
+const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:0};
+const getPosition = (options) => {return new Promise((resolve, reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 
 window.dash_clientside.clientside={
 clear_contents:function(clk){
-    if (typeof clk !== 'number'){return window.dash_clientside.no_update};
+    if (typeof clk !== 'number'){return dash_clientside.no_update};
     console.log("CALL clear contents (",dash_clientside.callback_context.triggered_id,")");
     return [];
 },
-close_modal:function(clk){if(typeof clk!=='number'){return window.dash_clientside.no_update};return false},
+close_modal:function(clk){if(typeof clk!=='number'){return dash_clientside.no_update};return false},
 save_state:function(_1,load,name,date,estab,obs,...prdc){
-    if (load === null){return window.dash_clientside.no_update}
+    if (load === null){return dash_clientside.no_update}
     let data=[];data.push({'first':[name,date,estab]});data.push({'observations':obs});
     for(let i=0;i < prdc.length;i++){
         let product_name=CFG.products[i];
@@ -79,12 +81,12 @@ validate_args:function(_1,name,date,est,...vals){
 delete_product_row:function(...vals){
     var ctx=dash_clientside.callback_context.triggered_id;
     if (vals.slice(0,CFG.products.length).every(sublist=>sublist.every(v=>typeof v === "undefined"))){
-        return window.dash_clientside.no_update;}
+        return dash_clientside.no_update;}
     var states=vals.slice(CFG.products.length);
     var ctxType=ctx.type.slice(7);
     var prop_id=`${ctxType}-product-row-${ctx.index}`
     var index=CFG.products.indexOf(ctxType);
-    var patch=Array(CFG.products.length).fill(window.dash_clientside.no_update);
+    var patch=Array(CFG.products.length).fill(dash_clientside.no_update);
     var children=states[index];
     for(let i=0;i < children.length;i++){
         var child=children[i];
@@ -115,18 +117,18 @@ establishment_address:function(est){
     if(est in COORDINATES){loc=COORDINATES[est].Endereço}else{loc="Sem endereço"}
     console.log("CALL address:",est,loc);return loc;
 },
-update_location:function(_){
-    return true;
-},
-locate_establishment:function(clk, pos,dt){
-    if(clk>=1){}else{return window.dash_clientside.no_update}
-    smallestDist = [Infinity, ""];
-    if(pos==null){return [window.dash_clientside.no_update,"Tente novamente ou permita o uso de localização!",true]}
-    for (est in COORDINATES) {
-        vals = COORDINATES[est];
-        dist = haversineDistance(pos.lat, pos.lon, vals.Latitude, vals.Longitude);
-        if (dist < smallestDist[0]) {smallestDist = [dist, est]}}
-    console.log("CALL locate:", smallestDist, dt);
-    return [smallestDist[1], "Distância estimada: "+smallestDist[0].toFixed(2)+"km,"+dt.split(",")[1],true];
+locate_establishment: async function(_1) {
+    if (navigator.geolocation) {try {
+        pos = await getPosition(GEOOPTS);
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+        smallestDist = [Infinity, ""];
+        for (est in COORDINATES) {
+            vals=COORDINATES[est];dist=haversineDistance(lat,lon,vals.Latitude,vals.Longitude);
+            if (dist<smallestDist[0]){smallestDist=[dist,est]}}
+        console.log("CALL locate establishment", smallestDist);
+        return [smallestDist[1],"Distância estimada: "+smallestDist[0].toFixed(2)+"km"];
+    } catch (error) {return [dash_clientside.no_update, "Tente novamente ou permita o uso de localização!"]}
+    } else {return [dash_clientside.no_update, "Localização não é suportada nesse browser!"]}
 }
 }
