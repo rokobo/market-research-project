@@ -145,6 +145,8 @@ def aggregate_reports(date):
         df = pd.read_csv(join(CFG.home, f"data/{file}"))
         if df.empty:
             continue
+        if "TESTE" in df.loc[0, "Estabelecimento"]:
+            continue
         reports.append(df)
 
     if reports == []:
