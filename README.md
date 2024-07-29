@@ -67,7 +67,7 @@ If you see in the `main.py` script, I made calls `getenv()`. This function is us
 
 ## Minify assets
 
-In order to decrease outgoing data from the application server, minifying the assets can decrease the data sent from the server to the user. Both CSS and Javascript files can be minified before setting up the web server. However, this is not strictly necessary, since the assets will be compressed by the Nginx server. Minifying will help decrease the size a little, although compression seems to be enough.
+In order to decrease outgoing data from the application server, minifying the assets can decrease the data sent from the server to the user. SVG, CSS and Javascript files can be minified before setting up the web server. However, this is not strictly necessary, since the assets will be compressed by the Nginx server. Minifying will help decrease the size a little, although compression seems to be enough.
 
 It is worth noting that partially minifying the assets is a good alternative. Simply avoid spaces and newlines when possible. Personally, I remove spaces and newlines on parts of the code that will not make the code overly cluttered and hard to read.
 

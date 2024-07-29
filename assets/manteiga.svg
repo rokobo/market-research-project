@@ -1,15 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools-->
-<svg width="20px" height="20px" viewBox="12.5 6.1 21 21" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" preserveAspectRatio="xMidYMid meet">
-  <path fill="currentColor" d="M33 19.011v-8.083l-7-4.041l-13.042 7.502v8.083l7 4.042z"/>
-  <path fill="currentColor" d="M33 19.011v-8.083l-13.042 7.503l-7-4.042v8.083l7 4.042z"/>
-  <path fill="currentColor" d="M33 19.011v-8.083l-13.042 7.503v8.083z"/>
-  <path stroke="white" stroke-width="1" d="M12 14 l8 4.5"/>
-  <path stroke="white" stroke-width="1" d="M19.9 18.5 l14 -8"/>
-  <path stroke="white" stroke-width="1" d="M19.9 18.5 v9"/>
-  <path stroke="white" stroke-width="1" d="M16 18.5 v4"/>
-  <path stroke="white" stroke-width="1" d="M12.6 14 l3.43 4.59"/>
-  <path stroke="white" stroke-width="1" d="M12.6 22.6 l3.43 -0.25"/>
-  <path stroke="white" stroke-width="1" d="M19.9 18.5 l-3.8 0.1"/>
-  <path stroke="white" stroke-width="1" d="M19.9 26.5 l-3.9 -4.2"/>
-</svg>
+<svg width="20" height="20" viewBox="12.5 6.1 21 21" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M33 19.011v-8.083l-7-4.041-13.042 7.502v8.083l7 4.042z"/><path fill="currentColor" d="M33 19.011v-8.083l-13.042 7.503-7-4.042v8.083l7 4.042z"/><path fill="currentColor" d="M33 19.011v-8.083l-13.042 7.503v8.083z"/><mask id="a"><path d="M0 0h400v400H0z"/><path stroke="#fff" d="m12 14 8 4.5m-.1 0 14-8m-14 8v9m-3.9-9v4M12.6 14l3.43 4.59M12.6 22.6l3.43-.25m3.87-3.85-3.8.1m3.8 7.9L16 22.3"/></mask><path fill="#fff" mask="url(#a)" d="M0 0h400v400H0z"/></svg>

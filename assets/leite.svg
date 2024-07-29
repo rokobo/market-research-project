@@ -1,9 +1,1 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg fill="currentColor" height="20px" width="20px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-	 viewBox="0 0 512 512" xml:space="preserve">
-<path d="M457.602,188.797L368,69.328V32c0-17.672-14.328-32-32-32H176c-17.672,0-32,14.328-32,32v37.336L54.398,188.797
-	C50.242,194.336,48,201.078,48,208v272c0,17.672,14.328,32,32,32h128h32h192c17.672,0,32-14.328,32-32V208
-	C464,201.078,461.758,194.336,457.602,188.797z M400,448H272V218.664l64-85.328l64,85.328V448z"/>
-</svg>
+<svg fill="currentColor" height="20" width="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" xml:space="preserve"><path d="M457.602 188.797 368 69.328V32c0-17.672-14.328-32-32-32H176c-17.672 0-32 14.328-32 32v37.336L54.398 188.797A32 32 0 0 0 48 208v272c0 17.672 14.328 32 32 32h352c17.672 0 32-14.328 32-32V208a32 32 0 0 0-6.398-19.203M400 448H272V218.664l64-85.328 64 85.328z"/></svg>
