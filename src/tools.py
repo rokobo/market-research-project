@@ -1,9 +1,11 @@
 """Tools for the pages."""
 
 from os.path import join, exists
-from os import makedirs, listdir
+from os import makedirs, listdir, remove
 import pandas as pd
 import time
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from typing import Optional
 from CONFIG import CFG
 
@@ -101,20 +103,50 @@ def save_products(product_data, info, obs: Optional[str], test=False):
     return
 
 
-def aggregate_reports(date=["2024", "06"]):
+def delete_old_reports():
+    now = datetime.now()
+    current_date = datetime(now.year, now.month, 1)
+    two_months_ago = current_date - relativedelta(months=3)
+    scheduled_delete = []
+    for file in listdir(join(CFG.home, "data")):
+        year, month, day = file.split("|")[0].split("-")
+        file_datetime = datetime(int(year), int(month), int(day))
+        if file_datetime < two_months_ago:
+            scheduled_delete.append(file)
+
+    if scheduled_delete == []:
+        print("No old files to delete")
+        return
+
+    print("Old files to delete:\n", "\n".join(scheduled_delete))
+
+    for file in scheduled_delete:
+        remove(join(CFG.home, f"data/{file}"))
+    print("Old files deleted")
+
+
+def aggregate_reports(date):
     # Collect all reports into a single dataframe
     reports = []
-    check_folder("data_agg")
+    check_folder(join(CFG.home, "data_agg"))
+    assert len(date[0]) == 4, date
+    assert len(date[1]) == 2, date
 
-    for file in listdir("data"):
+    for file in listdir(join(CFG.home, "data")):
         file_date = file.split("|")[0].split("-")
         if file_date[1] != date[1]:
             continue
 
-        df = pd.read_csv(f"data/{file}")
+        df = pd.read_csv(join(CFG.home, f"data/{file}"))
         if df.empty:
             continue
         reports.append(df)
+
+    if reports == []:
+        print("No valid reports found")
+        return
+    print("Number of reports: ", len(reports))
+
     coleta_mes = pd.concat(reports)
     coleta_mes.Marca = coleta_mes.Marca.fillna("")
     coleta_mes["PPK"] = [
@@ -147,8 +179,8 @@ def aggregate_reports(date=["2024", "06"]):
 
     # Save
     with pd.ExcelWriter(
-        f"data_agg/{date[0]}_{date[1]}_Coleta.xlsx", engine="xlsxwriter",
-        engine_kwargs={'options': {
+        join(CFG.home, f"data_agg/{date[0]}_{date[1]}_Coleta.xlsx"),
+        engine="xlsxwriter", engine_kwargs={'options': {
             'use_future_functions': True, 'strings_to_numbers': True}}
     ) as writer:
         # Coleta_Mes
