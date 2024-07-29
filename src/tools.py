@@ -110,6 +110,8 @@ def delete_old_reports():
     two_months_ago = current_date - relativedelta(months=3)
     scheduled_delete = []
     for file in listdir(join(CFG.home, "data")):
+        if not file.endswith(".csv"):
+            continue
         year, month, day = file.split("|")[0].split("-")
         file_datetime = datetime(int(year), int(month), int(day))
         if file_datetime < two_months_ago:
@@ -134,6 +136,8 @@ def aggregate_reports(date):
     assert len(date[1]) == 2, date
 
     for file in listdir(join(CFG.home, "data")):
+        if not file.endswith(".csv"):
+            continue
         file_date = file.split("|")[0].split("-")
         if file_date[1] != date[1]:
             continue
