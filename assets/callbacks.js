@@ -4,13 +4,14 @@ const COORDINATES=JSON.parse(localStorage.getItem('coordinates'));
 const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[i/4]){acc[keys[i/4]]=lists.slice(i,i+4).flat()}return acc},{});
 function haversineDistance(a,t,h,n){var r=deg2rad(h-a),s=deg2rad(n-t),M=Math.sin(r/2)*Math.sin(r/2)+Math.cos(deg2rad(a))*Math.cos(deg2rad(h))*Math.sin(s/2)*Math.sin(s/2);return 6371*(2*Math.atan2(Math.sqrt(M),Math.sqrt(1-M)))};
 function deg2rad(d){return d*(Math.PI/180)};
-const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:10};
+const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:5};
+let LOCATION = null;
 const getPosition = (options) => {return new Promise((resolve, reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 const ERRORS = {
-    1: "Permita o uso de localização e tente novamente!",
-    2: "Posição indisponível, tente novamente!",
-    3: "Tempo de requisição esgotado, tente novamente!",
-    default: "Erro desconhecido!"
+    1:"Permita o uso de localização e tente novamente!",
+    2:"Posição indisponível, tente novamente!",
+    3:"Tempo de requisição esgotado, tente novamente!",
+    default:"Erro desconhecido!"
 };
 const translateError=(error)=>{return ERRORS[error.code]||ERRORS.default};
 
@@ -21,6 +22,15 @@ clear_contents:function(clk){
     return [];
 },
 close_modal:function(clk){if(typeof clk!=='number'){return dash_clientside.no_update};return false},
+update_badges:async function(_,pos){
+    output=[];
+    if(navigator.onLine){output=output.concat(["ONLINE","success"])}
+    else {output=output.concat(["OFFLINE","danger"])};
+    if(navigator.geolocation){try{LOCATION=await getPosition(GEOOPTS);output=output.concat([LOCATION.coords.latitude.toFixed(4)+", "+LOCATION.coords.longitude.toFixed(4),"secondary"])}
+    catch(error){output=output.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
+    else{output=output.concat(["ERRO LOCALIZAÇÃO","danger"])}
+    return output;
+},
 save_state:function(_,load,name,date,estab,obs,...prdc){
     if (load === null){return dash_clientside.no_update}
     let data=[];data.push({'first':[name,date,estab]});data.push({'observations':obs});
@@ -113,9 +123,9 @@ display_progress:function(_,name,date,est,...vals){
     msg+=`${idx+=1}. Seções com poucos itens: `+vals.slice(13,26).filter((c,i)=>c.length<CFG.product_rows[CFG.products[i]]).length+"\n";
     if(today!=date_val){msg+=`${idx+=1}. Envio em dia diferente:\n      - Data atual: `+today+"\n      - Registrado: "+date_val}
     output=badges.map(v=>{
-        if (v === "success"){return {"color": "green"}}
-        else if (v === "danger"){return {"color": "red"}}
-        else {return {"color": "rgb(252,174,30)"}}});
+        if (v === "success"){return {"color":"green"}}
+        else if (v === "danger"){return {"color":"red"}}
+        else {return {"color":"rgb(252,174,30)"}}});
     // Update save button status
     if ([name,date,est].every(v=>v=="correct") && badges.every(v=>v!="danger")){output=output.concat(["success",""])}
     else {output=output.concat(["danger","unclickable"])};
@@ -128,10 +138,10 @@ establishment_address:function(est){
     if(est in COORDINATES){loc=COORDINATES[est].Endereço}else{loc="Sem endereço"}
     console.log("establishment_address:",est,loc);return loc;
 },
-locate_establishment:async function(_){
-    output = [dash_clientside.no_update, ""];
+locate_establishment:function(_){
+    output=[dash_clientside.no_update, ""];
     if(navigator.geolocation){try{
-        pos=await getPosition(GEOOPTS);
+        pos=LOCATION;
         lat=pos.coords.latitude;
         lon=pos.coords.longitude;
         smallestDist=[Infinity, ""];
@@ -140,10 +150,10 @@ locate_establishment:async function(_){
             if (dist<smallestDist[0]){smallestDist=[dist,est]}}
         console.log("locate_establishment:",smallestDist,pos);
         text="Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";
-        text+=new Date(pos.timestamp).toLocaleString("en-CA",{hour12: false});
-        output = [smallestDist[1],text];
-    }catch(error){output[1]=translateError(error)}
-    }else{output[1]="Localização não é suportada nesse browser!"}
+        text+=new Date(pos.timestamp).toLocaleString("en-CA",{hour12:false});
+        output=[smallestDist[1],text]}
+        catch(error){output[1]=translateError(error)}}
+    else{output[1]="Localização não é suportada nesse browser!"}
     return output;
 }
 }

@@ -3,6 +3,7 @@ import sys
 from os.path import join, dirname
 from os import getenv, listdir, remove
 import time
+from typing import Optional
 from dotenv import load_dotenv
 import chromedriver_autoinstaller
 from pytest import fixture, fail, mark
@@ -140,6 +141,28 @@ def fill_first_section(driver, date=False):
             element.send_keys(datetime.now().strftime('%m%d%Y'))
         else:
             element.send_keys(RAW_INPUTS[idx])
+
+
+def perform_save(driver: webdriver.Chrome) -> str:
+    button = get_by_cond(driver, "save-products", By.ID)
+    button.click()
+    alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
+    message = alert.text
+    alert.accept()
+    button = get_by_cond(driver, "close-send-confirmation", By.ID)
+    return message
+
+
+def find_saved_file(driver: webdriver.Chrome, path="data") -> Optional[str]:
+    file_path = None
+    path = join(CFG.home, path)
+    for file in listdir(path):
+        for substring in STORED_INPUTS:
+            if substring not in file:
+                continue
+        file_path = join(path, file)
+        break
+    return file_path
 
 
 @mark.incremental
@@ -306,26 +329,6 @@ class Test003SaveProducts:
     def setup_class(self, gunicorn_server, selenium_driver):
         self.app = selenium_driver
 
-    def perform_save(self):
-        button = get_by_cond(self.app, "save-products", By.ID)
-        button.click()
-        alert = WebDriverWait(self.app, 5).until(EC.alert_is_present())
-        message = alert.text
-        alert.accept()
-        button = get_by_cond(self.app, "close-send-confirmation", By.ID)
-        return message
-
-    def find_saved_file(self, path="data"):
-        file_path = None
-        path = join(CFG.home, path)
-        for file in listdir(path):
-            for substring in STORED_INPUTS:
-                if substring not in file:
-                    continue
-            file_path = join(path, file)
-            break
-        return file_path
-
     def test_valid_save(self):
         fill_first_section(self.app, True)
 
@@ -352,10 +355,10 @@ class Test003SaveProducts:
                 obs.send_keys(f"observation-{idx}")
 
         for path in ["data", "data_obs"]:
-            file_path = self.find_saved_file(path)
+            file_path = find_saved_file(self.app, path)
             while file_path is not None:
                 remove(file_path)
-                file_path = self.find_saved_file(path)
+                file_path = find_saved_file(self.app, path)
 
         time.sleep(1)
         button = get_by_cond(self.app, "save-products", By.ID)
@@ -368,7 +371,7 @@ class Test003SaveProducts:
         assert check_in_attr(observation, "value", "Test observation")
 
     def test_no_messages(self):
-        messages = self.perform_save().splitlines()
+        messages = perform_save(self.app).splitlines()
         assert any("poucos itens" in string for string in messages), messages
         assert not any("Envio em dia diferente" in string for string in messages), messages
 
@@ -378,7 +381,7 @@ class Test003SaveProducts:
                 break
 
     def test_full_save(self):
-        file_path = self.find_saved_file("data")
+        file_path = find_saved_file(self.app, "data")
         assert file_path is not None
         dataframe = pd.read_csv(file_path)
 
@@ -396,7 +399,7 @@ class Test003SaveProducts:
         assert float(dataframe.Quantidade.max()) == 1.0, dataframe
         remove(file_path)
 
-        obs_path = self.find_saved_file("data_obs")
+        obs_path = find_saved_file(self.app, "data_obs")
         assert obs_path is not None
         with open(obs_path, 'r') as file:
             observations = file.read()
@@ -462,7 +465,7 @@ class Test003SaveProducts:
             assert len(productElems) == 0, product
 
     def test_all_messages(self):
-        messages = self.perform_save().splitlines()
+        messages = perform_save(self.app).splitlines()
         assert any("poucos itens" in string for string in messages), messages
         assert any("Envio em dia diferente" in string for string in messages), messages
         assert any("Data atual:" in string for string in messages), messages
@@ -481,13 +484,13 @@ class Test003SaveProducts:
                 assert today != registered, (today, registered)
 
     def test_empty_save(self):
-        file_path = self.find_saved_file("data")
+        file_path = find_saved_file(self.app, "data")
         assert file_path is not None
         dataframe = pd.read_csv(file_path)
         assert dataframe.empty, dataframe
         assert list(dataframe.columns) == CSV_COLUMNS, dataframe.columns
         remove(file_path)
-        assert self.find_saved_file("data_obs") is None
+        assert find_saved_file(self.app, "data_obs") is None
 
 
 @mark.incremental
@@ -551,8 +554,7 @@ class Test005Geolocation:
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
-        wait_substring(
-            self.app, "establishment-subformtext", By.ID, "tente novamente", 5)
+        wait_substring(self.app, "establishment-subformtext", By.ID, "Erro", 5)
 
     def test_no_error(self):
         self.app.execute_cdp_cmd("Emulation.setGeolocationOverride", {
@@ -587,3 +589,20 @@ class Test005Geolocation:
         assert 0.01 <= dist <= 0.09, dist
         establishment = get_by_cond(self.app, FIRST_IDS[2], By.ID)
         assert check_in_attr(establishment, "value", "ENX-JB")
+
+    def test_save_filename(self):
+        fill_first_section(self.app)
+        for product in CFG.products:
+            scroll_to_product(self.app, product)
+            elements = get_all_by_cond(self.app, f'[id*="delete-{product}"]', By.CSS_SELECTOR)
+            for element in elements:
+                element.click()
+        time.sleep(0.25)
+        perform_save(self.app)
+        file_name = find_saved_file(self.app, "data")
+        assert file_name is not None
+        fields = file_name.split("|")
+        assert len(fields) == 6, fields
+        assert fields[4] == "-22.90941581120983", fields
+        assert fields[5].replace(".csv", "") == "-47.09562084004908", fields
+        remove(file_name)

@@ -155,7 +155,28 @@ layout = html.Div([
         id="page-loading-modal", is_open=True,
         centered=True, keyboard=False, backdrop="static"),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
+    dcc.Interval(id="10-seconds", interval=10*1000),
+    html.Div(
+        dbc.Stack([
+            dbc.Badge("", color="info", id="geolocation-badge"),
+            dbc.Badge("", color="success", id="online-badge"),
+        ], direction="horizontal"),
+        style={"position": "fixed", "bottom": 0, "right": 0}),
 ])
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='update_badges'
+    ),
+    Output('online-badge', 'children'),
+    Output('online-badge', 'color'),
+    Output('geolocation-badge', 'children'),
+    Output('geolocation-badge', 'color'),
+    Input("10-seconds", "n_intervals"),
+    State("geolocation", "position"),
+)
 
 
 clientside_callback(
