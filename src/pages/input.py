@@ -63,10 +63,12 @@ layout = html.Div([
     ], className="m-2"),
     html.Div([
         dbc.Label("Estabelecimento", style={'fontWeight': 'bold'}),
-        dbc.Stack([
-            dbc.Select(id="establishment", options=load_establishments()),
-            dbc.Button("Localizar", id="fill-establishment")
-        ], direction="horizontal", gap=1),
+        dcc.Loading(
+            dbc.Stack([
+                dbc.Select(id="establishment", options=load_establishments()),
+                dbc.Button("Localizar", id="fill-establishment")
+            ], direction="horizontal", gap=1),
+            overlay_style={"visibility": "visible", "filter": "blur(2px)"}),
         dbc.FormText(
             "...", id="establishment-formtext",
             color="secondary", className="unwrap"),
