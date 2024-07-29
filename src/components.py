@@ -1,8 +1,7 @@
 """Components for the pages."""
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc
-from typing import Optional
+from dash import html
 from tools import load_brands, load_images
 from CONFIG import CFG
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
