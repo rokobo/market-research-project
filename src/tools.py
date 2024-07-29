@@ -1,7 +1,8 @@
 """Tools for the pages."""
 
 from os.path import join, exists
-from os import makedirs, listdir, remove
+from os import makedirs, listdir
+from send2trash import send2trash
 import pandas as pd
 import time
 from datetime import datetime
@@ -121,7 +122,7 @@ def delete_old_reports():
     print("Old files to delete:\n", "\n".join(scheduled_delete))
 
     for file in scheduled_delete:
-        remove(join(CFG.home, f"data/{file}"))
+        send2trash(join(CFG.home, f"data/{file}"))
     print("Old files deleted")
 
 
