@@ -23,17 +23,19 @@ layout = html.Div([
     ], color="white", sticky="top", expand=True),
     dbc.Alert([
         html.H4(
-            "Instruções de preenchimento",
+            ["Instruções de preenchimento", html.Hr(className="m-1")],
             className="alert-heading", style={'fontWeight': 'bold'}),
         html.P([
             "Só é necessário especificar a Quant. se ela for diferente "
-            "da quantidade padrão. \n\n"
+            "da quantidade padrão.\n\n"
             "O envio é liberado se todas as seções estiverem completas. "
             "Caso queira não enviar alguma seção, delete as "
             "fileiras clicando no botão com X.\n\n"
             "Os ícones mostram se as informações de cada seção estão "
             "válidas. Amarelo indica menos items na seção do que o desejado."
-            " Clicar no ícone te leva para a seção."
+            " Clicar no ícone te leva para a seção.\n\n"
+            "Recomendado usar Chrome, foi testado e "
+            "possui compatibilidade plena."
         ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=True, color="warning"),
     dbc.Stack([
