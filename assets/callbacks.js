@@ -4,7 +4,7 @@ const COORDINATES=JSON.parse(localStorage.getItem('coordinates'));
 const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[i/4]){acc[keys[i/4]]=lists.slice(i,i+4).flat()}return acc},{});
 function haversineDistance(a,t,h,n){var r=deg2rad(h-a),s=deg2rad(n-t),M=Math.sin(r/2)*Math.sin(r/2)+Math.cos(deg2rad(a))*Math.cos(deg2rad(h))*Math.sin(s/2)*Math.sin(s/2);return 6371*(2*Math.atan2(Math.sqrt(M),Math.sqrt(1-M)))};
 function deg2rad(d){return d*(Math.PI/180)};
-const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:0};
+const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:10};
 const getPosition = (options) => {return new Promise((resolve, reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 
 window.dash_clientside.clientside={
@@ -126,8 +126,10 @@ locate_establishment: async function(_1) {
         for (est in COORDINATES) {
             vals=COORDINATES[est];dist=haversineDistance(lat,lon,vals.Latitude,vals.Longitude);
             if (dist<smallestDist[0]){smallestDist=[dist,est]}}
-        console.log("CALL locate establishment", smallestDist);
-        return [smallestDist[1],"Distância estimada: "+smallestDist[0].toFixed(2)+"km"];
+        console.log("CALL locate establishment", smallestDist, pos);
+        text = "Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";
+        text += new Date(pos.timestamp).toLocaleString("en-CA", {hour12: false});
+        return [smallestDist[1],text];
     } catch (error) {return [dash_clientside.no_update, "Tente novamente ou permita o uso de localização!"]}
     } else {return [dash_clientside.no_update, "Localização não é suportada nesse browser!"]}
 }
