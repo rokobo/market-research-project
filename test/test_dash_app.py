@@ -554,7 +554,7 @@ class Test005Geolocation:
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
-        wait_substring(self.app, "establishment-subformtext", By.ID, "Erro", 5)
+        wait_substring(self.app, "establishment-subformtext", By.ID, "tente novamente", 5)
 
     def test_no_error(self):
         self.app.execute_cdp_cmd("Emulation.setGeolocationOverride", {

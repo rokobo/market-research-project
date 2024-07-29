@@ -11,9 +11,10 @@ const ERRORS = {
     1:"Permita o uso de localização e tente novamente!",
     2:"Posição indisponível, tente novamente!",
     3:"Tempo de requisição esgotado, tente novamente!",
+    4: "Localização não é suportada nesse browser!",
     default:"Erro desconhecido!"
 };
-const translateError=(error)=>{return ERRORS[error.code]||ERRORS.default};
+const translateError=(error)=>{return ERRORS[error]||ERRORS.default};
 
 window.dash_clientside.clientside={
 clear_contents:function(clk){
@@ -27,8 +28,8 @@ update_badges:async function(_,pos){
     if(navigator.onLine){output=output.concat(["ONLINE","success"])}
     else {output=output.concat(["OFFLINE","danger"])};
     if(navigator.geolocation){try{LOCATION=await getPosition(GEOOPTS);output=output.concat([LOCATION.coords.latitude.toFixed(4)+", "+LOCATION.coords.longitude.toFixed(4),"secondary"])}
-    catch(error){output=output.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
-    else{output=output.concat(["ERRO LOCALIZAÇÃO","danger"])}
+    catch(error){LOCATION=error.code;output=output.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
+    else{LOCATION=4;output=output.concat(["ERRO LOCALIZAÇÃO","danger"])}
     return output;
 },
 save_state:function(_,load,name,date,estab,obs,...prdc){
@@ -140,20 +141,18 @@ establishment_address:function(est){
 },
 locate_establishment:function(_){
     output=[dash_clientside.no_update, ""];
-    if(navigator.geolocation){try{
-        pos=LOCATION;
-        lat=pos.coords.latitude;
-        lon=pos.coords.longitude;
-        smallestDist=[Infinity, ""];
-        for (est in COORDINATES) {
-            vals=COORDINATES[est];dist=haversineDistance(lat,lon,vals.Latitude,vals.Longitude);
-            if (dist<smallestDist[0]){smallestDist=[dist,est]}}
-        console.log("locate_establishment:",smallestDist,pos);
-        text="Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";
-        text+=new Date(pos.timestamp).toLocaleString("en-CA",{hour12:false});
-        output=[smallestDist[1],text]}
-        catch(error){output[1]=translateError(error)}}
-    else{output[1]="Localização não é suportada nesse browser!"}
+    pos=LOCATION;
+    if(typeof pos==="number"){output[1]=translateError(LOCATION);return output}
+    lat=pos.coords.latitude;
+    lon=pos.coords.longitude;
+    smallestDist=[Infinity, ""];
+    for (est in COORDINATES) {
+        vals=COORDINATES[est];dist=haversineDistance(lat,lon,vals.Latitude,vals.Longitude);
+        if (dist<smallestDist[0]){smallestDist=[dist,est]}}
+    console.log("locate_establishment:",smallestDist,pos);
+    text="Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";
+    text+=new Date(pos.timestamp).toLocaleString("en-CA",{hour12:false});
+    output=[smallestDist[1],text]
     return output;
 }
 }
