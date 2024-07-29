@@ -17,11 +17,11 @@ const translateError=(error)=>{return ERRORS[error.code]||ERRORS.default};
 window.dash_clientside.clientside={
 clear_contents:function(clk){
     if (typeof clk !== 'number'){return dash_clientside.no_update};
-    console.log("CALL clear contents (",dash_clientside.callback_context.triggered_id,")");
+    console.log("clear_contents: (",dash_clientside.callback_context.triggered_id,")");
     return [];
 },
 close_modal:function(clk){if(typeof clk!=='number'){return dash_clientside.no_update};return false},
-save_state:function(_1,load,name,date,estab,obs,...prdc){
+save_state:function(_,load,name,date,estab,obs,...prdc){
     if (load === null){return dash_clientside.no_update}
     let data=[];data.push({'first':[name,date,estab]});data.push({'observations':obs});
     for(let i=0;i < prdc.length;i++){
@@ -47,13 +47,14 @@ save_state:function(_1,load,name,date,estab,obs,...prdc){
             data.push({"container":product_name,"values":row,"row_id":row_id.split("-").slice(-1)[0]});
         }
     };
-    console.log("CALL save data (",dash_clientside.callback_context.triggered_id,")",data);
+    console.log("save_state: (",dash_clientside.callback_context.triggered_id,")",data);
     return data;
 },
-validate_args:function(_1,name,date,est,...vals){
+validate_args:function(_,name,date,est,...vals){
     var firsts=vals.splice(-3);
     var seconds=vals.slice((vals.length - CFG.products.length)/2 + CFG.products.length);
     var valids=[],status1=[],status2=[];
+    ctx = dash_clientside.callback_context.triggered_id;
     // Individual validations
     for(var i=0;i < seconds.length;i += 4){
         var [br,pr,qn,obs]=seconds.slice(i,i + 4);
@@ -73,7 +74,7 @@ validate_args:function(_1,name,date,est,...vals){
     };
     // Transform to appropriate classnames
     valids=valids.map(sublist=>sublist.map(v=>v?"correct":"wrong"));
-    console.log("CALL validation (",dash_clientside.callback_context.triggered_id,")",firsts,groupValidations2(valids,CFG.products));
+    console.log("validate_args: (",ctx,")",firsts,groupValidations2(valids,CFG.products));
     valids=valids.concat(status1).concat(status2).concat(firsts.map(v=>(v!==null&&v!==""?"correct":"wrong")));
     valids.push("");valids.push(false);
     // Add scroll on focus event listeners
@@ -100,45 +101,49 @@ delete_product_row:function(...vals){
         // Find row by row index and context index,remove child at index i
         if (child.props.id === prop_id){children.splice(i,1);break;}}
     patch[index]=children;
-    console.log("CALL delete row:",CFG.products[index]);
+    console.log("delete_product_row:",CFG.products[index]);
     return patch;
 },
-display_progress:function(_1,name,date,est,...vals){
+display_progress:function(_,name,date,est,...vals){
     badges=vals.slice(0,13);
-    msg="Você tem certeza que quer enviar? Resumo do envio:\n\n";
-    msg += "Seções com poucos itens: " + vals.slice(13).filter((c,i)=>c.length < CFG.product_rows[CFG.products[i]]).length;
+    today=new Date().toISOString().split('T')[0];
+    date_val=vals[26];
+    idx=0;
+    msg="Você tem certeza que quer enviar?\n\n";
+    msg+=`${idx+=1}. Seções com poucos itens: `+vals.slice(13,26).filter((c,i)=>c.length<CFG.product_rows[CFG.products[i]]).length+"\n";
+    if(today!=date_val){msg+=`${idx+=1}. Envio em dia diferente:\n      - Data atual: `+today+"\n      - Registrado: "+date_val}
     output=badges.map(v=>{
         if (v === "success"){return {"color": "green"}}
         else if (v === "danger"){return {"color": "red"}}
         else {return {"color": "rgb(252,174,30)"}}});
     // Update save button status
-    if ([name,date,est].every(v=>v=="correct") && badges.every(v=>v!="danger")){
-        output=output.concat(["success",""])}
+    if ([name,date,est].every(v=>v=="correct") && badges.every(v=>v!="danger")){output=output.concat(["success",""])}
     else {output=output.concat(["danger","unclickable"])};
-    console.log("CALL progress: (",dash_clientside.callback_context.triggered_id,")",[name,date,est],badges,output);
+    console.log("display_progress: (",dash_clientside.callback_context.triggered_id,")",[name,date,est],badges,output, msg);
     output.push(msg);
     output.push("");
     return output;
 },
 establishment_address:function(est){
     if(est in COORDINATES){loc=COORDINATES[est].Endereço}else{loc="Sem endereço"}
-    console.log("CALL address:",est,loc);return loc;
+    console.log("establishment_address:",est,loc);return loc;
 },
-locate_establishment: async function(_1) {
-    if (navigator.geolocation) {try {
-        pos = await getPosition(GEOOPTS);
-        lat = pos.coords.latitude;
-        lon = pos.coords.longitude;
-        smallestDist = [Infinity, ""];
+locate_establishment:async function(_){
+    output = [dash_clientside.no_update, ""];
+    if(navigator.geolocation){try{
+        pos=await getPosition(GEOOPTS);
+        lat=pos.coords.latitude;
+        lon=pos.coords.longitude;
+        smallestDist=[Infinity, ""];
         for (est in COORDINATES) {
             vals=COORDINATES[est];dist=haversineDistance(lat,lon,vals.Latitude,vals.Longitude);
             if (dist<smallestDist[0]){smallestDist=[dist,est]}}
-        console.log("CALL locate establishment", smallestDist, pos);
-        text = "Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";
-        text += new Date(pos.timestamp).toLocaleString("en-CA", {hour12: false});
-        return [smallestDist[1],text];
-    } catch (error) {
-        return [dash_clientside.no_update, translateError(error)]}
-    } else {return [dash_clientside.no_update, "Localização não é suportada nesse browser!"]}
+        console.log("locate_establishment:",smallestDist,pos);
+        text="Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";
+        text+=new Date(pos.timestamp).toLocaleString("en-CA",{hour12: false});
+        output = [smallestDist[1],text];
+    }catch(error){output[1]=translateError(error)}
+    }else{output[1]="Localização não é suportada nesse browser!"}
+    return output;
 }
 }

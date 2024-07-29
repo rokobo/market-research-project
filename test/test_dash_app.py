@@ -133,10 +133,13 @@ def check_logs(driver, message):
     return False
 
 
-def fill_first_section(driver):
+def fill_first_section(driver, date=False):
     elements = [get_by_cond(driver, id, By.ID) for id in FIRST_IDS]
     for idx, element in enumerate(elements):
-        element.send_keys(RAW_INPUTS[idx])
+        if (idx == 1) and date:
+            element.send_keys(datetime.now().strftime('%m%d%Y'))
+        else:
+            element.send_keys(RAW_INPUTS[idx])
 
 
 @mark.incremental
@@ -324,7 +327,7 @@ class Test003SaveProducts:
         return file_path
 
     def test_valid_save(self):
-        fill_first_section(self.app)
+        fill_first_section(self.app, True)
 
         for idx, product in enumerate(CFG.products):
             scroll_to_product(self.app, product)
@@ -354,6 +357,7 @@ class Test003SaveProducts:
                 remove(file_path)
                 file_path = self.find_saved_file(path)
 
+        time.sleep(1)
         button = get_by_cond(self.app, "save-products", By.ID)
         container = get_by_cond(self.app, "save-container", By.ID)
         assert check_in_attr(button, "class", "success")
@@ -363,20 +367,24 @@ class Test003SaveProducts:
         observation.send_keys("Test observation")
         assert check_in_attr(observation, "value", "Test observation")
 
+    def test_no_messages(self):
+        messages = self.perform_save().splitlines()
+        assert any("poucos itens" in string for string in messages), messages
+        assert not any("Envio em dia diferente" in string for string in messages), messages
+
+        for line in messages:
+            if "poucos itens" in line:
+                assert int(line.split(":")[-1].strip()) == 0, line
+                break
+
     def test_full_save(self):
-        message = self.perform_save()
-        for line in message.splitlines():
-            if "poucos itens" not in line:
-                continue
-            assert int(line.split(":")[-1].strip()) == 0, line
-            break
         file_path = self.find_saved_file("data")
         assert file_path is not None
         dataframe = pd.read_csv(file_path)
 
         assert len(dataframe) == 33, dataframe
         assert list(dataframe.Nome.unique()) == [STORED_INPUTS[0]], dataframe
-        assert list(dataframe.Data.unique()) == [STORED_INPUTS[1]], dataframe
+        assert list(dataframe.Data.unique()) == [datetime.now().strftime('%Y-%m-%d')], dataframe
         assert list(dataframe.Estabelecimento.unique()) == [RAW_INPUTS[2]], dataframe
         assert list(dataframe.columns) == CSV_COLUMNS, dataframe.columns
         assert dataframe.Produto.value_counts().to_dict() == CFG.product_rows, dataframe
@@ -453,13 +461,26 @@ class Test003SaveProducts:
                 f'[id*="price-{product}"]')
             assert len(productElems) == 0, product
 
+    def test_all_messages(self):
+        messages = self.perform_save().splitlines()
+        assert any("poucos itens" in string for string in messages), messages
+        assert any("Envio em dia diferente" in string for string in messages), messages
+        assert any("Data atual:" in string for string in messages), messages
+        assert any("Registrado:" in string for string in messages), messages
+        today = None
+
+        for line in messages:
+            if "poucos itens" in line:
+                assert int(line.split(":")[-1].strip()) == len(CFG.products), line
+            if "Data atual" in line:
+                today = line.split(":")[-1].strip()
+                assert len(today) == 10, today
+            if "Registrado" in line:
+                registered = line.split(":")[-1].strip()
+                assert len(registered) == 10, registered
+                assert today != registered, (today, registered)
+
     def test_empty_save(self):
-        message = self.perform_save()
-        for line in message.splitlines():
-            if "poucos itens" not in line:
-                continue
-            assert int(line.split(":")[-1].strip()) == len(CFG.products), line
-            break
         file_path = self.find_saved_file("data")
         assert file_path is not None
         dataframe = pd.read_csv(file_path)

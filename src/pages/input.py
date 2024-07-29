@@ -235,6 +235,7 @@ clientside_callback(
     Input("establishment", "className"),
     [Input(f"status-{product}", 'color') for product in CFG.products],
     [State(f"container-{product}", 'children') for product in CFG.products],
+    State("collection_date", "value"),
     prevent_initial_call=True
 )
 
@@ -354,11 +355,12 @@ clientside_callback(
     State("collection_date", "value"),
     State("establishment", "value"),
     State("general_observations", "value"),
+    State("geolocation", "position"),
     [State({"type": f"{field}-{product}", "index": ALL}, "value")
         for product in CFG.products for field in CFG.fields],
     prevent_initial_call=True
 )
-def save_args(clicks, name, date, establishment, obs, *values):
+def save_args(clicks, name, date, establishment, obs, pos, *values):
     if clicks is None:
         return dash.no_update
     products = [values[i:i + 4] for i in range(0, len(values), 4)]
