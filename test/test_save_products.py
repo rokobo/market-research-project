@@ -3,6 +3,7 @@ import sys
 from os.path import join, dirname
 from os import remove, listdir
 import pandas as pd
+import time
 
 
 sys.path.append(join(dirname(dirname(__file__)), "src"))
@@ -17,7 +18,7 @@ def test_one_line() -> None:
         product_data = [([], [], [], [])] * 13
         product_data[i] = ([f"marca{i}"], [i], [i], [])
         info = ["name", "date", "establishment"]
-        df1 = save_products(product_data, info, None, True)
+        df1 = save_products(product_data, info, None, None, True)
         df2 = pd.DataFrame({
             'Nome': ["name"],
             'Data': ["date"],
@@ -37,7 +38,7 @@ def test_two_lines() -> None:
     product_data[0] = (["marca"], [2], [3], [])
     product_data[1] = (["marca2"], [4], [5], [])
     info = ["name", "date", "establishment"]
-    df1 = save_products(product_data, info, None, True)
+    df1 = save_products(product_data, info, None, None, True)
     df2 = pd.DataFrame({
         'Nome': ["name"] * 2,
         'Data': ["date"] * 2,
@@ -51,6 +52,60 @@ def test_two_lines() -> None:
     assert df1.equals(df2)
 
 
+def test_naming() -> None:
+    data_path = join(CFG.home, "data")
+    for file in listdir(data_path):
+        remove(join(data_path, file))
+
+    product_data = [([], [], [], [])] * 13
+    info = ["name", "date", "establishment"]
+    save_products(product_data, info, None, None)
+    file_name = None
+
+    for file in listdir(data_path):
+        file_name = file
+        break
+
+    assert file_name
+    fields = file_name.split("|")
+    assert len(fields) == 4, fields
+    assert fields[0] == info[1], fields
+    assert abs(int(fields[1]) - int(time.time())) < 10, fields
+    assert fields[2] == info[0], fields
+    assert fields[3].replace(".csv", "") == info[2], fields
+    for file in listdir(data_path):
+        remove(join(data_path, file))
+
+
+def test_naming_coordinates() -> None:
+    data_path = join(CFG.home, "data")
+    for file in listdir(data_path):
+        remove(join(data_path, file))
+
+    product_data = [([], [], [], [])] * 13
+    info = ["name", "date", "establishment"]
+    save_products(product_data, info, None, {
+        'lat': -22.895, 'lon': -47.0439, 'accuracy': 1, 'alt': None,
+        'alt_accuracy': None, 'speed': None, 'heading': None})
+    file_name = None
+
+    for file in listdir(data_path):
+        file_name = file
+        break
+
+    assert file_name
+    fields = file_name.split("|")
+    assert len(fields) == 6, fields
+    assert fields[0] == info[1], fields
+    assert abs(int(fields[1]) - int(time.time())) < 10, fields
+    assert fields[2] == info[0], fields
+    assert fields[3] == info[2], fields
+    assert fields[4] == "-22.895", fields
+    assert fields[5].replace(".csv", "") == "-47.0439", fields
+    for file in listdir(data_path):
+        remove(join(data_path, file))
+
+
 def test_delete_simple() -> None:
     data_path = join(CFG.home, "data")
     for file in listdir(data_path):
@@ -59,7 +114,7 @@ def test_delete_simple() -> None:
         product_data = [([], [], [], [])] * 13
         product_data[1] = ([f"marca{1}"], [1], [1], [])
         info = [f"name{i}", "2020-06-28", "establishment"]
-        save_products(product_data, info, None)
+        save_products(product_data, info, None, None)
 
     assert len(listdir(data_path)) == 10
 
@@ -76,7 +131,7 @@ def test_delete_4_months() -> None:
         product_data = [([], [], [], [])] * 13
         product_data[1] = ([f"marca{1}"], [1], [1], [])
         info = [f"name{i}", "2024-03-28", "establishment"]
-        save_products(product_data, info, None)
+        save_products(product_data, info, None, None)
 
     assert len(listdir(data_path)) == 10
 
@@ -93,7 +148,7 @@ def test_delete_multiple() -> None:
         product_data = [([], [], [], [])] * 13
         product_data[1] = ([f"marca{1}"], [1], [1], [])
         info = [f"name{i}", f"2024-0{i}-28", "establishment"]
-        save_products(product_data, info, None)
+        save_products(product_data, info, None, None)
 
     assert len(listdir(data_path)) == 9
 

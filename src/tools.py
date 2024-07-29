@@ -7,7 +7,7 @@ import pandas as pd
 import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from typing import Optional
+from typing import Any, Optional
 from CONFIG import CFG
 
 
@@ -62,7 +62,10 @@ def check_folder(path):
         makedirs(path, exist_ok=True)
 
 
-def save_products(product_data, info, obs: Optional[str], test=False):
+def save_products(
+    product_data, info, obs: Optional[str],
+    position: Optional[dict[str, Any]], test=False
+):
     check_folder("data")
     check_folder("data_obs")
     rows = []
@@ -95,6 +98,12 @@ def save_products(product_data, info, obs: Optional[str], test=False):
     if test:
         return df
     file_name = f"{info[1]}|{int(time.time())}|{info[0]}|{info[2]}"
+
+    if isinstance(position, dict):
+        if "lat" in position:
+            file_name += f"|{position["lat"]}"
+        if "lon" in position:
+            file_name += f"|{position["lon"]}"
     df.to_csv(
         f"data/{file_name}.csv",
         index=False)

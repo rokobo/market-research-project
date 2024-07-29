@@ -364,5 +364,5 @@ def save_args(clicks, name, date, establishment, obs, pos, *values):
     if clicks is None:
         return dash.no_update
     products = [values[i:i + 4] for i in range(0, len(values), 4)]
-    save_products(products, (name, date, establishment), obs)
+    save_products(products, (name, date, establishment), obs, pos)
     return [], "", True
