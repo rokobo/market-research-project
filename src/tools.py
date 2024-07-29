@@ -46,11 +46,9 @@ def load_brands(product: str) -> list[dict[str, str]]:
 
 def load_images() -> dict[str, str]:
     icons = {}
-
     for product in CFG.products:
-        path = join(CFG.home, f"assets/{product}.svg")
-        if not exists(path):
-            path = join(CFG.home, "assets/tomato.svg")
+        path = join(CFG.home, f"images/{product}.svg")
+        assert exists(path), path
         with open(path, "r") as file:
             svg_data = file.read()
         icons[product] = svg_data
