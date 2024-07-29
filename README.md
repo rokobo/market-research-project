@@ -4,6 +4,8 @@
   - [Excel workbook](#excel-workbook)
   - [AWS costs and free tier](#aws-costs-and-free-tier)
   - [Clientside callbacks and authentication](#clientside-callbacks-and-authentication)
+  - [Configuration files](#configuration-files)
+  - [Additional checks](#additional-checks)
   - [Environment file](#environment-file)
   - [Minify assets](#minify-assets)
   - [AWS deployment to EC2](#aws-deployment-to-ec2)
@@ -46,6 +48,18 @@ To prevent possibly having a large AWS bill, the data being sent out of EC2 must
 1. Clientside callbacks were used because they do not send or receive data from the EC2 server. Some functions still had to be server callbacks because they either need to send data or need to create components dynamically (although I imagine it is possible to do this through clientside callbacks).
 2. `dash_auth` was used to prevent page load and minimize data sent out from the server to people who are not involved in the project. Considerations about the user/password duo is explained in the next section.
 3. One common mistake when creating callbacks in dash is not understanding the order in which the callbacks are called. Sometimes they are not even constant. One way to handle this is to use dummy inputs and outputs. If only one function outputs to a dummy container, then you can use as an input for a callback you want executed later.
+
+## Configuration files
+
+- `estabelecimentos.txt` - The establishments that are used in the callbacks.
+- `estabelecimentos.csv` - Used for locating the nearest establishment using Haversine distance and outputting the address.
+- `marcas-*.txt` - The brands for each product that are used in the callbacks.
+- `CONFIG.py` - Has configurations that are available to python files and clientside callbacks, this was done to ensure there weren't two configuration files.
+
+## Additional checks
+
+1. The modal that appears at the start of the page is a way to make sure that the validations callback is called. Due to the random nature of callback execution, it is used to make sure the user has the correct state of the site, prompting a refresh in case it fails.
+2. The modal that appears on send shows suspicious and possibly incorrect values that the user might have missed. The second modal that appears, thanking the user, is just for triggering the confetti animation. The second modal was used because `dcc.ConfirmDialogProvider` was not blocking click actions when the button was disabled or the prompt to save ignored.
 
 ## Environment file
 
