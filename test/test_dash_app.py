@@ -531,7 +531,7 @@ class Test005Geolocation:
         button = get_by_cond(self.app, "fill-establishment", By.ID)
         button.click()
         wait_substring(
-            self.app, "establishment-subformtext", By.ID, "Tente novamente", 5)
+            self.app, "establishment-subformtext", By.ID, "tente novamente", 5)
 
     def test_no_error(self):
         self.app.execute_cdp_cmd("Emulation.setGeolocationOverride", {
