@@ -156,6 +156,9 @@ layout = html.Div([
         ],
         id="page-loading-modal", is_open=True,
         centered=True, keyboard=False, backdrop="static"),
+    dbc.Modal(
+        id="geo-loading-modal", is_open=False,
+        centered=True, keyboard=False, backdrop="static"),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
     dcc.Interval(id="10-seconds", interval=10*1000),
     html.Div(
@@ -176,8 +179,12 @@ clientside_callback(
     Output('online-badge', 'color'),
     Output('geolocation-badge', 'children'),
     Output('geolocation-badge', 'color'),
+    Output("geo-loading-modal", "is_open"),
+    Output("geo-loading-modal", "children"),
+    Output('geo-history', 'data'),
     Input("10-seconds", "n_intervals"),
     State("geolocation", "position"),
+    State('geo-history', 'data'),
 )
 
 
@@ -351,7 +358,7 @@ clientside_callback(
     Output("collection_date", "className"),
     Output("establishment", "className"),
     Output("dummy-div-progress", "className"),
-    Output("page-loading-modal", "is_open"),
+    Output("page-loading-modal", "is_open", allow_duplicate=True),
     Input("dummy-div-validation", "className"),
     Input("collector_name", "value"),
     Input("collection_date", "value"),
@@ -371,6 +378,7 @@ clientside_callback(
 
 @callback(
     Output('store', 'data', allow_duplicate=True),
+    Output('geo-history', 'data', allow_duplicate=True),
     Output('dummy-div-load', 'className'),
     Output("send-confirmed-modal", "is_open"),
     Input("confirm-send", "submit_n_clicks"),
@@ -379,13 +387,14 @@ clientside_callback(
     State("establishment", "value"),
     State("general_observations", "value"),
     State("geolocation", "position"),
+    State('geo-history', 'data'),
     [State({"type": f"{field}-{product}", "index": ALL}, "value")
         for product in CFG.products for field in CFG.fields],
     prevent_initial_call=True
 )
-def save_args(clicks, name, date, establishment, obs, pos, *values):
+def save_args(clicks, name, date, establishment, obs, pos, geo_hist, *values):
     if clicks is None:
         return dash.no_update
     products = [values[i:i + 4] for i in range(0, len(values), 4)]
-    save_products(products, (name, date, establishment), obs, pos)
-    return [], "", True
+    save_products(products, (name, date, establishment), obs, pos, geo_hist)
+    return [], [], "", True

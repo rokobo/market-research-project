@@ -2,19 +2,18 @@ if(!window.dash_clientside){window.dash_clientside={}}
 const CFG=JSON.parse(localStorage.getItem('config'));
 const COORDINATES=JSON.parse(localStorage.getItem('coordinates'));
 const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[i/4]){acc[keys[i/4]]=lists.slice(i,i+4).flat()}return acc},{});
-function haversineDistance(a,t,h,n){var r=deg2rad(h-a),s=deg2rad(n-t),M=Math.sin(r/2)*Math.sin(r/2)+Math.cos(deg2rad(a))*Math.cos(deg2rad(h))*Math.sin(s/2)*Math.sin(s/2);return 6371*(2*Math.atan2(Math.sqrt(M),Math.sqrt(1-M)))};
+function haversineDistance(a,t){var[h,n]=a,[r,s]=t,M=deg2rad(r-h),d=deg2rad(s-n),e=Math.sin(M/2)*Math.sin(M/2)+Math.cos(deg2rad(h))*Math.cos(deg2rad(r))*Math.sin(d/2)*Math.sin(d/2);return 2*Math.atan2(Math.sqrt(e),Math.sqrt(1-e))*6371}
 function deg2rad(d){return d*(Math.PI/180)};
 const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:5};
-let LOCATION = null;
-const getPosition = (options) => {return new Promise((resolve, reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
+let LOCATION=null;
+const getPosition=(options)=>{return new Promise((resolve,reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 const ERRORS = {
-    1:"Permita o uso de localização e tente novamente!",
-    2:"Posição indisponível, tente novamente!",
-    3:"Tempo de requisição esgotado, tente novamente!",
-    4: "Localização não é suportada nesse browser!",
-    default:"Erro desconhecido!"
-};
+1:"Permita o uso de localização e tente novamente!",2:"Posição indisponível, tente novamente!",
+3:"Tempo de requisição esgotado, tente novamente!",4:"Localização não é suportada nesse browser!",
+default:"Erro desconhecido!"};
 const translateError=(error)=>{return ERRORS[error]||ERRORS.default};
+const BR={type:"Br",namespace:"dash_html_components",props:{}};
+const STRONG=(str)=>{return{type:"Strong",namespace:"dash_html_components",props:{children:str}}};
 
 window.dash_clientside.clientside={
 clear_contents:function(clk){
@@ -23,13 +22,21 @@ clear_contents:function(clk){
     return [];
 },
 close_modal:function(clk){if(typeof clk!=='number'){return dash_clientside.no_update};return false},
-update_badges:async function(_,pos){
-    output=[];
+update_badges:async function(_,pos,geo){
+    if (LOCATION==null){console.log("update_badges")}
+    output=[];geoNow=null;
     if(navigator.onLine){output=output.concat(["ONLINE","success"])}
     else {output=output.concat(["OFFLINE","danger"])};
-    if(navigator.geolocation){try{LOCATION=await getPosition(GEOOPTS);output=output.concat([LOCATION.coords.latitude.toFixed(4)+", "+LOCATION.coords.longitude.toFixed(4),"secondary"])}
-    catch(error){LOCATION=error.code;output=output.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
+    if(navigator.geolocation){try{LOCATION=await getPosition(GEOOPTS);geoNow=[LOCATION.coords.latitude,LOCATION.coords.longitude,LOCATION.timestamp];output=output.concat([geoNow[0].toFixed(4)+", "+geoNow[1].toFixed(4),"secondary"])}
+        catch(error){LOCATION=error.code;output=output.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
     else{LOCATION=4;output=output.concat(["ERRO LOCALIZAÇÃO","danger"])}
+    if (output[3] == "secondary"){output=output.concat([false,dash_clientside.no_update])}
+    else {output=output.concat([true,[BR,BR,STRONG("REQUERIMENTO NÃO SATISFEITO:"),translateError(LOCATION),BR,BR,BR]])}
+    if(geoNow==null){output.push(dash_clientside.no_update)}
+    else if(geo.length==0){output.push(geo.concat([geoNow]))}
+    else if(haversineDistance(geo.at(-1),geoNow)>0.1){output.push(geo.concat([geoNow]))}
+    else{{output.push(dash_clientside.no_update)}}
+    if(geo.length>CFG.geo_length){geo.shift()}
     return output;
 },
 save_state:function(_,load,name,date,estab,obs,...prdc){
@@ -117,7 +124,7 @@ delete_product_row:function(...vals){
 },
 display_progress:function(_,name,date,est,...vals){
     badges=vals.slice(0,13);
-    today=new Date().toISOString().split('T')[0];
+    today=new Date().toLocaleDateString('en-CA');
     date_val=vals[26];
     idx=0;
     msg="Você tem certeza que quer enviar?\n\n";
@@ -147,7 +154,7 @@ locate_establishment:function(_){
     lon=pos.coords.longitude;
     smallestDist=[Infinity, ""];
     for (est in COORDINATES) {
-        vals=COORDINATES[est];dist=haversineDistance(lat,lon,vals.Latitude,vals.Longitude);
+        vals=COORDINATES[est];dist=haversineDistance([lat,lon],[vals.Latitude,vals.Longitude]);
         if (dist<smallestDist[0]){smallestDist=[dist,est]}}
     console.log("locate_establishment:",smallestDist,pos);
     text="Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";

@@ -62,7 +62,7 @@ def check_folder(path):
 
 def save_products(
     product_data, info, obs: Optional[str],
-    position: Optional[dict[str, Any]], test=False
+    position: Optional[dict[str, Any]], geo_hist: Optional[list], test=False
 ):
     check_folder("data")
     check_folder("data_obs")
@@ -105,9 +105,19 @@ def save_products(
     df.to_csv(
         f"data/{file_name}.csv",
         index=False)
+
+    obs_data = []
     if (obs is not None) and (obs != ""):
+        obs_data.append(f"{obs}\n")
+    else:
+        obs_data.append("Sem observações\n")
+    if geo_hist is not None:
+        obs_data.append("\nHistórico de geolocalização\n")
+        for geo_data in geo_hist:
+            obs_data.append(f"{geo_data[2]}: {geo_data[0]}, {geo_data[1]}\n")
+    if obs_data != []:
         with open(f"data_obs/{file_name}.txt", "w") as f:
-            f.write(obs)
+            f.writelines(obs_data)
     return
 
 
