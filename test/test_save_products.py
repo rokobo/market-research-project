@@ -4,6 +4,8 @@ from os.path import join, dirname
 from os import remove, listdir
 import pandas as pd
 import time
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
 sys.path.append(join(dirname(dirname(__file__)), "src"))
@@ -12,13 +14,20 @@ from tools import save_products, delete_old_reports
 from CONFIG import CFG
 
 
+def delete_data_files():
+    for file in listdir(CFG.data_obs):
+        remove(join(CFG.data_obs, file))
+    for file in listdir(CFG.data_path):
+        remove(join(CFG.data_path, file))
+
+
 def test_one_line() -> None:
     """"Dataframes with one line."""
     for i, product in enumerate(CFG.products):
         product_data = [([], [], [], [])] * 13
         product_data[i] = ([f"marca{i}"], [i], [i], [])
         info = ["name", "date", "establishment"]
-        df1 = save_products(product_data, info, None, None, True)
+        df1 = save_products(product_data, info, None, None, None, True)
         df2 = pd.DataFrame({
             'Nome': ["name"],
             'Data': ["date"],
@@ -38,7 +47,7 @@ def test_two_lines() -> None:
     product_data[0] = (["marca"], [2], [3], [])
     product_data[1] = (["marca2"], [4], [5], [])
     info = ["name", "date", "establishment"]
-    df1 = save_products(product_data, info, None, None, True)
+    df1 = save_products(product_data, info, None, None, None, True)
     df2 = pd.DataFrame({
         'Nome': ["name"] * 2,
         'Data': ["date"] * 2,
@@ -53,16 +62,13 @@ def test_two_lines() -> None:
 
 
 def test_naming() -> None:
-    data_path = join(CFG.home, "data")
-    for file in listdir(data_path):
-        remove(join(data_path, file))
-
+    delete_data_files()
     product_data = [([], [], [], [])] * 13
     info = ["name", "date", "establishment"]
-    save_products(product_data, info, None, None)
+    save_products(product_data, info, None, None, None)
     file_name = None
 
-    for file in listdir(data_path):
+    for file in listdir(CFG.data_path):
         file_name = file
         break
 
@@ -73,23 +79,19 @@ def test_naming() -> None:
     assert abs(int(fields[1]) - int(time.time())) < 10, fields
     assert fields[2] == info[0], fields
     assert fields[3].replace(".csv", "") == info[2], fields
-    for file in listdir(data_path):
-        remove(join(data_path, file))
+    delete_data_files()
 
 
 def test_naming_coordinates() -> None:
-    data_path = join(CFG.home, "data")
-    for file in listdir(data_path):
-        remove(join(data_path, file))
-
+    delete_data_files()
     product_data = [([], [], [], [])] * 13
     info = ["name", "date", "establishment"]
     save_products(product_data, info, None, {
         'lat': -22.895, 'lon': -47.0439, 'accuracy': 1, 'alt': None,
-        'alt_accuracy': None, 'speed': None, 'heading': None})
+        'alt_accuracy': None, 'speed': None, 'heading': None}, None)
     file_name = None
 
-    for file in listdir(data_path):
+    for file in listdir(CFG.data_path):
         file_name = file
         break
 
@@ -102,58 +104,110 @@ def test_naming_coordinates() -> None:
     assert fields[3] == info[2], fields
     assert fields[4] == "-22.895", fields
     assert fields[5].replace(".csv", "") == "-47.0439", fields
-    for file in listdir(data_path):
-        remove(join(data_path, file))
+    delete_data_files()
+
+
+def test_short_geo_history() -> None:
+    delete_data_files()
+    product_data = [([], [], [], [])] * 13
+    info = ["name", "date", "establishment"]
+    geo_hist = [[1, 2, 3], [4, 5, 6]]
+    save_products(product_data, info, None, None, geo_hist)
+    file_name = None
+
+    for file in listdir(CFG.data_obs):
+        file_name = join(CFG.data_obs, file)
+        break
+
+    assert file_name
+    with open(file_name, 'r') as file:
+        observations = file.readlines()
+
+    assert "Sem observações" == observations[0].strip()
+    assert "Histórico de geolocalização" == observations[2].strip()
+    for i, obs in enumerate(observations[3:]):
+        geo = geo_hist[i]
+        assert obs.strip() == f"{geo[2]}: {geo[0]}, {geo[1]}"
+
+    delete_data_files()
+
+
+def test_longe_geo_history() -> None:
+    delete_data_files()
+    product_data = [([], [], [], [])] * 13
+    info = ["name", "date", "establishment"]
+    geo_hist = [[i, i+1, i+2] for i in range(100)]
+    save_products(product_data, info, None, None, geo_hist)
+    file_name = None
+
+    for file in listdir(CFG.data_obs):
+        file_name = join(CFG.data_obs, file)
+        break
+
+    assert file_name
+    with open(file_name, 'r') as file:
+        observations = file.readlines()
+
+    assert "Sem observações" == observations[0].strip()
+    assert "Histórico de geolocalização" == observations[2].strip()
+    for i, obs in enumerate(observations[3:]):
+        geo = geo_hist[i]
+        assert obs.strip() == f"{geo[2]}: {geo[0]}, {geo[1]}"
+
+    delete_data_files()
 
 
 def test_delete_simple() -> None:
-    data_path = join(CFG.home, "data")
-    for file in listdir(data_path):
-        remove(join(data_path, file))
+    delete_data_files()
     for i in range(10):
         product_data = [([], [], [], [])] * 13
         product_data[1] = ([f"marca{1}"], [1], [1], [])
         info = [f"name{i}", "2020-06-28", "establishment"]
-        save_products(product_data, info, None, None)
+        save_products(product_data, info, None, None, None)
 
-    assert len(listdir(data_path)) == 10
+    assert len(listdir(CFG.data_path)) == 10
 
     delete_old_reports()
 
-    assert len(listdir(data_path)) == 0
+    assert len(listdir(CFG.data_path)) == 0
+    delete_data_files()
 
 
 def test_delete_4_months() -> None:
-    data_path = join(CFG.home, "data")
-    for file in listdir(data_path):
-        remove(join(data_path, file))
+    delete_data_files()
     for i in range(10):
         product_data = [([], [], [], [])] * 13
         product_data[1] = ([f"marca{1}"], [1], [1], [])
-        info = [f"name{i}", "2024-03-28", "establishment"]
-        save_products(product_data, info, None, None)
+        info = [
+            f"name{i}",
+            (datetime.today()-relativedelta(months=4)).strftime('%Y-%m-%d'),
+            "establishment"]
+        save_products(product_data, info, None, None, None)
 
-    assert len(listdir(data_path)) == 10
+    assert len(listdir(CFG.data_path)) == 10
 
     delete_old_reports()
 
-    assert len(listdir(data_path)) == 0
+    assert len(listdir(CFG.data_path)) == 0
+    delete_data_files()
 
 
 def test_delete_multiple() -> None:
-    data_path = join(CFG.home, "data")
-    for file in listdir(data_path):
-        remove(join(data_path, file))
+    delete_data_files()
     for i in range(1, 10):
         product_data = [([], [], [], [])] * 13
         product_data[1] = ([f"marca{1}"], [1], [1], [])
-        info = [f"name{i}", f"2024-0{i}-28", "establishment"]
-        save_products(product_data, info, None, None)
+        info = [
+            f"name{i}",
+            (datetime.today()-relativedelta(months=6-i)).strftime('%Y-%m-%d'),
+            "establishment"]
+        save_products(product_data, info, None, None, None)
 
-    assert len(listdir(data_path)) == 9
+    assert len(listdir(CFG.data_path)) == 9
 
     delete_old_reports()
 
-    assert len(listdir(data_path)) == 6
-    for file in listdir(data_path):
-        remove(join(data_path, file))
+    assert len(listdir(CFG.data_path)) == 7
+    for file in listdir(CFG.data_path):
+        remove(join(CFG.data_path, file))
+    delete_data_files()
