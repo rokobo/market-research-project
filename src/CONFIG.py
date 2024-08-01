@@ -5,6 +5,8 @@ import pandas as pd
 
 CFG = SimpleNamespace(**dict(
     home=dirname(dirname(__file__)),
+    data_obs=join(dirname(dirname(__file__)), "data_obs"),
+    data_path=join(dirname(dirname(__file__)), "data"),
     products=[
         "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
         "soja", "banana", "batata", "tomate", "carne", "pao"],
@@ -15,6 +17,7 @@ CFG = SimpleNamespace(**dict(
         "leite": 4, "manteiga": 4, "soja": 2, "banana": 2, "batata": 1,
         "tomate": 1, "carne": 1, "pao": 1},
     fields=["brand", "price", "quantity", "obs"],
+    geo_length=10
 ))
 
 COORDINATES = pd.read_csv(
