@@ -7,6 +7,7 @@ CFG = SimpleNamespace(**dict(
     home=dirname(dirname(__file__)),
     data_obs=join(dirname(dirname(__file__)), "data_obs"),
     data_path=join(dirname(dirname(__file__)), "data"),
+    images=join(dirname(dirname(__file__)), "images"),
     products=[
         "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
         "soja", "banana", "batata", "tomate", "carne", "pao"],

@@ -19,8 +19,9 @@ def create_product_form(
 
     row.append(
         dbc.Col(dbc.Button(
-            "X", outline=True, color="secondary", className="me-1", size="sm",
-            id={"type": f"delete-{id_name}", "index": idx}
+            html.I(className="bi bi-trash3-fill", style={"fontSize": "100%"}),
+            size="sm", id={"type": f"delete-{id_name}", "index": idx},
+            style={"height": "100%"}, color="secondary", outline=True
         ), width="auto")
     )
     if brand:

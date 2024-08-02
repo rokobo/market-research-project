@@ -22,36 +22,45 @@ layout = html.Div([
         ], className="g-0 m-0 navigation")
     ], color="white", sticky="top", expand=True),
     dbc.Alert([
-        html.H4(
-            ["Instruções de preenchimento", html.Hr(className="m-1")],
-            className="alert-heading", style={'fontWeight': 'bold'}),
+        html.H4([
+            html.I(className="bi bi-info-circle"),
+            " Instruções de preenchimento", html.Hr(className="m-1")
+        ], className="alert-heading", style={'fontWeight': 'bold'}),
         html.P([
             "Só é necessário especificar a Quant. se ela for diferente "
             "da quantidade padrão.\n\n"
             "O envio é liberado se todas as seções estiverem completas. "
             "Caso queira não enviar alguma seção, delete as "
-            "fileiras clicando no botão com X.\n\n"
-            "Os ícones mostram se as informações de cada seção estão "
+            "fileiras clicando no botão com ",
+            html.I(className="bi bi-trash3-fill"),
+            ".\n\nOs ícones mostram se as informações de cada seção estão "
             "válidas. Amarelo indica menos items na seção do que o desejado."
             " Clicar no ícone te leva para a seção.\n\n"
-            "Recomendado usar Chrome, foi testado e "
+            " Recomendado usar ",
+            html.U(html.A(
+                ["Chrome ", html.I(className="bi bi-browser-chrome")],
+                href="https://www.google.com/chrome/",
+                target="_blank",
+                style={"text-decoration": "underline", "color": "inherit"}
+            )),
+            ", foi testado e "
             "possui compatibilidade plena."
         ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=True, color="warning"),
     dbc.Stack([
-        html.H1(
-            "Coleta de preços", className="b-3 mx-auto",
-            style={'fontWeight': 'bold', "text-align": "center"}),
+        html.H2(
+            "COLETA DE PREÇOS", className="mx-auto",
+            style={'fontWeight': 'bold'}),
         dcc.ConfirmDialogProvider(
-            dbc.Button("Limpar", color="warning", id="clear-products"),
+            dbc.Button(
+                [html.I(className="bi bi-trash3"), " Limpar"],
+                color="warning", id="clear-products"),
             id="confirm-clear",
             message=(
                 "Você tem certeza que quer limpar todos os campos? "
                 "Essa ação não pode ser revertida! \n\nApós "
-                "limpar o cache, atualize a página para aplicar a limpeza."
-            )
-        )
-    ], direction="horizontal"),
+                "limpar o cache, atualize a página para aplicar a limpeza."))
+    ], direction="horizontal", className="m-2 "),
     html.Div([
         dbc.Label("Nome do coletor", style={'fontWeight': 'bold'}),
         dbc.Input(type="text", id="collector_name"),
@@ -68,7 +77,9 @@ layout = html.Div([
         dcc.Loading(
             dbc.Stack([
                 dbc.Select(id="establishment", options=load_establishments()),
-                dbc.Button("Localizar", id="fill-establishment")
+                dbc.Button(
+                    [html.I(className="bi bi-geo-alt"), " Localizar"],
+                    id="fill-establishment")
             ], direction="horizontal", gap=1),
             overlay_style={"visibility": "visible", "filter": "blur(2px)"}),
         dbc.FormText(
@@ -119,7 +130,9 @@ layout = html.Div([
         "Pão Francês - 1kg", "pao",
         price=True, obs=True),
     html.Div([
-        dbc.Label("Observações gerais", style={'fontWeight': 'bold'}),
+        dbc.Label(
+            [html.I(className="bi bi-chat-right-text"), " Observações gerais"],
+            style={'fontWeight': 'bold'}),
         dbc.Textarea(
             id="general_observations", className="form-control",
             style={'width': '100%', 'height': '150px'},
@@ -128,7 +141,8 @@ layout = html.Div([
     ], className="m-2"),
     html.Div(dcc.ConfirmDialogProvider(
         html.Div(dbc.Button(
-            "Enviar", color="success", id="save-products"
+            [html.I(className="bi bi-file-earmark-arrow-up"), " Enviar"],
+            color="success", id="save-products"
         ), className="d-grid m-5"),
         id="confirm-send"
     ), id="save-container"),

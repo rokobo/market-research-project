@@ -9,7 +9,7 @@ let LOCATION=null;
 const getPosition=(options)=>{return new Promise((resolve,reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 const ERRORS = {
 1:"Permita o uso de localização e tente novamente!",2:"Posição indisponível, tente novamente!",
-3:"Tempo de requisição esgotado, tente novamente!",4:"Localização não é suportada nesse browser!",
+3:"Tempo de requisição esgotado, espere e tente novamente!",4:"Localização não é suportada nesse browser!",
 default:"Erro desconhecido!"};
 const translateError=(error)=>{return ERRORS[error]||ERRORS.default};
 const BR={type:"Br",namespace:"dash_html_components",props:{}};
@@ -24,20 +24,20 @@ clear_contents:function(clk){
 close_modal:function(clk){if(typeof clk!=='number'){return dash_clientside.no_update};return false},
 update_badges:async function(_,pos,geo){
     if (LOCATION==null){console.log("update_badges")}
-    output=[];geoNow=null;
-    if(navigator.onLine){output=output.concat(["ONLINE","success"])}
-    else {output=output.concat(["OFFLINE","danger"])};
-    if(navigator.geolocation){try{LOCATION=await getPosition(GEOOPTS);geoNow=[LOCATION.coords.latitude,LOCATION.coords.longitude,LOCATION.timestamp];output=output.concat([geoNow[0].toFixed(4)+", "+geoNow[1].toFixed(4),"secondary"])}
-        catch(error){LOCATION=error.code;output=output.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
-    else{LOCATION=4;output=output.concat(["ERRO LOCALIZAÇÃO","danger"])}
-    if (output[3] == "secondary"){output=output.concat([false,dash_clientside.no_update])}
-    else {output=output.concat([true,[BR,BR,STRONG("REQUERIMENTO NÃO SATISFEITO:"),translateError(LOCATION),BR,BR,BR]])}
-    if(geoNow==null){output.push(dash_clientside.no_update)}
-    else if(geo.length==0){output.push(geo.concat([geoNow]))}
-    else if(haversineDistance(geo.at(-1),geoNow)>0.1){output.push(geo.concat([geoNow]))}
-    else{{output.push(dash_clientside.no_update)}}
+    badgeOut=[];geoNow=null;
+    if(navigator.onLine){badgeOut=badgeOut.concat(["ONLINE","success"])}
+    else {badgeOut=badgeOut.concat(["OFFLINE","danger"])};
+    if(navigator.geolocation){try{LOCATION=await getPosition(GEOOPTS);geoNow=[LOCATION.coords.latitude,LOCATION.coords.longitude,LOCATION.timestamp];badgeOut=badgeOut.concat([geoNow[0].toFixed(4)+", "+geoNow[1].toFixed(4),"secondary"])}
+        catch(error){LOCATION=error.code;badgeOut=badgeOut.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
+    else{LOCATION=4;badgeOut=badgeOut.concat(["ERRO LOCALIZAÇÃO","danger"])}
+    if (badgeOut[3] == "secondary"){badgeOut=badgeOut.concat([false,dash_clientside.no_update])}
+    else {badgeOut=badgeOut.concat([true,[BR,BR,STRONG("REQUISITO PENDENTE:"),translateError(LOCATION),BR,BR,BR]])}
+    if(geoNow==null){badgeOut.push(dash_clientside.no_update)}
+    else if(geo.length==0){badgeOut.push(geo.concat([geoNow]))}
+    else if(haversineDistance(geo.at(-1),geoNow)>0.1){badgeOut.push(geo.concat([geoNow]))}
+    else{{badgeOut.push(dash_clientside.no_update)}}
     if(geo.length>CFG.geo_length){geo.shift()}
-    return output;
+    return badgeOut;
 },
 save_state:function(_,load,name,date,estab,obs,...prdc){
     if (load === null){return dash_clientside.no_update}

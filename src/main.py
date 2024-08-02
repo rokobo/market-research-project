@@ -15,7 +15,7 @@ load_dotenv()
 
 app = Dash(
     title="ICB", update_title="ICB...",
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
     use_pages=True, assets_folder='../assets',
     compress=False
 )
