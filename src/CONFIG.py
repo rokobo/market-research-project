@@ -18,7 +18,7 @@ CFG = SimpleNamespace(**dict(
         "leite": 4, "manteiga": 4, "soja": 2, "banana": 2, "batata": 1,
         "tomate": 1, "carne": 1, "pao": 1},
     fields=["brand", "price", "quantity", "obs"],
-    geo_length=10
+    geo_length=100
 ))
 
 COORDINATES = pd.read_csv(
