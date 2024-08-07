@@ -1,5 +1,6 @@
 """Tools for the pages."""
 
+from functools import cache
 from os.path import join, exists
 from os import makedirs, listdir
 from send2trash import send2trash
@@ -42,6 +43,24 @@ def load_brands(product: str) -> list[dict[str, str]]:
                 brands.append({
                     "label": brand, "value": brand
                 })
+    return brands
+
+
+@cache
+def load_raw_brands(product: str) -> Optional[list[dict[str, str]]]:
+    brands = []
+    path = join(CFG.home, f"config/marcas-{product}.txt")
+    if not exists(path):
+        return None
+    with open(path, 'r') as file:
+        for line in file:
+            brand = line.strip()
+            if brand == "-p":
+                continue
+            elif brand == "-np":
+                continue
+            else:
+                brands.append(brand)
     return brands
 
 
@@ -271,3 +290,46 @@ def aggregate_reports(date, test=False):
             "A1", '=balanço[[#All], [Data]:[Média Preço]]')
         worksheet.set_column("C:C", 11)
         return
+
+
+def check_reports():
+    pr = {}
+
+    for file in listdir(join(CFG.home, "data")):
+        pr[file] = [0, 0, 0, 0, 0, 0, 0]
+        if not file.endswith(".csv"):
+            continue
+        df = pd.read_csv(join(CFG.home, f"data/{file}"))
+        if df.empty:
+            continue
+        if "TESTE" in df.loc[0, "Estabelecimento"]:
+            continue
+
+        for _, row in df.iterrows():
+            if not isinstance(row["Nome"], str):
+                pr[file][0] += 1
+            if not isinstance(row["Data"], str):
+                pr[file][1] += 1
+            if not isinstance(row["Estabelecimento"], str):
+                pr[file][2] += 1
+            if not isinstance(row["Preço"], (int, float)) or np.isnan(row["Preço"]):
+                pr[file][5] += 1
+            if not isinstance(row["Quantidade"], (int, float)):
+                pr[file][6] += 1
+
+            if not any(row["Produto"] == v for v in CFG.products):
+                pr[file][3] += 1
+
+            brands = load_raw_brands(row["Produto"])
+            if brands is not None:
+                if not any(row["Marca"] == v for v in brands):
+                    pr[file][4] += 1
+
+    headers = [
+        "Nome", "Data", "Estabelecimento",
+        "Produto", "Marca", "Preço", "Quantidade"]
+    df = pd.DataFrame(pr).transpose()
+    df = df[~(df == 0).all(axis=1)]
+    df = df.set_axis(headers, axis=1)
+    df = df.replace(0, "-")
+    return df
