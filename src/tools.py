@@ -44,18 +44,6 @@ def load_brands(product: str) -> list[dict[str, str]]:
     return brands
 
 
-def load_images() -> dict[str, str]:
-    icons = {}
-    for file in listdir(CFG.images):
-        if not file.endswith(".svg"):
-            continue
-        name = file.split(".")[0].strip()
-        with open(join(CFG.images, file), "r") as file:
-            svg_data = file.read()
-        icons[name] = svg_data
-    return icons
-
-
 def check_folder(path):
     if not exists(path):
         makedirs(path, exist_ok=True)
@@ -79,10 +67,7 @@ def save_products(
             data = [prod_name]
             data.extend(row[:-1])
             if not isinstance(data[3], (float, int)):
-                if prod_name in CFG.quantities:
-                    quantidade = CFG.quantities[prod_name]
-                else:
-                    quantidade = 1
+                quantidade = CFG.quantities[prod_name][0]
                 data[3] = quantidade
             rows.append(data)
 

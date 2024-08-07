@@ -1,9 +1,9 @@
 import dash
 from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
-from components import product_form, add_new_form, ICONS
+from components import product_form, create_product_form
 from tools import load_establishments, save_products
-from CONFIG import CFG
+from CONFIG import CFG, ICONS
 import dash_bootstrap_components as dbc
 import time
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
@@ -90,45 +90,7 @@ layout = html.Div([
             "Geolocalização não usada",
             id="establishment-subformtext", color="secondary")
     ], className="m-2 unwrap"),
-    product_form(
-        "Açúcar - 1kg", "acucar",
-        brand=True, price=True, quantity=True),
-    product_form(
-        "Arroz - 5kg", "arroz",
-        brand=True, price=True, quantity=True),
-    product_form(
-        "Café - 0.5kg", "cafe",
-        brand=True, price=True, quantity=True),
-    product_form(
-        "Farinha - 1kg", "farinha",
-        brand=True, price=True, quantity=True),
-    product_form(
-        "Feijão - 1kg", "feijao",
-        brand=True, price=True, quantity=True),
-    product_form(
-        "Leite - 1L", "leite",
-        brand=True, price=True, quantity=True),
-    product_form(
-        "Manteiga - 0.2kg", "manteiga",
-        brand=True, price=True, quantity=True),
-    product_form(
-        "Óleo de soja - 0.9L", "soja",
-        brand=True, price=True, quantity=True),
-    product_form(
-        "Banana - 1kg (Nanica e Prata)", "banana",
-        brand=True, price=True),
-    product_form(
-        "Batata - 1kg (mais barata)", "batata",
-        price=True, obs=True),
-    product_form(
-        "Tomate - 1kg (mais barato)", "tomate",
-        price=True, obs=True),
-    product_form(
-        "Carne - 1kg (Coxão Mole)", "carne",
-        price=True, obs=True),
-    product_form(
-        "Pão Francês - 1kg", "pao",
-        price=True, obs=True),
+    html.Div([product_form(prd) for prd in CFG.products]),
     html.Div([
         dbc.Label(
             [html.I(className="bi bi-chat-right-text"), " Observações gerais"],
@@ -304,7 +266,7 @@ def load_state(_1, _2, data):
     if data == []:
         for idx, product in enumerate(CFG.products):
             containers[idx].extend([
-                add_new_form(product, idx, [None] * 4)
+                create_product_form(product, idx, [None] * 4)
                 for idx in range(CFG.product_rows[product])
             ])
     else:
@@ -315,7 +277,7 @@ def load_state(_1, _2, data):
                 return_data[4] = item["observations"]
             if "container" in item:
                 idx = CFG.products.index(item["container"])
-                containers[idx].append(add_new_form(
+                containers[idx].append(create_product_form(
                     item["container"], item["row_id"], item["values"]
                 ))
     return return_data + containers + [""]
@@ -351,7 +313,7 @@ def add_new_row(*values):
 
     context = context[4:]
     index = CFG.products.index(context)
-    new_row = add_new_form(context, int(time.time() * 10))
+    new_row = create_product_form(context, int(time.time() * 10))
     patched_children = [dash.no_update] * len(CFG.products)
     patch = Patch()
     patch.append(new_row)
