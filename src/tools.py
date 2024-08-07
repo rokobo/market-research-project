@@ -4,6 +4,7 @@ from os.path import join, exists
 from os import makedirs, listdir
 from send2trash import send2trash
 import pandas as pd
+import numpy as np
 import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -131,7 +132,7 @@ def delete_old_reports():
     print("Old files deleted")
 
 
-def aggregate_reports(date):
+def aggregate_reports(date, test=False):
     # Collect all reports into a single dataframe
     reports = []
     check_folder(join(CFG.home, "data_agg"))
@@ -142,6 +143,8 @@ def aggregate_reports(date):
         if not file.endswith(".csv"):
             continue
         file_date = file.split("|")[0].split("-")
+        if file_date[0] != date[0]:
+            continue
         if file_date[1] != date[1]:
             continue
 
@@ -161,6 +164,12 @@ def aggregate_reports(date):
     coleta_mes.Marca = coleta_mes.Marca.fillna("")
     coleta_mes["PPK"] = [
         f"=F{idx}/G{idx}" for idx in range(2, 2 + coleta_mes.shape[0])]
+    mask = coleta_mes['Produto'] == 'banana'
+    coleta_mes.loc[mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca'].str.lower()
+    coleta_mes.loc[mask, "Marca"] = ""
+
+    if test:
+        return coleta_mes
 
     prd_count = coleta_mes["Produto"].nunique()
     est_count = coleta_mes["Estabelecimento"].nunique()
@@ -173,7 +182,7 @@ def aggregate_reports(date):
     date_col = f"{date[0]}/{date[1]}"
     balanco = pd.DataFrame([{
         "Data": date_col,
-        "Produto": CFG.products[i-2],
+        "Produto": CFG.excel_products[i-2],
         "Média Preço": f"=ROUND(AVERAGEIFS({prc}, {prd}, B{i}), 3)",
         "Média Estab PPK": (
             f"=ROUND(AVERAGE(AVERAGEIFS({ppk}, {est},"
@@ -261,3 +270,4 @@ def aggregate_reports(date):
         worksheet.write_dynamic_array_formula(
             "A1", '=balanço[[#All], [Data]:[Média Preço]]')
         worksheet.set_column("C:C", 11)
+        return

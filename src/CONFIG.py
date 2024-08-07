@@ -12,6 +12,10 @@ CFG = SimpleNamespace(**dict(
     products=[
         "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
         "soja", "banana", "batata", "tomate", "carne", "pao"],
+    excel_products=[
+        "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
+        "soja", "banana prata", "banana nanica", "batata", "tomate", "carne",
+        "pao"],
     quantities={
         "acucar": [1, "kg"], "arroz": [5, "kg"], "cafe": [0.5, "kg"],
         "farinha": [1, "kg"], "feijao": [1, "kg"], "leite": [1, "L"],
