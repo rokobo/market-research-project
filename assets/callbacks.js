@@ -4,12 +4,12 @@ const COORDINATES=JSON.parse(localStorage.getItem('coordinates'));
 const groupValidations2=(lists,keys)=>lists.reduce((acc,_,i)=>{if(i%4===0&&keys[i/4]){acc[keys[i/4]]=lists.slice(i,i+4).flat()}return acc},{});
 function haversineDistance(a,t){var[h,n]=a,[r,s]=t,M=deg2rad(r-h),d=deg2rad(s-n),e=Math.sin(M/2)*Math.sin(M/2)+Math.cos(deg2rad(h))*Math.cos(deg2rad(r))*Math.sin(d/2)*Math.sin(d/2);return 2*Math.atan2(Math.sqrt(e),Math.sqrt(1-e))*6371}
 function deg2rad(d){return d*(Math.PI/180)};
-const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:5};
+const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:10000};
 let LOCATION=null;
 const getPosition=(options)=>{return new Promise((resolve,reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 const ERRORS = {
 1:"Permita o uso de localização e tente novamente!",2:"Posição indisponível, tente novamente!",
-3:"Tempo de requisição esgotado, espere e tente novamente!",4:"Localização não é suportada nesse browser!",
+3:"Tempo de requisição esgotado, espere ou tente novamente!",4:"Localização não é suportada nesse browser!",
 default:"Erro desconhecido!"};
 const translateError=(error)=>{return ERRORS[error]||ERRORS.default};
 const BR={type:"Br",namespace:"dash_html_components",props:{}};
@@ -98,7 +98,7 @@ validate_args:function(_,name,date,est,...vals){
     // Add scroll on focus event listeners
     document.querySelectorAll('.form-control').forEach(function(input){
         if (!input.hasEventListener){
-            input.addEventListener('focus',function(){input.scrollIntoView({behavior:'smooth',block:'center'})});
+            input.addEventListener('focus',function(){input.scrollIntoView({behavior:'instant',block:'center'})});
             input.hasEventListener=true;
         }
     })

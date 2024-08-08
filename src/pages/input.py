@@ -33,9 +33,11 @@ layout = html.Div([
             "Caso queira não enviar alguma seção, delete as "
             "fileiras clicando no botão com ",
             html.I(className="bi bi-trash3-fill"),
-            ".\n\nOs ícones mostram se as informações de cada seção estão "
-            "válidas. Amarelo indica menos items na seção do que o desejado."
-            " Clicar no ícone te leva para a seção.\n\n"
+            ".\n\nO status da seção é indicado pela cor do ícone:"
+            "Vermelho, seção incompleta. "
+            "Amarelo, menos fileiras que o desejado. "
+            "Verde, ideal. "
+            "Clicar no ícone te leva para a seção.\n\n"
             " Recomendado usar ",
             html.U(html.A(
                 ["Chrome ", html.I(className="bi bi-browser-chrome")],
@@ -136,7 +138,7 @@ layout = html.Div([
         id="geo-loading-modal", is_open=False,
         centered=True, keyboard=False, backdrop="static"),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
-    dcc.Interval(id="10-seconds", interval=10*1000),
+    dcc.Interval(id="10-seconds", interval=5*1000),
     html.Div(
         dbc.Stack([
             dbc.Badge("", color="info", id="geolocation-badge"),

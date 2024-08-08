@@ -207,8 +207,8 @@ def fill_first_section(driver, date=False):
 def perform_save(driver: webdriver.Chrome) -> str:
     for file in listdir(CFG.data_obs):
         remove(join(CFG.data_obs, file))
-    for file in listdir(CFG.data_path):
-        remove(join(CFG.data_path, file))
+    for file in listdir(CFG.data):
+        remove(join(CFG.data, file))
     button = get_by_cond(driver, "save-products", By.ID)
     send_click(driver, button)
     alert = WebDriverWait(driver, 5).until(EC.alert_is_present())

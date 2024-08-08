@@ -132,7 +132,7 @@ def delete_old_reports():
     current_date = datetime(now.year, now.month, 1)
     two_months_ago = current_date - relativedelta(months=3)
     scheduled_delete = []
-    for file in listdir(join(CFG.home, "data")):
+    for file in listdir(CFG.data):
         if not file.endswith(".csv"):
             continue
         year, month, day = file.split("|")[0].split("-")
@@ -154,11 +154,12 @@ def delete_old_reports():
 def aggregate_reports(date, test=False):
     # Collect all reports into a single dataframe
     reports = []
-    check_folder(join(CFG.home, "data_agg"))
+    check_folder(CFG.data_agg)
+    check_folder(CFG.data_agg_csv)
     assert len(date[0]) == 4, date
     assert len(date[1]) == 2, date
 
-    for file in listdir(join(CFG.home, "data")):
+    for file in listdir(CFG.data):
         if not file.endswith(".csv"):
             continue
         file_date = file.split("|")[0].split("-")
@@ -181,11 +182,13 @@ def aggregate_reports(date, test=False):
 
     coleta_mes = pd.concat(reports)
     coleta_mes.Marca = coleta_mes.Marca.fillna("")
-    coleta_mes["PPK"] = [
-        f"=F{idx}/G{idx}" for idx in range(2, 2 + coleta_mes.shape[0])]
     mask = coleta_mes['Produto'] == 'banana'
     coleta_mes.loc[mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca'].str.lower()
     coleta_mes.loc[mask, "Marca"] = ""
+    coleta_mes.to_csv(join(
+        CFG.home, f"data_agg_csv/{date[0]}_{date[1]}_Coleta.csv"))
+    coleta_mes["PPK"] = [
+        f"=F{idx}/G{idx}" for idx in range(2, 2 + coleta_mes.shape[0])]
 
     if test:
         return coleta_mes
@@ -295,7 +298,7 @@ def aggregate_reports(date, test=False):
 def check_reports():
     pr = {}
 
-    for file in listdir(join(CFG.home, "data")):
+    for file in listdir(CFG.data):
         pr[file] = [0, 0, 0, 0, 0, 0, 0]
         if not file.endswith(".csv"):
             continue

@@ -7,7 +7,9 @@ import pandas as pd
 CFG = SimpleNamespace(**dict(
     home=dirname(dirname(__file__)),
     data_obs=join(dirname(dirname(__file__)), "data_obs"),
-    data_path=join(dirname(dirname(__file__)), "data"),
+    data=join(dirname(dirname(__file__)), "data"),
+    data_agg=join(dirname(dirname(__file__)), "data_agg"),
+    data_agg_csv=join(dirname(dirname(__file__)), "data_agg_csv"),
     images=join(dirname(dirname(__file__)), "images"),
     products=[
         "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
@@ -41,7 +43,7 @@ titles = {
     "farinha": ["Farinha", ""], "feijao": ["Feijão", ""],
     "leite": ["Leite", ""], "manteiga": ["Manteiga", ""],
     "soja": ["Óleo de soja", ""], "banana": ["Banana", " (Nanica e Prata)"],
-    "batata": ["Banana", " (mais barata)"],
+    "batata": ["Batata", " (mais barata)"],
     "tomate": ["Tomate", " (mais barato)"],
     "carne": ["Carne", " (Coxão Mole)"],
     "pao": ["Pão Francês", ""]}

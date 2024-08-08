@@ -13,3 +13,5 @@ test*.*
 *.pem
 /data_obs
 gunicorn.log
+/data_agg_csv
+src/pages/report.py

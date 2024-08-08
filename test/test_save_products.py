@@ -18,8 +18,8 @@ from CONFIG import CFG
 def delete_data_files():
     for file in listdir(CFG.data_obs):
         remove(join(CFG.data_obs, file))
-    for file in listdir(CFG.data_path):
-        remove(join(CFG.data_path, file))
+    for file in listdir(CFG.data):
+        remove(join(CFG.data, file))
 
 
 def test_one_line() -> None:
@@ -87,7 +87,7 @@ def test_naming() -> None:
     save_products(product_data, info, None, None, None)
     file_name = None
 
-    for file in listdir(CFG.data_path):
+    for file in listdir(CFG.data):
         file_name = file
         break
 
@@ -110,7 +110,7 @@ def test_naming_coordinates() -> None:
         'alt_accuracy': None, 'speed': None, 'heading': None}, None)
     file_name = None
 
-    for file in listdir(CFG.data_path):
+    for file in listdir(CFG.data):
         file_name = file
         break
 
@@ -184,11 +184,11 @@ def test_delete_simple() -> None:
         info = [f"name{i}", "2020-06-28", "establishment"]
         save_products(product_data, info, None, None, None)
 
-    assert len(listdir(CFG.data_path)) == 10
+    assert len(listdir(CFG.data)) == 10
 
     delete_old_reports()
 
-    assert len(listdir(CFG.data_path)) == 0
+    assert len(listdir(CFG.data)) == 0
     delete_data_files()
 
 
@@ -203,11 +203,11 @@ def test_delete_4_months() -> None:
             "establishment"]
         save_products(product_data, info, None, None, None)
 
-    assert len(listdir(CFG.data_path)) == 10
+    assert len(listdir(CFG.data)) == 10
 
     delete_old_reports()
 
-    assert len(listdir(CFG.data_path)) == 0
+    assert len(listdir(CFG.data)) == 0
     delete_data_files()
 
 
@@ -222,11 +222,11 @@ def test_delete_multiple() -> None:
             "establishment"]
         save_products(product_data, info, None, None, None)
 
-    assert len(listdir(CFG.data_path)) == 9
+    assert len(listdir(CFG.data)) == 9
 
     delete_old_reports()
 
-    assert len(listdir(CFG.data_path)) == 7
-    for file in listdir(CFG.data_path):
-        remove(join(CFG.data_path, file))
+    assert len(listdir(CFG.data)) == 7
+    for file in listdir(CFG.data):
+        remove(join(CFG.data, file))
     delete_data_files()
