@@ -33,7 +33,7 @@ layout = html.Div([
             "Caso queira não enviar alguma seção, delete as "
             "fileiras clicando no botão com ",
             html.I(className="bi bi-trash3-fill"),
-            ".\n\nO status da seção é indicado pela cor do ícone:"
+            ".\n\nO status da seção é indicado pela cor do ícone: "
             "Vermelho, seção incompleta. "
             "Amarelo, menos fileiras que o desejado. "
             "Verde, ideal. "
@@ -150,7 +150,7 @@ layout = html.Div([
 
 clientside_callback(
     ClientsideFunction(
-        namespace='clientside',
+        namespace='input',
         function_name='update_badges'
     ),
     Output('online-badge', 'children'),
@@ -168,7 +168,7 @@ clientside_callback(
 
 clientside_callback(
     ClientsideFunction(
-        namespace='clientside',
+        namespace='input',
         function_name='locate_establishment'
     ),
     Output('establishment', 'value', allow_duplicate=True),
@@ -180,7 +180,7 @@ clientside_callback(
 
 clientside_callback(
     ClientsideFunction(
-        namespace='clientside',
+        namespace='input',
         function_name='establishment_address'
     ),
     Output("establishment-formtext", "children"),
@@ -191,7 +191,7 @@ clientside_callback(
 
 clientside_callback(
     ClientsideFunction(
-        namespace='clientside',
+        namespace='input',
         function_name='close_modal'
     ),
     Output("send-confirmed-modal", "is_open", allow_duplicate=True),
@@ -202,7 +202,7 @@ clientside_callback(
 
 clientside_callback(
     ClientsideFunction(
-        namespace='clientside',
+        namespace='input',
         function_name='save_state'
     ),
     Output('store', 'data'),
@@ -218,7 +218,7 @@ clientside_callback(
 
 clientside_callback(
     ClientsideFunction(
-        namespace="clientside",
+        namespace="input",
         function_name="clear_contents"
     ),
     Output('store', 'data', allow_duplicate=True),
@@ -229,7 +229,7 @@ clientside_callback(
 
 clientside_callback(
     ClientsideFunction(
-        namespace="clientside",
+        namespace="input",
         function_name="display_progress"
     ),
     [Output(f"icon-{product}", 'style') for product in CFG.products],
@@ -287,7 +287,7 @@ def load_state(_1, _2, data):
 
 clientside_callback(
     ClientsideFunction(
-        namespace='clientside',
+        namespace='input',
         function_name='delete_product_row'
     ),
     [Output(f"container-{product}", 'children', allow_duplicate=True)
@@ -325,7 +325,7 @@ def add_new_row(*values):
 
 clientside_callback(
     ClientsideFunction(
-        namespace='clientside',
+        namespace='input',
         function_name='validate_args'
     ),
     [Output({"type": f"{field}-{product}", "index": ALL}, "className")

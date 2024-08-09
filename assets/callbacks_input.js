@@ -15,7 +15,7 @@ const translateError=(error)=>{return ERRORS[error]||ERRORS.default};
 const BR={type:"Br",namespace:"dash_html_components",props:{}};
 const STRONG=(str)=>{return{type:"Strong",namespace:"dash_html_components",props:{children:str}}};
 
-window.dash_clientside.clientside={
+window.dash_clientside.input={
 clear_contents:function(clk){
     if (typeof clk !== 'number'){return dash_clientside.no_update};
     console.log("clear_contents: (",dash_clientside.callback_context.triggered_id,")");
