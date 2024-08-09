@@ -2,6 +2,7 @@ from os.path import dirname, join, getmtime, exists
 from os import listdir, makedirs
 from types import SimpleNamespace
 import pandas as pd
+from dash import html
 
 
 CFG = SimpleNamespace(**dict(
@@ -91,3 +92,7 @@ CFG.csv_timestamps = {
 BOLD = {'fontWeight': 'bold'}
 CENTER = {'text-align': 'center'}
 UNDERLINE = {'text-decoration': 'underline'}
+
+
+def INFO(comp_id):
+    return html.I(className="bi bi-info-circle mx-1 pulse-icon", id=comp_id)

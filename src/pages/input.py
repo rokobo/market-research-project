@@ -3,7 +3,7 @@ from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
 from components import product_form, create_product_form
 from tools import load_establishments, save_products
-from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE
+from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE, INFO
 import dash_bootstrap_components as dbc
 import time
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
@@ -24,32 +24,30 @@ layout = html.Div([
     ], className="navbar bg-body", sticky="top", expand=True),
     dbc.Alert([
         html.H4([
-            html.I(className="bi bi-info-circle"),
+            html.I(className="bi bi-info-circle-fill"),
             " Instruções de preenchimento", html.Hr(className="m-1")
         ], className="alert-heading", style=BOLD),
         html.P([
-            "Só é necessário especificar a Quant. se ela for diferente "
-            "da quantidade padrão.\n\n"
-            "O envio é liberado se todas as seções estiverem completas. "
-            "Caso queira não enviar alguma seção, delete as "
-            "fileiras clicando no botão com ",
-            html.I(className="bi bi-trash3-fill"),
-            ".\n\nO status da seção é indicado pela cor do ícone: "
-            "Vermelho, seção incompleta. "
-            "Amarelo, menos fileiras que o desejado. "
-            "Verde, ideal. "
-            "Clicar no ícone te leva para a seção.\n\n"
-            " Recomendado usar ",
+            "Clique tem todos os ícones ",
+            html.I(className="bi bi-info-circle"),
+            " para saber o funcionamento do site. "
+            "Por favor, use preferencialmente o ",
             html.U(html.A(
                 ["Chrome ", html.I(className="bi bi-browser-chrome")],
                 href="https://www.google.com/chrome/",
                 target="_blank",
                 style=UNDERLINE | {"color": "inherit"}
             )),
-            ", foi testado e "
+            ", visto que foi testado e "
             "possui compatibilidade plena."
         ], className="mb-0", style={'whiteSpace': 'pre-line'}),
-    ], dismissable=True, color="warning"),
+    ], dismissable=False, color="warning"),
+    INFO("header-info"),
+    dbc.Tooltip(
+        "O botão 'Limpar' pode ser usado para começar um relatório do zero. "
+        "Você também pode escolher usar o site no modo claro ou noturno, "
+        "basta escolher uma opção no seletor à esquerda.",
+        target="header-info"),
     html.H1(
         "COLETA DE PREÇOS", className="my-2",
         style=BOLD | CENTER),
@@ -79,6 +77,11 @@ layout = html.Div([
     ], className="m-2"),
     html.Div([
         dbc.Label("Data de coleta", style=BOLD),
+        INFO("date-info"),
+        dbc.Tooltip(
+            "Aperte o botão 'Hoje' para automaticamente preencher "
+            "o campo 'Data de coleta'.",
+            target="date-info"),
         dbc.InputGroup([
             dbc.Input(type="date", id="collection_date"),
             dbc.Button(
@@ -86,11 +89,20 @@ layout = html.Div([
                 id="fill-date", color="primary")
         ]),
         dbc.FormText(
-            "Data em que a coleta foi feita, mm/dd/yyyy",
+            "Data em que a coleta foi feita, formato: mm/dd/yyyy",
             color="secondary")
     ], className="m-2"),
     html.Div([
         dbc.Label("Estabelecimento", style=BOLD),
+        INFO("estab-info"),
+        dbc.Tooltip(
+            "Aperte o botão 'Localizar' para preencher o estabelecimento "
+            "mais perto da sua localização atual. Abaixo do campo, serão "
+            "exibidos as seguintes informações: O endereço do estabelecimento "
+            "e os parâmetros da geolocalização (distância até o "
+            "estabelecimento, margem de erro e última atualização da "
+            "localização)",
+            target="estab-info"),
         dbc.InputGroup([
             dbc.Select(id="establishment", options=load_establishments()),
             dbc.Button(
@@ -116,6 +128,7 @@ layout = html.Div([
             placeholder="Algo que tenha ocorrido ou marcas não listadas"),
         dbc.FormText("Opcional: relatar algo relevante", color="secondary")
     ], className="m-2"),
+    INFO("save-info"),
     html.Div(dcc.ConfirmDialogProvider(
         html.Div(dbc.Button(
             [html.I(className="bi bi-file-earmark-arrow-up"), " Enviar"],
@@ -123,6 +136,11 @@ layout = html.Div([
         ), className="d-grid m-5"),
         id="confirm-send"
     ), id="save-container"),
+    dbc.Tooltip(
+        "O botão 'Enviar' só poderá ser clicado quando todas as seções "
+        "estiverem válidas (ícone e status não podem estar vermelhos). "
+        "O botão ficará verde quando o envio estiver liberado.",
+        target="save-info"),
     dbc.Modal([
         dbc.ModalHeader(
             dbc.ModalTitle("RELATÓRIO ENVIADO"), close_button=False),

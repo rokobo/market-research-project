@@ -9,3 +9,6 @@ html{scroll-padding-top:80px}
 .form-control:focus{scale:1.01;box-shadow:0 0 20px #cc00ff}
 .form-control{scroll-margin-bottom:50vh}
 .unwrap{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}}
+.pulse-icon{float:inline-end;animation:pulse 2s ease-in-out infinite}
+.tooltip-inner{max-width:90vw}

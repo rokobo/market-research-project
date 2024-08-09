@@ -3,7 +3,7 @@
 import dash_bootstrap_components as dbc
 from dash import html
 from tools import load_brands
-from CONFIG import CFG, ICONS, BOLD, CENTER
+from CONFIG import CFG, ICONS, BOLD, CENTER, INFO
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 
 
@@ -58,18 +58,49 @@ def product_form(
         row.append(dbc.Col(dbc.Label("Quant.", style=style)))
     if fields[3]:
         row.append(dbc.Col(dbc.Label("Obs.", style=style)))
-    return dbc.Row([
-        dbc.Col([
-            html.Div(DangerouslySetInnerHTML(
-                ICONS[id_name]), style={"display": "inline-block"}),
-            dbc.Label(
-                label, style=BOLD, className="mx-2 mb-0"),
-            dbc.Badge("", pill=True, id=f"status-{id_name}"),
-        ]),
+
+    final_row = [dbc.Col([
+        html.Div(DangerouslySetInnerHTML(
+            ICONS[id_name]), style={"display": "inline-block"}),
+        dbc.Label(
+            label, style=BOLD, className="mx-2 mb-0"),
+        dbc.Badge("", pill=True, id=f"status-{id_name}"),
+        (INFO(f"section-{id_name}-info") if id_name == "acucar" else None)
+    ])]
+
+    if id_name == "acucar":
+        quant = CFG.quantities[id_name]
+        final_row += dbc.Tooltip([
+            "O campo 'Quant.' só precisa ser preenchido quando a quantidade "
+            "do produto que você está anotando é diferente da quantidade "
+            "especificada na seção. Por exemplo, nesta seção, a quantidade "
+            f"padrão é {quant[0]}{quant[1]}. ",
+            html.Hr(),
+            "Campos com borda vermelha são obrigatórios",
+            html.Hr(),
+            "Se não deseja preencher todas as fileiras com itens, clique no "
+            "botão com o ícone ", html.I(className="bi bi-trash3-fill"),
+            ", para remover a fileira. Caso queira adicionar uma fileira, "
+            "clique no botão com o ícone ",
+            html.I(className="bi bi-file-earmark-plus"), ".",
+            html.Hr(),
+            "Status da seção: ",
+            "Vermelho -> Campos obrigatórios estão vazios. ",
+            "Amarelo -> Campos OK, número de fileiras menor que o esperado. ",
+            "Verde -> Campos e número de fileiras OK",
+            html.Hr(),
+            "O status da seção é espelhado nos ícones do topo da página. "
+            "Clicar no ícone de uma seção te leva até ela."
+        ], target=f"section-{id_name}-info"),
+
+    final_row.extend([
         dbc.Row(row, className="g-0 mt-2"),
         dbc.Row([
             create_product_form(id_name, idx)
             for idx in range(CFG.product_rows[id_name])
         ], id=f"container-{id_name}", className="g-0"),
-        html.Button("+", id=f"add-{id_name}", className="mb-4")
-    ], className="m-2 g-0", id=f"{id_name}-heading")
+        html.Button(
+            html.I(className="bi bi-file-earmark-plus"),
+            id=f"add-{id_name}", className="mb-4")
+    ])
+    return dbc.Row(final_row, className="m-2 g-0", id=f"{id_name}-heading")
