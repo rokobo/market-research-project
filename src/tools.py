@@ -186,7 +186,7 @@ def aggregate_reports(date, test=False):
     coleta_mes.loc[mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca'].str.lower()
     coleta_mes.loc[mask, "Marca"] = ""
     coleta_mes.to_csv(join(
-        CFG.home, f"data_agg_csv/{date[0]}_{date[1]}_Coleta.csv"))
+        CFG.home, f"data_agg_csv/{date[0]}_{date[1]}_Coleta.csv"), index=False)
     coleta_mes["PPK"] = [
         f"=F{idx}/G{idx}" for idx in range(2, 2 + coleta_mes.shape[0])]
 
