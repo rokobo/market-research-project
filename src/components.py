@@ -3,7 +3,7 @@
 import dash_bootstrap_components as dbc
 from dash import html
 from tools import load_brands
-from CONFIG import CFG, ICONS
+from CONFIG import CFG, ICONS, BOLD, CENTER
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 
 
@@ -45,7 +45,7 @@ def product_form(
     id_name: str
 ):
     row = []
-    style = {'textAlign': 'center', 'width': '100%'}
+    style = CENTER | {'width': '100%'}
     row.append(dbc.Col(style={'marginRight': '30px'}, width="auto"))
     fields = CFG.product_fields[id_name]
     label = CFG.product_titles[id_name]
@@ -63,7 +63,7 @@ def product_form(
             html.Div(DangerouslySetInnerHTML(
                 ICONS[id_name]), style={"display": "inline-block"}),
             dbc.Label(
-                label, style={'fontWeight': 'bold'}, className="mx-2 mb-0"),
+                label, style=BOLD, className="mx-2 mb-0"),
             dbc.Badge("", pill=True, id=f"status-{id_name}"),
         ]),
         dbc.Row(row, className="g-0 mt-2"),

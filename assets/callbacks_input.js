@@ -22,6 +22,7 @@ clear_contents:function(clk){
     return [];
 },
 close_modal:function(clk){if(typeof clk!=='number'){return dash_clientside.no_update};return false},
+theme_switcher:function(s){console.log("theme_switch",s);document.documentElement.setAttribute('data-bs-theme',s);return s},
 update_badges:async function(_,pos,geo){
     if (LOCATION==null){console.log("update_badges")}
     badgeOut=[];geoNow=null;

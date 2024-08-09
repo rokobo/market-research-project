@@ -3,10 +3,11 @@ from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
 from components import product_form, create_product_form
 from tools import load_establishments, save_products
-from CONFIG import CFG, ICONS
+from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE
 import dash_bootstrap_components as dbc
 import time
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
+import dash_mantine_components as dmc
 
 dash.register_page(__name__, path="/")
 
@@ -20,12 +21,12 @@ layout = html.Div([
                 style={"color": "red"}, href=f"#{product}-heading"
             ) for product in CFG.products
         ], className="g-0 m-0 navigation")
-    ], color="white", sticky="top", expand=True),
+    ], className="navbar bg-body", sticky="top", expand=True),
     dbc.Alert([
         html.H4([
             html.I(className="bi bi-info-circle"),
             " Instruções de preenchimento", html.Hr(className="m-1")
-        ], className="alert-heading", style={'fontWeight': 'bold'}),
+        ], className="alert-heading", style=BOLD),
         html.P([
             "Só é necessário especificar a Quant. se ela for diferente "
             "da quantidade padrão.\n\n"
@@ -43,16 +44,25 @@ layout = html.Div([
                 ["Chrome ", html.I(className="bi bi-browser-chrome")],
                 href="https://www.google.com/chrome/",
                 target="_blank",
-                style={"text-decoration": "underline", "color": "inherit"}
+                style=UNDERLINE | {"color": "inherit"}
             )),
             ", foi testado e "
             "possui compatibilidade plena."
         ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=True, color="warning"),
+    html.H1(
+        "COLETA DE PREÇOS", className="my-2",
+        style=BOLD | CENTER),
     dbc.Stack([
-        html.H2(
-            "COLETA DE PREÇOS", className="mx-auto",
-            style={'fontWeight': 'bold'}),
+        dmc.SegmentedControl(data=[
+            {"value": "light", "label": [
+                html.I(className="bi bi-brightness-high-fill"), " Claro"]},
+            {"value": "dark", "label": [
+                "Noturno ", html.I(className="bi bi-moon-stars-fill")]}],
+            value="light", radius=20, size="sm", id="theme_switch",
+            persistence=True, persistence_type="local", transitionDuration=500
+        ),
+        html.Div(className="mx-auto"),
         dcc.ConfirmDialogProvider(
             dbc.Button(
                 [html.I(className="bi bi-trash3"), " Limpar"],
@@ -61,21 +71,21 @@ layout = html.Div([
             message=(
                 "Você tem certeza que quer limpar todos os campos? "
                 "Essa ação não pode ser revertida! \n\nApós "
-                "limpar o cache, atualize a página para aplicar a limpeza."))
-    ], direction="horizontal", className="m-2 "),
+                "limpar o cache, atualize a página para aplicar a limpeza.")),
+    ], direction="horizontal", className="mx-2 mb-3 mbt-2"),
     html.Div([
-        dbc.Label("Nome do coletor", style={'fontWeight': 'bold'}),
+        dbc.Label("Nome do coletor", style=BOLD),
         dbc.Input(type="text", id="collector_name"),
     ], className="m-2"),
     html.Div([
-        dbc.Label("Data de coleta", style={'fontWeight': 'bold'}),
+        dbc.Label("Data de coleta", style=BOLD),
         dbc.Input(type="date", id="collection_date"),
         dbc.FormText(
             "Selecione a data do dia em que a coleta foi feita",
             color="secondary")
     ], className="m-2"),
     html.Div([
-        dbc.Label("Estabelecimento", style={'fontWeight': 'bold'}),
+        dbc.Label("Estabelecimento", style=BOLD),
         dcc.Loading(
             dbc.Stack([
                 dbc.Select(id="establishment", options=load_establishments()),
@@ -96,7 +106,7 @@ layout = html.Div([
     html.Div([
         dbc.Label(
             [html.I(className="bi bi-chat-right-text"), " Observações gerais"],
-            style={'fontWeight': 'bold'}),
+            style=BOLD),
         dbc.Textarea(
             id="general_observations", className="form-control",
             style={'width': '100%', 'height': '150px'},
@@ -130,7 +140,7 @@ layout = html.Div([
             ], direction="horizontal", gap=3), close_button=False),
             dbc.ModalBody(html.H6(
                 "Se nada acontecer, atualize a página.",
-                style={"text-align": "center"})),
+                style=CENTER)),
         ],
         id="page-loading-modal", is_open=True,
         centered=True, keyboard=False, backdrop="static"),
@@ -186,6 +196,16 @@ clientside_callback(
     Output("establishment-formtext", "children"),
     Input("establishment", "value"),
     prevent_initial_call=True
+)
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='input',
+        function_name='theme_switcher'
+    ),
+    Output("mantine", "forceColorScheme"),
+    Input("theme_switch", "value")
 )
 
 

@@ -1,4 +1,4 @@
-from os.path import dirname, join
+from os.path import dirname, join, getmtime
 from os import listdir
 from types import SimpleNamespace
 import pandas as pd
@@ -80,3 +80,12 @@ for file in listdir(CFG.images):
 
 assert len(CFG.products) == len(ICONS)
 assert set(ICONS.keys()) == set(CFG.products)
+
+CFG.csv_timestamps = {
+    file[0:7]: int(getmtime(join(CFG.data_agg_csv, file)))
+    for file in listdir(CFG.data_agg_csv)
+}
+
+BOLD = {'fontWeight': 'bold'}
+CENTER = {'text-align': 'center'}
+UNDERLINE = {'text-decoration': 'underline'}
