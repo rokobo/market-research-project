@@ -1,5 +1,5 @@
-from os.path import dirname, join, getmtime
-from os import listdir
+from os.path import dirname, join, getmtime, exists
+from os import listdir, makedirs
 from types import SimpleNamespace
 import pandas as pd
 
@@ -81,6 +81,8 @@ for file in listdir(CFG.images):
 assert len(CFG.products) == len(ICONS)
 assert set(ICONS.keys()) == set(CFG.products)
 
+if not exists(CFG.data_agg_csv):
+    makedirs(CFG.data_agg_csv, exist_ok=True)
 CFG.csv_timestamps = {
     file[0:7]: int(getmtime(join(CFG.data_agg_csv, file)))
     for file in listdir(CFG.data_agg_csv)
