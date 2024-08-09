@@ -79,21 +79,24 @@ layout = html.Div([
     ], className="m-2"),
     html.Div([
         dbc.Label("Data de coleta", style=BOLD),
-        dbc.Input(type="date", id="collection_date"),
+        dbc.InputGroup([
+            dbc.Input(type="date", id="collection_date"),
+            dbc.Button(
+                [html.I(className="bi bi-calendar2-check"), " Hoje"],
+                id="fill-date", color="primary")
+        ]),
         dbc.FormText(
-            "Selecione a data do dia em que a coleta foi feita",
+            "Data em que a coleta foi feita, mm/dd/yyyy",
             color="secondary")
     ], className="m-2"),
     html.Div([
         dbc.Label("Estabelecimento", style=BOLD),
-        dcc.Loading(
-            dbc.Stack([
-                dbc.Select(id="establishment", options=load_establishments()),
-                dbc.Button(
-                    [html.I(className="bi bi-geo-alt"), " Localizar"],
-                    id="fill-establishment")
-            ], direction="horizontal", gap=1),
-            overlay_style={"visibility": "visible", "filter": "blur(2px)"}),
+        dbc.InputGroup([
+            dbc.Select(id="establishment", options=load_establishments()),
+            dbc.Button(
+                [html.I(className="bi bi-geo-alt"), " Localizar"],
+                id="fill-establishment", color="primary")
+        ]),
         dbc.FormText(
             "...", id="establishment-formtext",
             color="secondary", className="unwrap"),
@@ -173,6 +176,17 @@ clientside_callback(
     Input("10-seconds", "n_intervals"),
     State("geolocation", "position"),
     State('geo-history', 'data'),
+)
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='input',
+        function_name='fill_date'
+    ),
+    Output('collection_date', 'value', allow_duplicate=True),
+    Input("fill-date", "n_clicks"),
+    prevent_initial_call=True
 )
 
 
