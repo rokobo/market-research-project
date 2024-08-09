@@ -95,13 +95,15 @@ layout = html.Div([
     html.Div([
         dbc.Label("Estabelecimento", style=BOLD),
         INFO("estab-info"),
-        dbc.Tooltip(
+        dbc.Tooltip([
             "Aperte o botão 'Localizar' para preencher o estabelecimento "
-            "mais perto da sua localização atual. Abaixo do campo, serão "
+            "mais perto da sua localização. ",
+            html.Hr(),
+            "Abaixo do campo, serão "
             "exibidos as seguintes informações: O endereço do estabelecimento "
             "e os parâmetros da geolocalização (distância até o "
-            "estabelecimento, margem de erro e última atualização da "
-            "localização)",
+            "estabelecimento, margem de erro da geolocalização e última "
+            "atualização da localização)"],
             target="estab-info"),
         dbc.InputGroup([
             dbc.Select(id="establishment", options=load_establishments()),
@@ -175,7 +177,7 @@ layout = html.Div([
             dbc.Badge("", color="info", id="geolocation-badge"),
             dbc.Badge("", color="success", id="online-badge"),
         ], direction="horizontal"),
-        style={"position": "fixed", "bottom": 0, "right": 0}),
+        style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
 ])
 
 
