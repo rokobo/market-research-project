@@ -321,7 +321,8 @@ alias s1="cd market-research-project"
 alias s2="sudo killall gunicorn"
 alias s3="source .venv/bin/activate"
 alias s4="git pull origin main"
-alias s5="gunicorn src.main:server --daemon -b 127.0.0.1:8060"
+alias s5="gunicorn src.main:server -b 127.0.0.1:8060"
+alias s6="gunicorn src.main:server --daemon -b 127.0.0.1:8060"
 ```
 
 So to change the server to the newest version, you simply need to kill all Gunicorn processes, active the virtual environment, update code by pulling the newest version from GitHub and restarting Gunicorn:
@@ -332,6 +333,12 @@ s2
 s3
 s4
 s5
+```
+
+Check if there are no errors, then run with daemon mode:
+
+```sh
+s6
 ```
 
 If there are any new requirements, remember to update the environment.
