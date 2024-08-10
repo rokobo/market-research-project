@@ -2,7 +2,8 @@ from os.path import dirname, join, getmtime, exists
 from os import listdir, makedirs
 from types import SimpleNamespace
 import pandas as pd
-from dash import html
+from dash import html, dcc
+import dash_bootstrap_components as dbc
 
 
 CFG = SimpleNamespace(**dict(
@@ -29,13 +30,13 @@ CFG = SimpleNamespace(**dict(
         "acucar": 2, "arroz": 4, "cafe": 4, "farinha": 3, "feijao": 4,
         "leite": 4, "manteiga": 4, "soja": 2, "banana": 2, "batata": 1,
         "tomate": 1, "carne": 1, "pao": 1},
-    fields=["brand", "price", "quantity", "obs"],
+    fields=["brand", "price", "quantity"],
     product_fields={
-        "acucar": [1, 1, 1, 0], "arroz": [1, 1, 1, 0], "cafe": [1, 1, 1, 0],
-        "farinha": [1, 1, 1, 0], "feijao": [1, 1, 1, 0], "leite": [1, 1, 1, 0],
-        "manteiga": [1, 1, 1, 0], "soja": [1, 1, 1, 0], "banana": [1, 1, 0, 0],
-        "batata": [0, 1, 0, 1], "tomate": [0, 1, 0, 1], "carne": [0, 1, 0, 1],
-        "pao": [0, 1, 0, 1]},
+        "acucar": [1, 1, 1], "arroz": [1, 1, 1], "cafe": [1, 1, 1],
+        "farinha": [1, 1, 1], "feijao": [1, 1, 1], "leite": [1, 1, 1],
+        "manteiga": [1, 1, 1], "soja": [1, 1, 1], "banana": [1, 1, 1],
+        "batata": [0, 1, 1], "tomate": [0, 1, 1], "carne": [0, 1, 1],
+        "pao": [0, 1, 1]},
     geo_length=100
 ))
 
@@ -54,6 +55,15 @@ CFG.product_titles = {
     for (prd, lbl), (_, quant) in zip(titles.items(), CFG.quantities.items())
 }
 
+if not exists(CFG.data_agg_csv):
+    makedirs(CFG.data_agg_csv, exist_ok=True)
+CFG.csv_timestamps = {
+    file[0:7]: int(getmtime(join(CFG.data_agg_csv, file)))
+    for file in listdir(CFG.data_agg_csv)
+}
+
+CFG.version = "CFG 1.0"
+
 assert len(CFG.products) == len(CFG.product_rows)
 assert len(CFG.products) == len(CFG.product_fields)
 assert len(CFG.products) == len(CFG.quantities)
@@ -67,6 +77,7 @@ assert set(CFG.product_titles.keys()) == set(CFG.products)
 COORDINATES = pd.read_csv(
     join(CFG.home, "config/estabelecimentos.csv")
 ).set_index("Estabelecimento").transpose().to_dict()
+COORDINATES["version"] = "COORDINATES 1.0"
 
 ICONS = {}
 for file in listdir(CFG.images):
@@ -82,12 +93,6 @@ for file in listdir(CFG.images):
 assert len(CFG.products) == len(ICONS)
 assert set(ICONS.keys()) == set(CFG.products)
 
-if not exists(CFG.data_agg_csv):
-    makedirs(CFG.data_agg_csv, exist_ok=True)
-CFG.csv_timestamps = {
-    file[0:7]: int(getmtime(join(CFG.data_agg_csv, file)))
-    for file in listdir(CFG.data_agg_csv)
-}
 
 BOLD = {'fontWeight': 'bold'}
 CENTER = {'text-align': 'center'}
@@ -96,3 +101,16 @@ UNDERLINE = {'text-decoration': 'underline'}
 
 def INFO(comp_id):
     return html.I(className="bi bi-info-circle mx-1 pulse-icon", id=comp_id)
+
+
+def CLEAR(comp_id, idx):
+    return dcc.ConfirmDialogProvider(
+        dbc.Button(
+            [html.I(className="bi bi-trash3"), " Limpar"],
+            color="warning"),
+        id={"type": comp_id, "index": idx},
+        message=(
+            "Você tem certeza que quer limpar todos os campos? "
+            "Essa ação não pode ser revertida! \n\nApós "
+            "limpar o cache, atualize a página para aplicar a limpeza.")
+    )

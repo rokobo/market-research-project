@@ -3,7 +3,7 @@ from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
 from components import product_form, create_product_form
 from tools import load_establishments, save_products
-from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE, INFO
+from CONFIG import CFG, CLEAR, ICONS, BOLD, CENTER, UNDERLINE, INFO
 import dash_bootstrap_components as dbc
 import time
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
@@ -54,22 +54,14 @@ layout = html.Div([
     dbc.Stack([
         dmc.SegmentedControl(data=[
             {"value": "light", "label": [
-                html.I(className="bi bi-brightness-high-fill"), " Claro"]},
+                html.I(className="bi bi-brightness-high-fill"), " Light"]},
             {"value": "dark", "label": [
-                "Noturno ", html.I(className="bi bi-moon-stars-fill")]}],
+                "Dark ", html.I(className="bi bi-moon-stars-fill")]}],
             value="light", radius=20, size="sm", id="theme_switch",
             persistence=True, persistence_type="local", transitionDuration=500
         ),
         html.Div(className="mx-auto"),
-        dcc.ConfirmDialogProvider(
-            dbc.Button(
-                [html.I(className="bi bi-trash3"), " Limpar"],
-                color="warning", id="clear-products"),
-            id="confirm-clear",
-            message=(
-                "Você tem certeza que quer limpar todos os campos? "
-                "Essa ação não pode ser revertida! \n\nApós "
-                "limpar o cache, atualize a página para aplicar a limpeza.")),
+        CLEAR("confirm-clear", 1),
     ], direction="horizontal", className="mx-2 mb-3 mbt-2"),
     html.Div([
         dbc.Label("Nome do coletor", style=BOLD),
@@ -124,6 +116,12 @@ layout = html.Div([
         dbc.Label(
             [html.I(className="bi bi-chat-right-text"), " Observações gerais"],
             style=BOLD),
+        INFO("obs-info"),
+        dbc.Tooltip(
+            "Somente anote: Marcas colocadas como Outro/Outra, "
+            "observação para administradores do site ou do projeto e "
+            "fatos que precisam ser guardados para o futuro.",
+            target="obs-info"),
         dbc.Textarea(
             id="general_observations", className="form-control",
             style={'width': '100%', 'height': '150px'},
@@ -164,6 +162,8 @@ layout = html.Div([
             dbc.ModalBody(html.H6(
                 "Se nada acontecer, atualize a página.",
                 style=CENTER)),
+            dbc.ModalFooter([
+                html.H6("Ou limpe o cache:"), CLEAR("confirm-clear", 2)])
         ],
         id="page-loading-modal", is_open=True,
         centered=True, keyboard=False, backdrop="static"),
@@ -261,7 +261,6 @@ clientside_callback(
     ),
     Output('store', 'data'),
     Input("dummy-div-save", "className"),
-    State('load-flag', 'data'),
     State("collector_name", "value"),
     State("collection_date", "value"),
     State("establishment", "value"),
@@ -276,7 +275,7 @@ clientside_callback(
         function_name="clear_contents"
     ),
     Output('store', 'data', allow_duplicate=True),
-    Input("confirm-clear", "submit_n_clicks"),
+    Input({"type": "confirm-clear", "index": ALL}, "submit_n_clicks"),
     prevent_initial_call=True
 )
 
@@ -303,7 +302,6 @@ clientside_callback(
 
 
 @callback(
-    Output('load-flag', 'data'),
     Output("collector_name", "value"),
     Output("collection_date", "value"),
     Output("establishment", "value"),
@@ -316,21 +314,22 @@ clientside_callback(
     State('store', 'data'),
 )
 def load_state(_1, _2, data):
-    return_data = [True, "", "", "", ""]
+    return_data = ["", "", "", ""]
     containers = [[] for _ in range(len(CFG.products))]
+    k = len(CFG.fields)
 
     if data == []:
         for idx, product in enumerate(CFG.products):
             containers[idx].extend([
-                create_product_form(product, idx, [None] * 4)
+                create_product_form(product, idx, [None] * k)
                 for idx in range(CFG.product_rows[product])
             ])
     else:
         for item in data:
             if "first" in item:
-                return_data[1:4] = item["first"]
+                return_data[:3] = item["first"]
             if "observations" in item:
-                return_data[4] = item["observations"]
+                return_data[3] = item["observations"]
             if "container" in item:
                 idx = CFG.products.index(item["container"])
                 containers[idx].append(create_product_form(
@@ -427,6 +426,7 @@ clientside_callback(
 def save_args(clicks, name, date, establishment, obs, pos, geo_hist, *values):
     if clicks is None:
         return dash.no_update
-    products = [values[i:i + 4] for i in range(0, len(values), 4)]
+    k = len(CFG.fields)
+    products = [values[i:i + k] for i in range(0, len(values), k)]
     save_products(products, (name, date, establishment), obs, pos, geo_hist)
     return [], [], "", True

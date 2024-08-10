@@ -85,7 +85,7 @@ def save_products(
             for col in product]
         for row in list(zip(*product)):
             data = [prod_name]
-            data.extend(row[:-1])
+            data.extend(row)
             if not isinstance(data[3], (float, int)):
                 quantidade = CFG.quantities[prod_name][0]
                 data[3] = quantidade

@@ -35,9 +35,6 @@ def create_product_form(
             type="number", id={"type": f"quantity-{id_name}", "index": idx},
             min=0, value=values[2]
         )))
-    if fields[3]:
-        row.append(dbc.Col(dbc.Input(
-            id={"type": f"obs-{id_name}", "index": idx}, value=values[3])))
     return dbc.Row(row, className="g-0", id=f"{id_name}-product-row-{idx}")
 
 
@@ -56,8 +53,6 @@ def product_form(
         row.append(dbc.Col(dbc.Label("Preço", style=style)))
     if fields[2]:
         row.append(dbc.Col(dbc.Label("Quant.", style=style)))
-    if fields[3]:
-        row.append(dbc.Col(dbc.Label("Obs.", style=style)))
 
     final_row = [dbc.Col([
         html.Div(DangerouslySetInnerHTML(
@@ -76,7 +71,8 @@ def product_form(
             "especificada na seção. Por exemplo, nesta seção, a quantidade "
             f"padrão é {quant[0]}{quant[1]}. ",
             html.Hr(),
-            "Campos com borda vermelha são obrigatórios",
+            "Campos com borda vermelha são obrigatórios e estão com erro: "
+            "Campo vazio ou valor errado.",
             html.Hr(),
             "Se não deseja preencher todas as fileiras com itens, clique no "
             "botão com o ícone ", html.I(className="bi bi-trash3-fill"),

@@ -305,7 +305,7 @@ class Test002SecondSection:
 
             for idx, elements in enumerate(productElems):
                 for element in elements:
-                    class_name = "wrong" if idx < 2 else "correct"
+                    class_name = "wrong" if idx != 2 else "correct"
                     assert element.get_attribute("value") == ""
                     assert check_in_attr(element, "class", class_name)
 
@@ -327,7 +327,7 @@ class Test002SecondSection:
                 self.app, f'[id*="price-{product}"]', By.CSS_SELECTOR)
 
             for idx, current_price in enumerate(prices):
-                send_input(self.app, current_price, str(idx0 + (idx / 10)))
+                send_input(self.app, current_price, str(1 + idx0 + (idx / 10)))
                 for idx2, price in enumerate(prices):
                     class_name = "wrong" if idx2 > idx else "correct"
                     assert check_in_attr(price, "class", class_name)
@@ -338,21 +338,13 @@ class Test002SecondSection:
             section = get_by_cond(self.app, f"{product}-heading", By.ID)
             badge = get_by_cond(self.app, f"status-{product}", By.ID)
 
-            selector = [
-                f'[id*="brand-{product}"]',
-                f'[id*="quantity-{product}"]', f'[id*="obs-{product}"]']
+            selector = [f'[id*="brand-{product}"]', f'[id*="quantity-{product}"]']
 
             if idx < 9:
                 for brd in section.find_elements(By.CSS_SELECTOR, selector[0]):
                     send_input(self.app, brd, brd.find_elements(By.TAG_NAME, 'option')[-1].text)
-            if idx < 8:
-                for i, qty in enumerate(
-                    section.find_elements(By.CSS_SELECTOR, selector[1])
-                ):
-                    send_input(self.app, qty, f"0.{idx}{i}")
-            if idx > 8:
-                for obs in section.find_elements(By.CSS_SELECTOR, selector[2]):
-                    send_input(self.app, obs, f"observation-{idx}")
+            for i, qty in enumerate(section.find_elements(By.CSS_SELECTOR, selector[1])):
+                send_input(self.app, qty, f"1.{idx}{i}")
             assert check_in_attr(badge, "class", "success")
 
     def test_green_icon(self):
@@ -375,22 +367,13 @@ class Test002SecondSection:
             section = get_by_cond(self.app, f"{product}-heading", By.ID)
             badge = get_by_cond(self.app, f"status-{product}", By.ID)
 
-            selector = [
-                f'[id*="brand-{product}"]',
-                f'[id*="quantity-{product}"]', f'[id*="obs-{product}"]']
+            selector = [f'[id*="brand-{product}"]', f'[id*="quantity-{product}"]']
 
             if idx < 9:
                 for brd in section.find_elements(By.CSS_SELECTOR, selector[0]):
                     assert brd.get_attribute("value") not in ["", None], product
-            if idx < 8:
-                for i, qty in enumerate(
-                    section.find_elements(By.CSS_SELECTOR, selector[1])
-                ):
-                    assert float(qty.get_attribute("value")) == float(f"0.{idx}{i}"), product
-            if idx > 8:
-                for obs in section.find_elements(By.CSS_SELECTOR, selector[2]):
-                    assert obs.get_attribute("value") == f"observation-{idx}", product
-
+            for i, qty in enumerate(section.find_elements(By.CSS_SELECTOR, selector[1])):
+                assert float(qty.get_attribute("value")) == float(f"1.{idx}{i}"), product
             assert check_in_attr(badge, "class", "success"), product
 
 
@@ -409,20 +392,15 @@ class Test003SaveProducts:
 
             selector = [
                 f'[id*="brand-{product}"]', f'[id*="price-{product}"]',
-                f'[id*="quantity-{product}"]', f'[id*="obs-{product}"]']
+                f'[id*="quantity-{product}"]']
 
             if idx < 9:
                 for brd in section.find_elements(By.CSS_SELECTOR, selector[0]):
                     send_input(self.app, brd, brd.find_elements(By.TAG_NAME, 'option')[-1].text)
             for idx2, prc in enumerate(section.find_elements(By.CSS_SELECTOR, selector[1])):
-                send_input(self.app, prc, str(idx + (idx2 / 10)))
-            if idx < 8:
-                for i, qty in enumerate(
-                    section.find_elements(By.CSS_SELECTOR, selector[2])
-                ):
-                    send_input(self.app, qty, f"0.{idx}{i}")
-            for obs in section.find_elements(By.CSS_SELECTOR, selector[3]):
-                send_input(self.app, obs, f"observation-{idx}")
+                send_input(self.app, prc, str(1 + idx + (idx2 / 10)))
+            for i, qty in enumerate(section.find_elements(By.CSS_SELECTOR, selector[2])):
+                send_input(self.app, qty, f"1.{idx}{i}")
 
         for path in ["data", "data_obs"]:
             file_path = find_saved_file(self.app, path)
@@ -459,12 +437,12 @@ class Test003SaveProducts:
         assert list(dataframe.Estabelecimento.unique()) == [RAW_INPUTS[2]], dataframe
         assert list(dataframe.columns) == CSV_COLUMNS, dataframe.columns
         assert dataframe.Produto.value_counts().to_dict() == CFG.product_rows, dataframe
-        assert float(dataframe.Preço.sum()) == 156.6, dataframe
-        assert float(dataframe.Quantidade.sum()) == 15.85, dataframe
-        assert float(dataframe.Preço.min()) == 0.0, dataframe
-        assert float(dataframe.Preço.max()) == 12.0, dataframe
-        assert float(dataframe.Quantidade.min()) == 0.0, dataframe
-        assert float(dataframe.Quantidade.max()) == 1.0, dataframe
+        assert float(dataframe.Preço.sum()) == 189.6, dataframe
+        assert float(dataframe.Preço.min()) == 1.0, dataframe
+        assert float(dataframe.Preço.max()) == 13.0, dataframe
+        assert float(dataframe.Quantidade.sum()) == 45.69, dataframe
+        assert float(dataframe.Quantidade.min()) == 1.0, dataframe
+        assert float(dataframe.Quantidade.max()) ==1.9, dataframe
         remove(file_path)
 
         obs_path = find_saved_file(self.app, "data_obs")
@@ -498,7 +476,7 @@ class Test003SaveProducts:
 
             for idx, elements in enumerate(productElems):
                 for element in elements:
-                    class_name = "wrong" if idx < 2 else "correct"
+                    class_name = "wrong" if idx != 2 else "correct"
                     assert element.get_attribute("value") == ""
                     assert check_in_attr(element, "class", class_name)
 
@@ -581,7 +559,7 @@ class Test004AuxiliaryFunctions:
                 send_input(self.app, price, "1")
 
         fill_first_section(self.app)
-        button = get_by_cond(self.app, "clear-products", By.ID)
+        button = get_all_by_cond(self.app, '[id*="confirm-clear"]', By.CSS_SELECTOR)[0]
         wait_interactable(self.app, button)
         send_click(self.app, button)
         alert = WebDriverWait(self.app, 5).until(EC.alert_is_present())

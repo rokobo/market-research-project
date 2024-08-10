@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html, _dash_renderer
+from dash import Dash, dcc, html, _dash_renderer, Output, Input, callback
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
@@ -34,13 +34,32 @@ auth = dash_auth.BasicAuth(
 
 app.layout = dmc.MantineProvider(html.Div([
     dcc.Store(id="store", storage_type="local", data=[]),
-    dcc.Store(id="load-flag", storage_type="local", data=False),
     dcc.Store(id="config", storage_type="local", data=vars(CFG)),
     dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     dcc.Store(id="geo-history", storage_type="local", data=[]),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dash.page_container
 ]), id="mantine")
+
+
+@callback(
+    Output('config', 'data'),
+    Input('config', 'data')
+)
+def check_version(config):
+    if config is None or CFG.version != config.get('version'):
+        return vars(CFG)
+    return dash.no_update
+
+
+@callback(
+    Output('coordinates', 'data'),
+    Input('coordinates', 'data')
+)
+def check_version2(coords):
+    if coords is None or COORDINATES["version"] != coords.get('version'):
+        return COORDINATES
+    return dash.no_update
 
 
 @server.route('/data_agg_csv/<path:filename>')
