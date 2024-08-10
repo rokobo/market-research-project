@@ -6,6 +6,8 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 
+update_time = f"{int(getmtime(__file__)):,}".replace(",", ".")
+
 CFG = SimpleNamespace(**dict(
     home=dirname(dirname(__file__)),
     data_obs=join(dirname(dirname(__file__)), "data_obs"),
@@ -61,8 +63,7 @@ CFG.csv_timestamps = {
     file[0:7]: int(getmtime(join(CFG.data_agg_csv, file)))
     for file in listdir(CFG.data_agg_csv)
 }
-
-CFG.version = "CFG 1.0"
+CFG.version = update_time
 
 assert len(CFG.products) == len(CFG.product_rows)
 assert len(CFG.products) == len(CFG.product_fields)
@@ -77,7 +78,7 @@ assert set(CFG.product_titles.keys()) == set(CFG.products)
 COORDINATES = pd.read_csv(
     join(CFG.home, "config/estabelecimentos.csv")
 ).set_index("Estabelecimento").transpose().to_dict()
-COORDINATES["version"] = "COORDINATES 1.0"
+COORDINATES["version"] = update_time
 
 ICONS = {}
 for file in listdir(CFG.images):
