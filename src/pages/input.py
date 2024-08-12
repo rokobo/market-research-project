@@ -12,6 +12,7 @@ import dash_mantine_components as dmc
 dash.register_page(__name__, path="/")
 
 
+import dash_ag_grid as dag
 layout = html.Div([
     dbc.Navbar([
         dbc.Row([
@@ -111,6 +112,35 @@ layout = html.Div([
             "Geolocalização não usada",
             id="establishment-subformtext", color="secondary")
     ], className="m-2 unwrap"),
+
+    dag.AgGrid(id="ag-grid-1", columnDefs=[
+        {
+            "field": "Ticker",
+            "cellRenderer": "StockLink",
+            "editable": False
+        },
+        {
+            "field": "Marca",
+            "cellEditor": "agSelectCellEditor",
+            "cellEditorParams": {
+                "values": ["Apple", "Banana", "Orange"]
+            }
+        },
+        {
+            "field": "Quantity",
+        },
+    ], defaultColDef={"editable": True},
+               rowData=[
+    {"Marca": "Apple", "Quantity": 10, "Ticker": ""},
+    {"Marca": "Banana", "Quantity": 15, "Ticker": ""},
+    {"Marca": "Orange", "Quantity": 8, "Ticker": ""},
+], dashGridOptions = {"domLayout": "autoHeight", "singleClickEdit": True, "stopEditingWhenCellsLoseFocus": True},
+style = {"height": None}),
+
+    html.Div(html.Button(
+        html.I(className="bi bi-file-earmark-plus"),
+        id=f"add-test", className="mb-4")),
+
     html.Div([product_form(prd) for prd in CFG.products]),
     html.Div([
         dbc.Label(
@@ -197,7 +227,12 @@ clientside_callback(
     State("geolocation", "position"),
     State('geo-history', 'data'),
 )
-
+@callback(
+    Output("ag-grid-1", "rowTransaction"),
+    Input("add-test", "n_clicks"),
+)
+def a(m):
+    return {"add": [{"Marca": None, "Quantity": None}]}
 
 clientside_callback(
     ClientsideFunction(
