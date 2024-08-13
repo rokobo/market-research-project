@@ -1,6 +1,6 @@
-var dagcomponentfuncs = (window.dashAgGridComponentFunctions = window.dashAgGridComponentFunctions || {});
+var dag = (window.dashAgGridComponentFunctions = window.dashAgGridComponentFunctions || {});
 
-dagcomponentfuncs.StockLink = function (props) {
+dag.DeleteRow = function (props) {
     return React.createElement(
         'button',
         {
@@ -12,3 +12,5 @@ dagcomponentfuncs.StockLink = function (props) {
         React.createElement("i", { className: "bi bi-trash3-fill" })
     );
 };
+
+dag.CustomNoRowsOverlay=function(){return React.createElement('div',{},'')};

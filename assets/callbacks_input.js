@@ -15,14 +15,17 @@ const errTxt=(e)=>{return ERRS[e]||ERRS.default};
 const BR={type:"Br",namespace:"dash_html_components",props:{}};
 const STRONG=(str)=>{return{type:"Strong",namespace:"dash_html_components",props:{children:str}}};
 const K=CFG.fields.length;
+const NOUPDATE=dash_clientside.no_update;
+const PRDOUT=new Array(13).fill(NOUPDATE);
 
 window.dash_clientside.input={
+add_row:function(...clk){out=[...PRDOUT];prd=dash_clientside.callback_context.triggered_id.slice(4);out[CFG.product_index[prd]]={"add":[{}]};console.log("add_row",prd);return out},
 clear_contents:function(...clk){
     console.log("clear_contents: (",dash_clientside.callback_context.triggered_id,"): ",clk[0]);
-    if(clk[0].some(v=>typeof v==='number')){console.log("clear_contents: Memory deleted");return []}
-    return dash_clientside.no_update;
+    if(clk[0].some(v=>typeof v==='number')){console.log("clear_contents: Memory deleted");return[]}
+    return NOUPDATE;
 },
-close_modal:function(clk){if(typeof clk!=='number'){return dash_clientside.no_update};return false},
+close_modal:function(clk){if(typeof clk!=='number'){return NOUPDATE};return false},
 theme_switcher:function(s){console.log("theme_switch",s);document.documentElement.setAttribute('data-bs-theme',s);return s},
 fill_date:function(_){return new Date().toLocaleDateString('en-CA')},
 update_badges:async function(_,pos,geo){
@@ -32,116 +35,60 @@ update_badges:async function(_,pos,geo){
     if(navigator.geolocation){try{LOC=await getPos(GEOOPTS);geoNow=[LOC.coords.latitude,LOC.coords.longitude,LOC.timestamp];bdgOut=bdgOut.concat([geoNow[0].toFixed(4)+", "+geoNow[1].toFixed(4),"secondary"])}
         catch(e){LOC=e.code;bdgOut=bdgOut.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
     else{LOC=4;bdgOut=bdgOut.concat(["ERRO LOCALIZAÇÃO","danger"])}
-    if(bdgOut[3]=="secondary"){bdgOut=bdgOut.concat([false,dash_clientside.no_update])}
+    if(bdgOut[3]=="secondary"){bdgOut=bdgOut.concat([false,NOUPDATE])}
     else {bdgOut=bdgOut.concat([true,[BR,BR,STRONG("REQUISITO PENDENTE:"),errTxt(LOC),BR,BR,BR]])}
-    if(geoNow==null){bdgOut.push(dash_clientside.no_update)}
-    else if(geo.length==0){bdgOut.push(geo.concat([geoNow]))}
-    else if(haversine(geo.at(-1),geoNow)>0.1){bdgOut.push(geo.concat([geoNow]))}
-    else{{bdgOut.push(dash_clientside.no_update)}}
+    if(geoNow==null){bdgOut.push(NOUPDATE)}
+    else if(geo.length==0||haversine(geo.at(-1),geoNow)>0.1){bdgOut.push(geo.concat([geoNow]))}
+    else{{bdgOut.push(NOUPDATE)}}
     if(geo.length>CFG.geo_length){geo.shift()}
+    size = (Object.keys(localStorage).reduce((t,k)=>{return t+(localStorage[k].length+k.length)*2},0)/1024).toFixed(2);
+    bdgOut.push(size + " KB");
     return bdgOut;
 },
-save_state:function(_,name,date,estab,obs,...prds){
-    let data=[];data.push({'first':[name,date,estab]});data.push({'observations':obs});
-    for(let i=0;i<prds.length;i++){
-        let prd_name=CFG.products[i];
-        let prd=prds[i];
-        for(let prod_row of prd){
-            let row_id=prod_row.props.id;
-            let val=prod_row.props.children;
-            let vals={};
-            for(let idx=0;idx<val.length;idx++){
-                try{vals[idx]=val[idx].props.children.props.value}catch(e){}}
-            let row=[null,null,null,null];
-            switch(val.length){
-                case 4:row=[vals[1],vals[2],vals[3]];break;
-                case 3:row=[null,vals[1],vals[2]];break;
-                default:row=[null,null,null]}
-            data.push({"container":prd_name,"values":row,"row_id":row_id.split("-").slice(-1)[0]});
-        }
-    };
-    console.log("save_state: (",dash_clientside.callback_context.triggered_id,")",data);
-    return data;
+load_state:function(_, _,local){console.log("load_state");local.push("");return local},
+test:function(...args){
+    console.log("TESTE", dash_clientside.callback_context.triggered_id, args);
 },
-validate_args:function(_,name,date,est,...vals){
-    var firsts=vals.splice(-3);
-    var seconds=vals.slice((vals.length-CFG.products.length)/2+CFG.products.length);
-    var valids=[],status1=[],status2=[];
-    ctx=dash_clientside.callback_context.triggered_id;
-    // Individual validations
-    for(var i=0;i<seconds.length;i+=K){
-        var [br,pr,qn]=seconds.slice(i,i+K);
-        valids=valids.concat([
-            br.map((a=>"string"==typeof a)),
-            pr.map((a=>"number"==typeof a&&!isNaN(a)&&a>0)),
-            qn.map((a=>a==null|a>0))]);
+validate_args:function(_,n,d,e, ...vals){
+    vals=vals.splice(CFG.products.length);
+    firsts=vals.splice(CFG.products.length);
+    if(vals[0]===undefined){return NOUPDATE}
+    vals=vals.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill({}):v);
+    var badgeText=[],badgeColor=[], icons=[],ctx=dash_clientside.callback_context.triggered_id;
+    for(var i=0;i<vals.length;i++){
+        if (vals[i].every(d=>d["Marca"] != null && d["Preço"] != null)) {
+            if (vals[i].length >= CFG.product_rows[CFG.products[i]])
+                {badgeText.push("Completo");badgeColor.push("success");icons.push({"color":"green"})}
+            else{badgeText.push("Okay");badgeColor.push("warning");icons.push({"color":"rgb(252,174,30)"})}
+        }
+        else {badgeText.push("Faltando");badgeColor.push("danger");icons.push({"color":"red"})}
     };
-    // Section validations
-    for(var i=0;i<valids.length;i+=K){
-        const val=valids.slice(i,i+K);
-        if(val.every(sublist=>sublist.every(v=>v))){
-            if(val[1].length >=CFG.product_rows[CFG.products[i/K]]){status1.push("Completo");status2.push("success")
-            }else {status1.push("Okay");status2.push("warning");}
-        }else{status1.push("Faltando");status2.push("danger")}
-    };
-    // Transform to appropriate classnames
-    valids=valids.map(sublist=>sublist.map(v=>v?"correct":"wrong"));
-    console.log("validate_args: (",ctx,")",firsts,logValids(valids,CFG.products));
-    valids=valids.concat(status1).concat(status2).concat(firsts.map(v=>(v!==null&&v!==""?"correct":"wrong")));
-    valids.push("");valids.push(false);
+    firstClass = firsts.map(v=>(v!=null&&v!==""?"correct":"wrong"));
+    out=badgeText.concat(badgeColor).concat(icons).concat(firstClass);
+    out.push("");out.push(false);out.push(vals);
+
+    var idx=0, today=new Date().toLocaleDateString('en-CA'), msg="Você tem certeza que quer enviar?\n\n";
+    msg+=`${idx+=1}. Seções com poucos itens: `+vals.filter((c,i)=>c.length<CFG.product_rows[CFG.products[i]]).length+"\n";
+    if(today!=firsts[1]){msg+=`${idx+=1}. Envio em dia diferente:\n      - Data atual: `+today+"\n      - Registrado: "+firsts[1]}
+    if(firstClass.every(v=>v=="correct") && badgeColor.every(v=>v!="danger")){out=out.concat(["success",""])}
+    else {out=out.concat(["danger","unclickable"])};
+    console.log("validate_args: (",ctx,")",firsts,badgeText,badgeColor,icons,out.slice(-9, -6),out.slice(-2), msg);
+    out.push(msg);
     // Add scroll on focus event listeners
-    document.querySelectorAll('.form-control').forEach(function(input){
-        if(!input.hasEventListener){
-            input.addEventListener('focus',function(){input.scrollIntoView({behavior:'instant',block:'center'})});
-            input.hasEventListener=true;
-        }
-    })
-    return valids;
-},
-delete_product_row:function(...vals){
-    var ctx=dash_clientside.callback_context.triggered_id;
-    if(vals.slice(0,CFG.products.length).every(sublist=>sublist.every(v=>typeof v==="undefined"))){
-        return dash_clientside.no_update;}
-    var states=vals.slice(CFG.products.length);
-    var ctxType=ctx.type.slice(7);
-    var prop_id=`${ctxType}-product-row-${ctx.index}`
-    var index=CFG.products.indexOf(ctxType);
-    var patch=Array(CFG.products.length).fill(dash_clientside.no_update);
-    var children=states[index];
-    for(let i=0;i<children.length;i++){
-        var child=children[i];
-        // Find row by row index and context index,remove child at index i
-        if(child.props.id===prop_id){children.splice(i,1);break;}}
-    patch[index]=children;
-    console.log("delete_product_row:",CFG.products[index]);
-    return patch;
-},
-display_progress:function(_,name,date,est,...vals){
-    badges=vals.slice(0,13);
-    today=new Date().toLocaleDateString('en-CA');
-    date_val=vals[26];
-    idx=0;
-    msg="Você tem certeza que quer enviar?\n\n";
-    msg+=`${idx+=1}. Seções com poucos itens: `+vals.slice(13,26).filter((c,i)=>c.length<CFG.product_rows[CFG.products[i]]).length+"\n";
-    if(today!=date_val){msg+=`${idx+=1}. Envio em dia diferente:\n      - Data atual: `+today+"\n      - Registrado: "+date_val}
-    output=badges.map(v=>{
-        if(v==="success"){return {"color":"green"}}
-        else if(v==="danger"){return {"color":"red"}}
-        else {return {"color":"rgb(252,174,30)"}}});
-    // Update save button status
-    if([name,date,est].every(v=>v=="correct") && badges.every(v=>v!="danger")){output=output.concat(["success",""])}
-    else {output=output.concat(["danger","unclickable"])};
-    console.log("display_progress: (",dash_clientside.callback_context.triggered_id,")",[name,date,est],badges,output, msg);
-    output.push(msg);
-    output.push("");
-    return output;
+    // document.querySelectorAll('.form-control').forEach(function(input){
+    //     if(!input.hasEventListener){
+    //         input.addEventListener('focus',function(){input.scrollIntoView({behavior:'instant',block:'center'})});
+    //         input.hasEventListener=true;
+    //     }
+    // })
+    return out;
 },
 establishment_address:function(est){
     if(est in COORDS){loc=COORDS[est].Endereço}else{loc="Sem endereço"}
     console.log("establishment_address:",est,loc);return loc;
 },
 locate_establishment:function(_){
-    output=[dash_clientside.no_update, ""];pos=LOC;
+    output=[NOUPDATE, ""];pos=LOC;
     if(typeof pos==="number"){output[1]=errTxt(LOC);return output}
     lat=pos.coords.latitude;lon=pos.coords.longitude;smallestDist=[Infinity, ""];
     for(est in COORDS) {

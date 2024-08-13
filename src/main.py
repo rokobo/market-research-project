@@ -33,7 +33,7 @@ auth = dash_auth.BasicAuth(
 )
 
 app.layout = dmc.MantineProvider(html.Div([
-    dcc.Store(id="store", storage_type="local", data=[]),
+    dcc.Store(id="grid-data", storage_type="local", data=[]),
     dcc.Store(id="config", storage_type="local", data=vars(CFG)),
     dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     dcc.Store(id="geo-history", storage_type="local", data=[]),
