@@ -45,7 +45,9 @@ update_badges:async function(_,pos,geo){
     bdgOut.push(size + " KB");
     return bdgOut;
 },
-load_state:function(_, _,local){console.log("load_state");local.push("");return local},
+load_state:function(_, _,local){
+    local=local.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill({}):v);
+    console.log("load_state",dash_clientside.callback_context.triggered_id);local.push("");return local},
 test:function(...args){
     console.log("TESTE", dash_clientside.callback_context.triggered_id, args);
 },
