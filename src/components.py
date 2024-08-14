@@ -9,7 +9,7 @@ from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 
 CELL_CLASS = {
     'wrong': 'params.value == null || params.value == ""',
-    '': 'params.value != null && params.value != ""'
+    'correct': 'params.value != null && params.value != ""'
 }
 
 
@@ -41,10 +41,11 @@ def product_grid(product):
     if fields[0]:
         columnDefs.append({
             "field": "Marca", "flex": 1.8,
-            "cellEditor": "agSelectCellEditor",
-            "cellEditorParams": {
-                "values": [v["label"] for v in load_brands(product) if "disabled" not in v]
-            },
+            "cellRenderer": "SelectRow", "editable": False,
+            "cellRendererParams": {
+                "options": load_brands(product)
+            },"cellStyle": {"padding": 0, "margin": 0},
+
             'cellClassRules': CELL_CLASS
         })
     if fields[1]:
@@ -59,6 +60,7 @@ def product_grid(product):
             "field": "Quant", "flex": 1, "headerName": "Quant.",
             'cellDataType': 'number', 'cellEditor': 'agNumberCellEditor',
             'cellEditorParams': {'min': 0.001, 'precision': 3},
+            'cellClass': "correct"
         })
 
     return dbc.Row([
@@ -86,7 +88,10 @@ def product_grid(product):
                 "singleClickEdit": True,
                 "stopEditingWhenCellsLoseFocus": True,
                 "noRowsOverlayComponent": "CustomNoRowsOverlay",
-                'headerHeight': 20
+                'headerHeight': 20,
+                'frameworkComponents': {
+                    'CustomSelectEditor': 'CustomSelectEditor'
+                }
             },
             style={"height": None},
             className="p-0 ag-theme-material",
@@ -94,7 +99,7 @@ def product_grid(product):
         dbc.Button(
             html.I(className="bi bi-file-earmark-arrow-down"),
             id=f"add-{product}", outline=True, color="secondary"),
-    ], className="mx-2 mt-4")
+    ], className="mx-2 mt-4", id=f"{product}-heading")
 
 
 def wait_modal(id, source, index):
