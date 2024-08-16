@@ -70,29 +70,19 @@ def check_folder(path):
 
 
 def save_products(
-    product_data, info, obs: Optional[str],
+    data, info, obs: Optional[str],
     position: Optional[dict[str, Any]], geo_hist: Optional[list], test=False
 ):
     check_folder("data")
     check_folder("data_obs")
-    rows = []
 
-    for product, prod_name in zip(product_data, CFG.products):
-        size = len(product[1])
-        product = [
-            col if len(col) == size
-            else col + ([None] * (size - len(col)))
-            for col in product]
-        for row in list(zip(*product)):
-            data = [prod_name]
-            data.extend(row)
-            if not isinstance(data[3], (float, int)):
-                quantidade = CFG.quantities[prod_name][0]
-                data[3] = quantidade
-            rows.append(data)
+    df = pd.DataFrame([
+        row | {"Produto": prd}
+        for rows, prd in zip(data, CFG.products)
+        for row in rows
+    ], columns=["Produto", "Marca", "Preço", "Quantidade"])
+    df = df.dropna(subset=["Preço"]).reset_index(drop=True)
 
-    df = pd.DataFrame(
-        rows, columns=["Produto", "Marca", "Preço", "Quantidade"])
     df["Nome"] = info[0]
     df["Data"] = info[1]
     df["Estabelecimento"] = info[2].split(" ")[0]

@@ -11,11 +11,6 @@ import dash_mantine_components as dmc
 
 dash.register_page(__name__, path="/")
 
-CELL_CLASS = {
-                'wrong': 'params.value == null || params.value == ""',
-                'correct': 'params.value != null && params.value != ""'
-            }
-import dash_ag_grid as dag
 layout = html.Div([
     dbc.Navbar([
         dbc.Row([
@@ -69,9 +64,7 @@ layout = html.Div([
     ], direction="horizontal", className="mx-2 mb-3 mbt-2"),
     html.Div([
         dbc.Label("Nome do coletor", style=BOLD),
-        dbc.Input(  # Only the name will persist, date/loc should not.
-            type="text", id="collector_name",
-            persistence_type="local", persistence=True),
+        dbc.Input(type="text", id="collector_name", persistence=False),
     ], className="m-2"),
     html.Div([
         dbc.Label("Data de coleta", style=BOLD),
@@ -81,7 +74,7 @@ layout = html.Div([
             "o campo 'Data de coleta'.",
             target="date-info"),
         dbc.InputGroup([
-            dbc.Input(type="date", id="collection_date"),
+            dbc.Input(type="date", id="collection_date", persistence=False),
             dbc.Button(
                 [html.I(className="bi bi-calendar2-check"), " Hoje"],
                 id="fill-date", color="primary")
@@ -104,7 +97,9 @@ layout = html.Div([
             "atualização da localização)"],
             target="estab-info"),
         dbc.InputGroup([
-            dbc.Select(id="establishment", options=load_establishments()),
+            dbc.Select(
+                id="establishment", options=load_establishments(),
+                persistence=False),
             dbc.Button(
                 [html.I(className="bi bi-geo-alt"), " Localizar"],
                 id="fill-establishment", color="primary")
@@ -180,13 +175,12 @@ layout = html.Div([
     ], id="send-confirmed-modal", centered=True, is_open=False),
     html.Div(id="dummy-div-load"),        # save_products  ->  load
     html.Div(id="dummy-div-validation"),  # load           ->  validation
-    html.Div(id="dummy-div-progress"),    # validation     ->  progress
-    html.Div(id="dummy-div-save"),        # progress       ->  save
     html.Div([
         wait_modal(modal_info[0], modal_info[1], i) for i, modal_info
         in enumerate([
-            ("page-loading-modal", "validate_args()")
-    ])]),
+            ("page-loading-modal", "Validando campos"),
+            ("state-loading-modal", "Carregando dados"),
+        ])]),
     dbc.Modal(
         id="geo-loading-modal", is_open=False,
         centered=True, keyboard=False, backdrop="static"),
@@ -293,11 +287,11 @@ clientside_callback(
         function_name="clear_contents"
     ),
     Output('grid-data', 'data', allow_duplicate=True),
+    Output('info-data', 'data', allow_duplicate=True),
+    Output("dummy-div-load", "className", allow_duplicate=True),
     Input({"type": "confirm-clear", "index": ALL}, "submit_n_clicks"),
     prevent_initial_call=True
 )
-
-
 
 
 clientside_callback(
@@ -307,9 +301,14 @@ clientside_callback(
     ),
     [Output(f"ag-grid-{prd}", 'rowData') for prd in CFG.products],
     Output("dummy-div-validation", "className"),
+    Output("collector_name", "value"),
+    Output("collection_date", "value"),
+    Output("establishment", "value"),
+    Output("state-loading-modal", "is_open"),
     Input("dummy-div-load", "className"),
     Input("confetti", "className"),
-    State('grid-data', 'data')
+    State('grid-data', 'data'),
+    State('info-data', 'data')
 )
 
 
@@ -324,9 +323,9 @@ clientside_callback(
     Output("collector_name", "className"),
     Output("collection_date", "className"),
     Output("establishment", "className"),
-    Output("dummy-div-progress", "className"),
     Output("page-loading-modal", "is_open", allow_duplicate=True),
     Output('grid-data', 'data', allow_duplicate=True),
+    Output('info-data', 'data', allow_duplicate=True),
     Output("save-products", "color"),
     Output("save-container", "className"),
     Output("confirm-send", "message"),
@@ -345,6 +344,7 @@ clientside_callback(
 
 @callback(
     Output('grid-data', 'data', allow_duplicate=True),
+    Output('info-data', 'data', allow_duplicate=True),
     Output('geo-history', 'data', allow_duplicate=True),
     Output('dummy-div-load', 'className'),
     Output("send-confirmed-modal", "is_open"),
@@ -355,14 +355,11 @@ clientside_callback(
     State("general_observations", "value"),
     State("geolocation", "position"),
     State('geo-history', 'data'),
-    [State({"type": f"{field}-{prd}", "index": ALL}, "value")
-        for prd in CFG.products for field in CFG.fields],
+    State('grid-data', 'data'),
     prevent_initial_call=True
 )
-def save_args(clicks, name, date, establishment, obs, pos, geo_hist, *values):
+def save_args(clicks, name, date, establishment, obs, pos, geo_hist, data):
     if clicks is None:
         return dash.no_update
-    k = len(CFG.fields)
-    products = [values[i:i + k] for i in range(0, len(values), k)]
-    save_products(products, (name, date, establishment), obs, pos, geo_hist)
-    return [], [], "", True
+    save_products(data, (name, date, establishment), obs, pos, geo_hist)
+    return ["reload"], [], [], "", True
