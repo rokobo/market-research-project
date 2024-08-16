@@ -1,31 +1,5 @@
-var dag = (window.dashAgGridComponentFunctions = window.dashAgGridComponentFunctions || {});
-const OPT=(v)=>{return React.createElement('option',Object.assign({},v,{key:v.value}))}
-
-dag.DeleteRow = function (props) {
-    return React.createElement(
-        'button',
-        {
-            className: "btn btn-outline-secondary btn-sm",
-            onClick: function() {
-                props.api.applyTransaction({ remove: [props.data] });
-            }
-        },
-        React.createElement("i", { className: "bi bi-trash3-fill" })
-    );
-};
-dag.SelectRow = function (props) {
-    const {setData, _} = props;
-
-    const handleChange = function(event) {
-        const val = event.target.value;
-        props.node.setDataValue(props.column.colId, val);
-        setData(val)
-    };
-    return React.createElement(
-        'select',
-        {value: props.value || '', onChange: handleChange, class: "grid-select"},
-        [OPT({"label": '', "value": ''})].concat(props.options.map(option =>OPT(option)))
-    );
-};
-
-dag.CustomNoRowsOverlay=function(){return React.createElement('div',{},'')};
+var dag=window.dashAgGridComponentFunctions=window.dashAgGridComponentFunctions||{};
+const OPT=e=>React.createElement("option",e,e.label);
+dag.DeleteRenderer=function(e){return React.createElement("button",{className:"btn btn-outline-secondary btn-sm delete-button",onClick:function(){e.api.applyTransaction({remove:[e.data]})}},React.createElement("i",{className:"bi bi-trash3-fill"}))};
+dag.SelectRenderer=function(e){const{setData:t}=e;return React.createElement(window.dash_bootstrap_components.Select,{value:e.value||"",setProps:function(n){const a=n.value;e.node.setDataValue(e.column.colId,a),t(a)},options:e.options,className:"grid-select"})};
+dag.NoRowsOverlay=function(){return React.createElement("div",{},"")};

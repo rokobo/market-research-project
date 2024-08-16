@@ -8,27 +8,28 @@ const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:10000};
 let LOC=null;
 const getPos=(options)=>{return new Promise((resolve,reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 const ERRS={
-1:"Permita o uso de localização e tente novamente!",2:"Posição indisponível, tente novamente!",
-3:"Tempo de requisição esgotado, espere ou tente novamente!",4:"Localização não é suportada nesse browser!",
+1:"Permita o uso de localização e tente novamente!",
+2:"Posição indisponível, tente novamente!",
+3:"Dispositivo não respondeu com a localização, espere ou tente novamente!",
+4:"Localização não é suportada nesse browser!",
 default:"Erro desconhecido!"};
 const errTxt=(e)=>{return ERRS[e]||ERRS.default};
 const BR={type:"Br",namespace:"dash_html_components",props:{}};
 const STRONG=(str)=>{return{type:"Strong",namespace:"dash_html_components",props:{children:str}}};
-const K=CFG.fields.length;
 const NOUPDATE=dash_clientside.no_update;
 const PRDOUT=new Array(13).fill(NOUPDATE);
-
 window.dash_clientside.input={
 add_row:function(...clk){out=[...PRDOUT];prd=dash_clientside.callback_context.triggered_id.slice(4);out[CFG.product_index[prd]]={"add":[{}]};console.log("add_row",prd);return out},
 clear_contents:function(...clk){
     console.log("clear_contents: (",dash_clientside.callback_context.triggered_id,"): ",clk[0]);
-    if(clk[0].some(v=>typeof v==='number')){console.log("clear_contents: Memory deleted");return[]}
+    if(clk[0].some(v=>typeof v==='number')){console.log("clear_contents: Memory deleted");return[[], [], '']}
     return NOUPDATE;
 },
 close_modal:function(clk){if(typeof clk!=='number'){return NOUPDATE};return false},
 theme_switcher:function(s){console.log("theme_switch",s);document.documentElement.setAttribute('data-bs-theme',s);return s},
 fill_date:function(_){return new Date().toLocaleDateString('en-CA')},
 update_badges:async function(_,pos,geo){
+    if(CFG==null){location.reload();console.log("CFG is null, RELOADING")}
     bdgOut=[];geoNow=null;
     if(navigator.onLine){bdgOut=bdgOut.concat(["ONLINE","success"])}
     else {bdgOut=bdgOut.concat(["OFFLINE","danger"])};
@@ -36,7 +37,7 @@ update_badges:async function(_,pos,geo){
         catch(e){LOC=e.code;bdgOut=bdgOut.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
     else{LOC=4;bdgOut=bdgOut.concat(["ERRO LOCALIZAÇÃO","danger"])}
     if(bdgOut[3]=="secondary"){bdgOut=bdgOut.concat([false,NOUPDATE])}
-    else {bdgOut=bdgOut.concat([true,[BR,BR,STRONG("REQUISITO PENDENTE:"),errTxt(LOC),BR,BR,BR]])}
+    else {bdgOut=bdgOut.concat([true,[BR,BR,STRONG("REQUISITO PENDENTE:"),errTxt(LOC),BR,BR]])}
     if(geoNow==null){bdgOut.push(NOUPDATE)}
     else if(geo.length==0||haversine(geo.at(-1),geoNow)>0.1){bdgOut.push(geo.concat([geoNow]))}
     else{{bdgOut.push(NOUPDATE)}}
@@ -45,12 +46,13 @@ update_badges:async function(_,pos,geo){
     bdgOut.push(size + " KB");
     return bdgOut;
 },
-load_state:function(_, _,local){
+load_state:function(_, _,local,info){
+    if(info.length!=3){info=[null,null,null]}
+    if(local==["reload"]){location.reload(true)}
+    if(!Array.isArray(local)|local.length!=CFG.products.length){local=CFG.products.map(p=>Array(CFG.product_rows[p]).fill({}))}
     local=local.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill({}):v);
-    console.log("load_state",dash_clientside.callback_context.triggered_id);local.push("");return local},
-test:function(...args){
-    console.log("TESTE", dash_clientside.callback_context.triggered_id, args);
-},
+    console.log("load_state",dash_clientside.callback_context.triggered_id);local.push("");
+    local=local.concat(info);local.push(false);return local},
 validate_args:function(_,n,d,e, ...vals){
     vals=vals.splice(CFG.products.length);
     firsts=vals.splice(CFG.products.length);
@@ -58,8 +60,9 @@ validate_args:function(_,n,d,e, ...vals){
     vals=vals.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill({}):v);
     var badgeText=[],badgeColor=[], icons=[],ctx=dash_clientside.callback_context.triggered_id;
     for(var i=0;i<vals.length;i++){
-        if (vals[i].every(d=>d["Marca"] != null && d["Preço"] != null)) {
-            if (vals[i].length >= CFG.product_rows[CFG.products[i]])
+        prd = CFG.products[i];
+        if (vals[i].every(d=>(!CFG.product_fields[prd][0]||(d["Marca"]!=null&&d["Marca"]!=''))&&d["Preço"]!=null)) {
+            if (vals[i].length >= CFG.product_rows[prd])
                 {badgeText.push("Completo");badgeColor.push("success");icons.push({"color":"green"})}
             else{badgeText.push("Okay");badgeColor.push("warning");icons.push({"color":"rgb(252,174,30)"})}
         }
@@ -67,14 +70,13 @@ validate_args:function(_,n,d,e, ...vals){
     };
     firstClass = firsts.map(v=>(v!=null&&v!==""?"correct":"wrong"));
     out=badgeText.concat(badgeColor).concat(icons).concat(firstClass);
-    out.push("");out.push(false);out.push(vals);
-
+    out.push(false);out.push(vals);out.push(firsts);
     var idx=0, today=new Date().toLocaleDateString('en-CA'), msg="Você tem certeza que quer enviar?\n\n";
     msg+=`${idx+=1}. Seções com poucos itens: `+vals.filter((c,i)=>c.length<CFG.product_rows[CFG.products[i]]).length+"\n";
     if(today!=firsts[1]){msg+=`${idx+=1}. Envio em dia diferente:\n      - Data atual: `+today+"\n      - Registrado: "+firsts[1]}
     if(firstClass.every(v=>v=="correct") && badgeColor.every(v=>v!="danger")){out=out.concat(["success",""])}
     else {out=out.concat(["danger","unclickable"])};
-    console.log("validate_args: (",ctx,")",firsts,badgeText,badgeColor,icons,out.slice(-9, -6),out.slice(-2), msg);
+    console.log("validate_args: (",ctx,")",firsts,badgeColor,out.slice(-9, -6),out.slice(-2), msg);
     out.push(msg);
     // Add scroll on focus event listeners
     // document.querySelectorAll('.form-control').forEach(function(input){
