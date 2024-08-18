@@ -18,18 +18,19 @@ const BR={type:"Br",namespace:"dash_html_components",props:{}};
 const STRONG=(str)=>{return{type:"Strong",namespace:"dash_html_components",props:{children:str}}};
 const NOUPDATE=dash_clientside.no_update;
 const PRDOUT=new Array(13).fill(NOUPDATE);
+function INFO(...m){console.log(`%c${INFO.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#00252E;color:#25F5FC","background:#382C00;color:#FFC800",...m)}
+function ERROR(...m){console.log(`%cERROR ${ERROR.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#700000;color:#FFADAD","background:#382C00;color:#FFC800",...m)}
 window.dash_clientside.input={
-add_row:function(...clk){out=[...PRDOUT];prd=dash_clientside.callback_context.triggered_id.slice(4);out[CFG.product_index[prd]]={"add":[{}]};console.log("add_row",prd);return out},
+add_row:function(...clk){out=[...PRDOUT];prd=dash_clientside.callback_context.triggered_id.slice(4);out[CFG.product_index[prd]]={"add":[{}]};INFO(prd);return out},
 clear_contents:function(...clk){
-    console.log("clear_contents: (",dash_clientside.callback_context.triggered_id,"): ",clk[0]);
-    if(clk[0].some(v=>typeof v==='number')){console.log("clear_contents: Memory deleted");return[[], [], '']}
+    if(clk[0].some(v=>typeof v==='number')){INFO("Memory deleted");return[[], [], '']}
     return NOUPDATE;
 },
 close_modal:function(clk){if(typeof clk!=='number'){return NOUPDATE};return false},
-theme_switcher:function(s){console.log("theme_switch",s);document.documentElement.setAttribute('data-bs-theme',s);return s},
+theme_switcher:function(s){INFO(s,"mode");document.documentElement.setAttribute('data-bs-theme',s);return s},
 fill_date:function(_){return new Date().toLocaleDateString('en-CA')},
 update_badges:async function(_,pos,geo){
-    if(CFG==null){location.reload();console.log("CFG is null, RELOADING")}
+    if(CFG==null){location.reload();INFO("CFG is null, reloading...")}
     bdgOut=[];geoNow=null;
     if(navigator.onLine){bdgOut=bdgOut.concat(["ONLINE","success"])}
     else {bdgOut=bdgOut.concat(["OFFLINE","danger"])};
@@ -51,7 +52,7 @@ load_state:function(_, _,local,info){
     if(local==["reload"]){location.reload(true)}
     if(!Array.isArray(local)|local.length!=CFG.products.length){local=CFG.products.map(p=>Array(CFG.product_rows[p]).fill({}))}
     local=local.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill({}):v);
-    console.log("load_state",dash_clientside.callback_context.triggered_id);local.push("");
+    INFO("");local.push("");
     local=local.concat(info);local.push(false);return local},
 validate_args:function(_,n,d,e, ...vals){
     vals=vals.splice(CFG.products.length);
@@ -76,7 +77,7 @@ validate_args:function(_,n,d,e, ...vals){
     if(today!=firsts[1]){msg+=`${idx+=1}. Envio em dia diferente:\n      - Data atual: `+today+"\n      - Registrado: "+firsts[1]}
     if(firstClass.every(v=>v=="correct") && badgeColor.every(v=>v!="danger")){out=out.concat(["success",""])}
     else {out=out.concat(["danger","unclickable"])};
-    console.log("validate_args: (",ctx,")",firsts,badgeColor,out.slice(-9, -6),out.slice(-2), msg);
+    INFO(firsts,badgeColor,out.slice(-9, -6),out.slice(-2),msg);
     out.push(msg);
     // Add scroll on focus event listeners
     // document.querySelectorAll('.form-control').forEach(function(input){
@@ -89,7 +90,7 @@ validate_args:function(_,n,d,e, ...vals){
 },
 establishment_address:function(est){
     if(est in COORDS){loc=COORDS[est].Endereço}else{loc="Sem endereço"}
-    console.log("establishment_address:",est,loc);return loc;
+    INFO(est,loc);return loc;
 },
 locate_establishment:function(_){
     output=[NOUPDATE, ""];pos=LOC;
@@ -98,7 +99,7 @@ locate_establishment:function(_){
     for(est in COORDS) {
         vals=COORDS[est];dist=haversine([lat,lon],[vals.Latitude,vals.Longitude]);
         if(dist<smallestDist[0]){smallestDist=[dist,est]}}
-    console.log("locate_establishment:",smallestDist,pos);
+    INFO(smallestDist,pos);
     text="Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";
     text+=new Date(pos.timestamp).toLocaleString("en-CA",{hour12:false});
     output=[smallestDist[1],text];return output

@@ -33,6 +33,7 @@ CFG = SimpleNamespace(**dict(
         "leite": 4, "manteiga": 4, "soja": 2, "banana": 2, "batata": 1,
         "tomate": 1, "carne": 1, "pao": 1},
     fields=["brand", "price", "quantity"],
+    field_names=["Marca", "Preço", "Quantidade"],
     product_fields={
         "acucar": [1, 1, 1], "arroz": [1, 1, 1], "cafe": [1, 1, 1],
         "farinha": [1, 1, 1], "feijao": [1, 1, 1], "leite": [1, 1, 1],

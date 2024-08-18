@@ -24,6 +24,12 @@ def CLEAR(comp_id, idx):
     )
 
 
+CELL_CLASS = {
+    'wrong': 'params.value == null || params.value == ""',
+    'correct': 'params.value != null && params.value != ""'
+}
+
+
 def product_grid(product):
     fields = CFG.product_fields[product]
     columnDefs = [{
@@ -37,24 +43,18 @@ def product_grid(product):
             "cellRenderer": "SelectRenderer", "editable": False,
             "cellRendererParams": {"options": load_brands(product)},
             "cellStyle": {"paddingLeft": 0, "margin": 0},
-            'cellClassRules': {
-                'wrong': 'params.value == null || params.value == ""',
-                'correct': 'params.value != null && params.value != ""'
-            }
+            'cellClassRules': CELL_CLASS
         })
     if fields[1]:
         columnDefs.append({
-            "field": "Preço",  'cellClass': "form-control", "flex": 1,
+            "field": "Preço", 'cellClass': "form-control", "flex": 1,
             'cellDataType': 'number', 'cellEditor': 'agNumberCellEditor',
             'cellEditorParams': {'min': 0.001, 'precision': 3},
-            'cellClassRules': {
-                'wrong': 'params.value == null || params.value == ""',
-                'correct': 'params.value != null && params.value != ""'
-            }
+            'cellClassRules': CELL_CLASS
         })
     if fields[2]:
         columnDefs.append({
-            "field": "Quantidade", "headerName": "Quant.",
+            "field": "Quantidade",
             'cellDataType': 'number', 'cellEditor': 'agNumberCellEditor',
             'cellEditorParams': {'min': 0.001, 'precision': 3},
             'cellClass': "correct form-control", "flex": 1
