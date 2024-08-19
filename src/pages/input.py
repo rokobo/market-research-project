@@ -1,11 +1,10 @@
 import dash
-from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
+from dash import html, callback, Input, Output, State, ALL, dcc, \
     clientside_callback, ClientsideFunction
 from components import product_grid, wait_modal, INFO, CLEAR
-from tools import load_brands, load_establishments, save_products
+from tools import load_establishments, save_products
 from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE
 import dash_bootstrap_components as dbc
-import time
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 import dash_mantine_components as dmc
 
@@ -220,7 +219,10 @@ clientside_callback(
         namespace='input',
         function_name='add_row'
     ),
-    [Output(f"ag-grid-{product}", 'rowTransaction') for product in CFG.products],
+    [
+        Output(f"ag-grid-{product}", 'rowTransaction')
+        for product in CFG.products
+    ],
     [Input(f"add-{product}", 'n_clicks') for product in CFG.products],
     prevent_initial_call=True
 )

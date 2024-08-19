@@ -173,7 +173,8 @@ def aggregate_reports(date, test=False):
     coleta_mes = pd.concat(reports)
     coleta_mes.Marca = coleta_mes.Marca.fillna("")
     mask = coleta_mes['Produto'] == 'banana'
-    coleta_mes.loc[mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca'].str.lower()
+    coleta_mes.loc[
+        mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca'].str.lower()
     coleta_mes.loc[mask, "Marca"] = ""
     coleta_mes.to_csv(join(
         CFG.home, f"data_agg_csv/{date[0]}_{date[1]}_Coleta.csv"), index=False)
@@ -305,7 +306,9 @@ def check_reports():
                 pr[file][1] += 1
             if not isinstance(row["Estabelecimento"], str):
                 pr[file][2] += 1
-            if not isinstance(row["Preço"], (int, float)) or np.isnan(row["Preço"]):
+            if not isinstance(row["Preço"], (int, float)) or np.isnan(
+                row["Preço"]
+            ):
                 pr[file][5] += 1
             if not isinstance(row["Quantidade"], (int, float)):
                 pr[file][6] += 1

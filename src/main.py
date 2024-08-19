@@ -1,4 +1,5 @@
-from dash import Dash, dcc, html, _dash_renderer, Output, Input, callback, State
+# flake8: noqa: E402
+from dash import Dash, dcc, html, _dash_renderer, Output, Input, callback
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
