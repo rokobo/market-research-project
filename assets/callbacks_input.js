@@ -18,9 +18,10 @@ const BR={type:"Br",namespace:"dash_html_components",props:{}};
 const STRONG=(str)=>{return{type:"Strong",namespace:"dash_html_components",props:{children:str}}};
 const NOUPDATE=dash_clientside.no_update;
 const PRDOUT=new Array(13).fill(NOUPDATE);
-function INFO(...m){console.log(`%c${INFO.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#00252E;color:#25F5FC","background:#382C00;color:#FFC800",...m)}
+function INFO(...m){ctx=dash_clientside.callback_context&&dash_clientside.callback_context.triggered_id?dash_clientside.callback_context.triggered_id:"?";console.log(`%c${INFO.caller.name.toUpperCase()} %c(${ctx}):`,"background:#00252E;color:#25F5FC","background:#382C00;color:#FFC800",...m)}
 function ERROR(...m){console.log(`%cERROR ${ERROR.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#700000;color:#FFADAD","background:#382C00;color:#FFC800",...m)}
 async function SYNC(){if(CFG==null||null==localStorage.getItem("config")||COORDS==null||null==localStorage.getItem("coordinates")){ERROR("Reparing configuration...");location.reload()}}
+function nearest(lat,lon){smallestDist=[Infinity,""];for(est in COORDS){vals=COORDS[est];dist=haversine([lat,lon],[vals.Latitude,vals.Longitude]);if(dist<smallestDist[0]){smallestDist=[dist,est]}}return smallestDist}
 window.dash_clientside.input={
 add_row:function(...clk){out=[...PRDOUT];prd=dash_clientside.callback_context.triggered_id.slice(4);out[CFG.product_index[prd]]={"add":[{}]};INFO(prd);return out},
 clear_contents:function(...clk){if(clk[0].some(v=>typeof v==='number')){INFO("Memory deleted");return[[],[],'']}return NOUPDATE},
@@ -89,10 +90,7 @@ establishment_address:function(est){
 locate_establishment:function(_){
     output=[NOUPDATE, ""];pos=LOC;
     if(typeof pos==="number"){output[1]=errTxt(LOC);return output}
-    lat=pos.coords.latitude;lon=pos.coords.longitude;smallestDist=[Infinity, ""];
-    for(est in COORDS) {
-        vals=COORDS[est];dist=haversine([lat,lon],[vals.Latitude,vals.Longitude]);
-        if(dist<smallestDist[0]){smallestDist=[dist,est]}}
+    smallestDist=nearest(pos.coords.latitude,lon=pos.coords.longitude);
     INFO(smallestDist,pos);
     text="Distância: "+smallestDist[0].toFixed(2)+"km ± "+pos.coords.accuracy.toFixed(0)+"m, ";
     text+=new Date(pos.timestamp).toLocaleString("en-CA",{hour12:false});

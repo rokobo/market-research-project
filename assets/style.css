@@ -14,7 +14,7 @@ html{scroll-padding-top:80px}
 .tooltip-inner{max-width:90vw}
 .ag-theme-material{--ag-background-color:var(--bs-body-bg)!important;--ag-header-background-color:var(--bs-body-bg)!important;--ag-odd-row-background-color:hsla(0,0%,100%,0)!important;--ag-foreground-color:var(--bs-body-color)!important;--ag-header-foreground-color:var(--bs-body-color)!important}
 .ag-center-cols-viewport{min-height:0!important;}
-.ag-header-cell-label{justify-content:end}
+.ag-header-cell-label{justify-content:center}
 .ag-header-cell{padding-right:0px!important;padding-left:0!important}
 .grid-select{width:100%;height:100%;padding:0;border-color:transparent;background-position-y:var(--valid-y);background-position-x:var(--valid-x)}
 .ag-cell-label-container{padding:0!important}
