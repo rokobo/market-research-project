@@ -1,16 +1,15 @@
 import dash
 from dash import html, callback, Input, Output, State, ctx, Patch, ALL, dcc, \
     clientside_callback, ClientsideFunction
-from components import product_form, create_product_form
-from tools import load_establishments, save_products
-from CONFIG import CFG, CLEAR, ICONS, BOLD, CENTER, UNDERLINE, INFO
+from components import product_grid, wait_modal, INFO, CLEAR
+from tools import load_brands, load_establishments, save_products
+from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE
 import dash_bootstrap_components as dbc
 import time
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 import dash_mantine_components as dmc
 
 dash.register_page(__name__, path="/")
-
 
 layout = html.Div([
     dbc.Navbar([
@@ -65,7 +64,7 @@ layout = html.Div([
     ], direction="horizontal", className="mx-2 mb-3 mbt-2"),
     html.Div([
         dbc.Label("Nome do coletor", style=BOLD),
-        dbc.Input(type="text", id="collector_name"),
+        dbc.Input(type="text", id="collector_name", persistence=False),
     ], className="m-2"),
     html.Div([
         dbc.Label("Data de coleta", style=BOLD),
@@ -75,7 +74,7 @@ layout = html.Div([
             "o campo 'Data de coleta'.",
             target="date-info"),
         dbc.InputGroup([
-            dbc.Input(type="date", id="collection_date"),
+            dbc.Input(type="date", id="collection_date", persistence=False),
             dbc.Button(
                 [html.I(className="bi bi-calendar2-check"), " Hoje"],
                 id="fill-date", color="primary")
@@ -98,7 +97,9 @@ layout = html.Div([
             "atualização da localização)"],
             target="estab-info"),
         dbc.InputGroup([
-            dbc.Select(id="establishment", options=load_establishments()),
+            dbc.Select(
+                id="establishment", options=load_establishments(),
+                persistence=False),
             dbc.Button(
                 [html.I(className="bi bi-geo-alt"), " Localizar"],
                 id="fill-establishment", color="primary")
@@ -111,7 +112,30 @@ layout = html.Div([
             "Geolocalização não usada",
             id="establishment-subformtext", color="secondary")
     ], className="m-2 unwrap"),
-    html.Div([product_form(prd) for prd in CFG.products]),
+    html.Div([product_grid(prd) for prd in CFG.products]),
+    dbc.Tooltip([
+        "O campo 'Quant.' só precisa ser preenchido quando a quantidade "
+        "do produto que você está anotando é diferente da quantidade "
+        "especificada na seção. Por exemplo, nesta seção, a quantidade "
+        f"padrão é {''.join(map(str, CFG.quantities["acucar"]))}. ",
+        html.Hr(),
+        "Campos com borda vermelha são obrigatórios e estão com erro: "
+        "Campo vazio ou valor errado.",
+        html.Hr(),
+        "Se não deseja preencher todas as fileiras com itens, clique no "
+        "botão com o ícone ", html.I(className="bi bi-trash3-fill"),
+        ", para remover a fileira. Caso queira adicionar uma fileira, "
+        "clique no botão com o ícone ",
+        html.I(className="bi bi-file-earmark-plus"), ".",
+        html.Hr(),
+        "Status da seção: ",
+        "Vermelho -> Campos obrigatórios estão vazios. ",
+        "Amarelo -> Campos OK, número de fileiras menor que o esperado. ",
+        "Verde -> Campos e número de fileiras OK",
+        html.Hr(),
+        "O status da seção é espelhado nos ícones do topo da página. "
+        "Clicar no ícone de uma seção te leva até ela."
+    ], target="section-acucar-info"),
     html.Div([
         dbc.Label(
             [html.I(className="bi bi-chat-right-text"), " Observações gerais"],
@@ -151,22 +175,12 @@ layout = html.Div([
     ], id="send-confirmed-modal", centered=True, is_open=False),
     html.Div(id="dummy-div-load"),        # save_products  ->  load
     html.Div(id="dummy-div-validation"),  # load           ->  validation
-    html.Div(id="dummy-div-progress"),    # validation     ->  progress
-    html.Div(id="dummy-div-save"),        # progress       ->  save
-    dbc.Modal(
-        [
-            dbc.ModalHeader(dbc.Stack([
-                html.H2("Esperando validação..."),
-                dbc.Spinner(color="secondary"),
-            ], direction="horizontal", gap=3), close_button=False),
-            dbc.ModalBody(html.H6(
-                "Se nada acontecer, atualize a página.",
-                style=CENTER)),
-            dbc.ModalFooter([
-                html.H6("Ou limpe o cache:"), CLEAR("confirm-clear", 2)])
-        ],
-        id="page-loading-modal", is_open=True,
-        centered=True, keyboard=False, backdrop="static"),
+    html.Div([
+        wait_modal(modal_info[0], modal_info[1], i) for i, modal_info
+        in enumerate([
+            ("page-loading-modal", "Validando campos"),
+            ("state-loading-modal", "Carregando dados"),
+        ])]),
     dbc.Modal(
         id="geo-loading-modal", is_open=False,
         centered=True, keyboard=False, backdrop="static"),
@@ -174,7 +188,8 @@ layout = html.Div([
     dcc.Interval(id="10-seconds", interval=5*1000),
     html.Div(
         dbc.Stack([
-            dbc.Badge("", color="info", id="geolocation-badge"),
+            dbc.Badge("", color="primary", id="size-badge"),
+            dbc.Badge("", color="secondary", id="geolocation-badge"),
             dbc.Badge("", color="success", id="online-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
@@ -193,9 +208,21 @@ clientside_callback(
     Output("geo-loading-modal", "is_open"),
     Output("geo-loading-modal", "children"),
     Output('geo-history', 'data'),
+    Output("size-badge", "children"),
     Input("10-seconds", "n_intervals"),
     State("geolocation", "position"),
     State('geo-history', 'data'),
+)
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='input',
+        function_name='add_row'
+    ),
+    [Output(f"ag-grid-{product}", 'rowTransaction') for product in CFG.products],
+    [Input(f"add-{product}", 'n_clicks') for product in CFG.products],
+    prevent_initial_call=True
 )
 
 
@@ -256,25 +283,12 @@ clientside_callback(
 
 clientside_callback(
     ClientsideFunction(
-        namespace='input',
-        function_name='save_state'
-    ),
-    Output('store', 'data'),
-    Input("dummy-div-save", "className"),
-    State("collector_name", "value"),
-    State("collection_date", "value"),
-    State("establishment", "value"),
-    State("general_observations", "value"),
-    [State(f"container-{product}", 'children') for product in CFG.products],
-    prevent_initial_call=True
-)
-
-clientside_callback(
-    ClientsideFunction(
         namespace="input",
         function_name="clear_contents"
     ),
-    Output('store', 'data', allow_duplicate=True),
+    Output('grid-data', 'data', allow_duplicate=True),
+    Output('info-data', 'data', allow_duplicate=True),
+    Output("dummy-div-load", "className", allow_duplicate=True),
     Input({"type": "confirm-clear", "index": ALL}, "submit_n_clicks"),
     prevent_initial_call=True
 )
@@ -283,97 +297,19 @@ clientside_callback(
 clientside_callback(
     ClientsideFunction(
         namespace="input",
-        function_name="display_progress"
+        function_name="load_state"
     ),
-    [Output(f"icon-{product}", 'style') for product in CFG.products],
-    Output("save-products", "color"),
-    Output("save-container", "className"),
-    Output("confirm-send", "message"),
-    Output("dummy-div-save", "className"),
-    Input("dummy-div-progress", "className"),
-    Input("collector_name", "className"),
-    Input("collection_date", "className"),
-    Input("establishment", "className"),
-    [Input(f"status-{product}", 'color') for product in CFG.products],
-    [State(f"container-{product}", 'children') for product in CFG.products],
-    State("collection_date", "value"),
-    prevent_initial_call=True
-)
-
-
-@callback(
+    [Output(f"ag-grid-{prd}", 'rowData') for prd in CFG.products],
+    Output("dummy-div-validation", "className"),
     Output("collector_name", "value"),
     Output("collection_date", "value"),
     Output("establishment", "value"),
-    Output("general_observations", "value"),
-    [Output(f"container-{product}", 'children')
-        for product in CFG.products],
-    Output("dummy-div-validation", "className"),
+    Output("state-loading-modal", "is_open"),
     Input("dummy-div-load", "className"),
     Input("confetti", "className"),
-    State('store', 'data'),
+    State('grid-data', 'data'),
+    State('info-data', 'data')
 )
-def load_state(_1, _2, data):
-    return_data = ["", "", "", ""]
-    containers = [[] for _ in range(len(CFG.products))]
-    k = len(CFG.fields)
-
-    if data == []:
-        for idx, product in enumerate(CFG.products):
-            containers[idx].extend([
-                create_product_form(product, idx, [None] * k)
-                for idx in range(CFG.product_rows[product])
-            ])
-    else:
-        for item in data:
-            if "first" in item:
-                return_data[:3] = item["first"]
-            if "observations" in item:
-                return_data[3] = item["observations"]
-            if "container" in item:
-                idx = CFG.products.index(item["container"])
-                containers[idx].append(create_product_form(
-                    item["container"], item["row_id"], item["values"]
-                ))
-    return return_data + containers + [""]
-
-
-clientside_callback(
-    ClientsideFunction(
-        namespace='input',
-        function_name='delete_product_row'
-    ),
-    [Output(f"container-{product}", 'children', allow_duplicate=True)
-        for product in CFG.products],
-    [Input({"type": f"delete-{product}", "index": ALL}, 'n_clicks')
-        for product in CFG.products],
-    [State(f"container-{product}", 'children') for product in CFG.products],
-    prevent_initial_call=True
-)
-
-
-@callback(
-    [Output(f"container-{product}", 'children', allow_duplicate=True)
-        for product in CFG.products],
-    [Input(f"add-{product}", 'n_clicks') for product in CFG.products],
-    [State(f"container-{product}", 'children') for product in CFG.products],
-    prevent_initial_call=True
-)
-def add_new_row(*values):
-    context = ctx.triggered_id
-    if context is None:
-        return dash.no_update
-    if all(n is None for n in values[:len(CFG.products)]):
-        return dash.no_update
-
-    context = context[4:]
-    index = CFG.products.index(context)
-    new_row = create_product_form(context, int(time.time() * 10))
-    patched_children = [dash.no_update] * len(CFG.products)
-    patch = Patch()
-    patch.append(new_row)
-    patched_children[index] = patch
-    return patched_children
 
 
 clientside_callback(
@@ -381,25 +317,24 @@ clientside_callback(
         namespace='input',
         function_name='validate_args'
     ),
-    [Output({"type": f"{field}-{product}", "index": ALL}, "className")
-        for product in CFG.products for field in CFG.fields],
-    [Output(f"status-{product}", 'children') for product in CFG.products],
-    [Output(f"status-{product}", 'color') for product in CFG.products],
+    [Output(f"status-{prd}", 'children') for prd in CFG.products],
+    [Output(f"status-{prd}", 'color') for prd in CFG.products],
+    [Output(f"icon-{product}", 'style') for product in CFG.products],
     Output("collector_name", "className"),
     Output("collection_date", "className"),
     Output("establishment", "className"),
-    Output("dummy-div-progress", "className"),
     Output("page-loading-modal", "is_open", allow_duplicate=True),
+    Output('grid-data', 'data', allow_duplicate=True),
+    Output('info-data', 'data', allow_duplicate=True),
+    Output("save-products", "color"),
+    Output("save-container", "className"),
+    Output("confirm-send", "message"),
     Input("dummy-div-validation", "className"),
     Input("collector_name", "value"),
     Input("collection_date", "value"),
     Input("establishment", "value"),
-    [Input({"type": f"{field}-{product}", "index": ALL}, "value")
-        for product in CFG.products for field in CFG.fields],
-    [Input(f"container-{product}", 'children')
-        for product in CFG.products],
-    [State({"type": f"{field}-{product}", "index": ALL}, "value")
-        for product in CFG.products for field in CFG.fields],
+    [Input(f"ag-grid-{prd}", 'cellValueChanged') for prd in CFG.products],
+    [Input(f"ag-grid-{prd}", 'virtualRowData') for prd in CFG.products],
     State("collector_name", "value"),
     State("collection_date", "value"),
     State("establishment", "value"),
@@ -408,7 +343,8 @@ clientside_callback(
 
 
 @callback(
-    Output('store', 'data', allow_duplicate=True),
+    Output('grid-data', 'data', allow_duplicate=True),
+    Output('info-data', 'data', allow_duplicate=True),
     Output('geo-history', 'data', allow_duplicate=True),
     Output('dummy-div-load', 'className'),
     Output("send-confirmed-modal", "is_open"),
@@ -419,14 +355,11 @@ clientside_callback(
     State("general_observations", "value"),
     State("geolocation", "position"),
     State('geo-history', 'data'),
-    [State({"type": f"{field}-{product}", "index": ALL}, "value")
-        for product in CFG.products for field in CFG.fields],
+    State('grid-data', 'data'),
     prevent_initial_call=True
 )
-def save_args(clicks, name, date, establishment, obs, pos, geo_hist, *values):
+def save_args(clicks, name, date, establishment, obs, pos, geo_hist, data):
     if clicks is None:
         return dash.no_update
-    k = len(CFG.fields)
-    products = [values[i:i + k] for i in range(0, len(values), k)]
-    save_products(products, (name, date, establishment), obs, pos, geo_hist)
-    return [], [], "", True
+    save_products(data, (name, date, establishment), obs, pos, geo_hist)
+    return ["reload"], [], [], "", True

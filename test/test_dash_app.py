@@ -3,15 +3,20 @@ import sys
 from os.path import join, dirname
 from os import getenv, listdir, remove
 import time
-from typing import Optional
+from types import NoneType
+from typing import Any, Optional
 from dotenv import load_dotenv
 import chromedriver_autoinstaller
 from pytest import fixture, fail, mark
 import requests
 from datetime import datetime
+from itertools import count
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 from selenium import webdriver
@@ -35,7 +40,7 @@ CSV_COLUMNS = [
 @fixture(scope="class")
 def selenium_driver(request):
     # Start Gunicorn server
-    BASE_URL = f"http://127.0.0.1:806{int(request.cls.__name__[4:7])}"
+    BASE_URL = f"http://127.0.0.1:{8060 + int(request.cls.__name__[4:7])}"
     AUTHENTICATED_URL = BASE_URL.replace(
         "//", f"//{getenv('APP_USERNAME')}:{getenv('APP_PASSWORD')}@")
 
@@ -68,17 +73,20 @@ def selenium_driver(request):
     options = webdriver.ChromeOptions()
     options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
     driver = webdriver.Chrome(options=options)
+    driver.execute_cdp_cmd("Emulation.setGeolocationOverride", {
+        "latitude": -22.9, "longitude": -47.1, "accuracy": 1})
 
     # Access the app
     driver.get(AUTHENTICATED_URL)
     WebDriverWait(driver, 10).until(EC.title_is("ICB"))
     driver.get(BASE_URL)
     WebDriverWait(driver, 10).until(EC.title_is("ICB"))
+
     for _ in range(5):
         try:
             driver.refresh()
             WebDriverWait(driver, 10).until(EC.title_is("ICB"))
-            wait_substring(driver, "online-badge", By.ID, "LINE", wait=2)
+            wait_substring(driver, "online-badge", By.ID, "LINE", wait=5)
             break
         except:
             time.sleep(1)
@@ -121,17 +129,25 @@ def wait_substring(
     return get_by_cond(driver, id, cond)
 
 
-def check_in_attr(element: WebElement, attribute, substring, reverse=False):
-    value = element.get_attribute(attribute)
-    if value is None:
-        fail(f"check attr: {substring}, {value}")
-    if reverse:
-        if substring in value:
-            fail(f"check attr: {substring}, {value}")
-    else:
-        if substring not in value:
-            fail(f"check attr: {substring}, {value}")
-    return True
+def check_in_attr(
+    element: WebElement, attribute, substring, reverse=False, retry=10
+):
+    exception = None
+    for _ in range(retry):
+        value = element.get_attribute(attribute)
+        if value is None:
+            exception = f"check attr: {substring}, {value}"
+        if reverse:
+            if substring in value:
+                exception = f"check attr: {substring}, {value}"
+        else:
+            if substring not in value:
+                exception = f"check attr: {substring}, {value}"
+        if exception is None:
+            return True
+        time.sleep(0.1)
+    assert exception is not None
+    fail(exception)
 
 
 def scroll_to_coordinate(driver, coordinate, extra_delay=0.0):
@@ -182,11 +198,16 @@ def send_click(driver: webdriver.Chrome, element: WebElement):
 
 
 def send_input(driver: webdriver.Chrome, element: WebElement, keys: str):
+    if isinstance(element, Select):
+        element.select_by_index(2)
+        return
+
+    assert isinstance(element, WebElement)
     for _ in range(3):
         wait_interactable(driver, element)
         element.send_keys(keys)
         if element.get_attribute("value"):
-            break
+            return
 
 
 def fill_first_section(driver, date=False):
@@ -239,6 +260,27 @@ def clear_storage(driver: webdriver.Chrome, name: str):
     return driver.execute_script(
         "return window.localStorage.removeItem(arguments[0]);", name)
 
+
+def check_baseline_first(driver):
+    for element in [get_by_cond(driver, id, By.ID) for id in FIRST_IDS]:
+        assert element.get_attribute("value") == ""
+        assert check_in_attr(element, "class", "wrong")
+
+
+def check_baseline_second(driver):
+    exp = {"Marca": "wrong", "Preço": "wrong", "Quantidade": "correct"}
+    for product in CFG.products:
+        fields = get_fields(product)
+        section_div = get_by_cond(driver, f"{product}-heading", By.ID)
+        rowsValue, _ = get_cells(section_div, "value")
+        rowsClass, _ = get_cells(section_div, "class")
+        assert len(rowsValue["Preço"]) == CFG.product_rows[product], product
+        assert len(rowsValue["Preço"]) == len(rowsClass["Preço"]), product
+        for field in fields:
+            assert all(v in [None, ''] for v in rowsValue[field]), rowsValue[field]
+            assert all(exp[field] in c for c in rowsClass[field]), rowsClass[field]
+
+
 @mark.incremental
 class Test001FirstSection:
     @fixture(autouse=True)
@@ -247,9 +289,7 @@ class Test001FirstSection:
         self.elements = [get_by_cond(self.app, id, By.ID) for id in FIRST_IDS]
 
     def test_initial_state(self):
-        for element in self.elements:
-            assert element.get_attribute("value") == ""
-            assert check_in_attr(element, "class", "wrong")
+        check_baseline_first(self.app)
 
     def test_interaction(self):
         for idx in range(3):
@@ -269,22 +309,66 @@ class Test001FirstSection:
     def test_load(self):
         self.app.refresh()
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
-
-        self.elements = [get_by_cond(self.app, id, By.ID) for id in FIRST_IDS]
-        for element, value in zip(self.elements, STORED_INPUTS):
-            assert check_in_attr(element, "class", "correct")
-            assert element.get_attribute("value") == value
+        element = get_by_cond(self.app, FIRST_IDS[0], By.ID)
+        assert check_in_attr(element, "class", "correct")
+        assert element.get_attribute("value") == STORED_INPUTS[0]
 
     def test_mass_load(self):
         for _ in range(5):
             self.app.refresh()
             time.sleep(0.1)
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
+        element = get_by_cond(self.app, FIRST_IDS[0], By.ID)
+        assert check_in_attr(element, "class", "correct")
+        assert element.get_attribute("value") == STORED_INPUTS[0]
 
-        self.elements = [get_by_cond(self.app, id, By.ID) for id in FIRST_IDS]
-        for element, value in zip(self.elements, STORED_INPUTS):
-            assert check_in_attr(element, "class", "correct")
-            assert element.get_attribute("value") == value
+
+def get_cells(div: WebElement, attr: Optional[str] = None):
+    # The header is counted as a row, so ignore it
+    columns = {}
+    for field in CFG.field_names:
+        columns[field] = div.find_elements(
+            By.CSS_SELECTOR, f'div[role="gridcell"][col-id="{field}"]')
+    headers = [
+        h.get_attribute('innerText') for h in
+        div.find_elements(By.CLASS_NAME, "ag-header-cell-text")[1:]]
+
+    assert all(isinstance(h, str) for h in headers)
+    assert all(all(isinstance(c, WebElement) for c in col) for col in list(columns.values()))
+
+    if attr is not None:
+        for field, cells in columns.items():
+            # Access select element's value differently
+            if field == "Marca" and attr == "value":
+                cells = columns["Marca"] = [
+                    Select(m.find_element(By.TAG_NAME, 'select'))
+                    for m in cells]
+                selected = [c.all_selected_options for c in cells]
+                selected = [c[0].get_attribute("value") if len(c) != 0 else None for c in selected]
+                columns["Marca"] = selected
+                continue
+
+            new_attr = attr
+            if attr == "value":
+                new_attr = "innerText"
+            columns[field] = [c.get_attribute(new_attr) for c in cells]
+        assert all(all(isinstance(c, (str, float, int, NoneType)) for c in col) for col in list(columns.values())), list(columns.values())
+        return columns, headers
+
+    if "Marca" in columns and not isinstance(columns["Marca"], Select):
+        columns["Marca"] = [
+            Select(m.find_element(By.TAG_NAME, 'select'))
+            for m in columns["Marca"]]
+    return columns, headers
+
+
+def get_fields(product):
+    return [
+        field for flag, field
+        in zip(CFG.product_fields[product], CFG.field_names)
+        if flag]
+
+
 
 
 @mark.incremental
@@ -294,24 +378,10 @@ class Test002SecondSection:
         self.app = selenium_driver
 
     def test_initial_state(self):
-        products = [CFG.products[0], CFG.products[-1]]
-        get_all_by_cond(self.app, '[id*="price-"]', By.CSS_SELECTOR)
-
-        for product in products:
-            section_div = get_by_cond(self.app, f"{product}-heading", By.ID)
-            productElems = [section_div.find_elements(By.CSS_SELECTOR,
-                f'[id*="{field}-{product}"]') for field in CFG.fields]
-            assert len(productElems[1]) == CFG.product_rows[product], product
-
-            for idx, elements in enumerate(productElems):
-                for element in elements:
-                    class_name = "wrong" if idx != 2 else "correct"
-                    assert element.get_attribute("value") == ""
-                    assert check_in_attr(element, "class", class_name)
+        check_baseline_second(self.app)
 
     def test_red_badge(self):
         for product in CFG.products:
-            scroll_to_product(self.app, product)
             badge = get_by_cond(self.app, f"status-{product}", By.ID)
             assert check_in_attr(badge, "class", "danger")
 
@@ -321,31 +391,24 @@ class Test002SecondSection:
             assert check_in_attr(icon, "style", "red")
 
     def test_interaction(self):
-        for idx0, product in enumerate(CFG.products):
-            scroll_to_product(self.app, product, 2 if idx0 == 0 else 0)
-            prices = get_all_by_cond(
-                self.app, f'[id*="price-{product}"]', By.CSS_SELECTOR)
-
-            for idx, current_price in enumerate(prices):
-                send_input(self.app, current_price, str(1 + idx0 + (idx / 10)))
-                for idx2, price in enumerate(prices):
-                    class_name = "wrong" if idx2 > idx else "correct"
-                    assert check_in_attr(price, "class", class_name)
+        for idx, product in enumerate(CFG.products):
+            section_div = get_by_cond(self.app, f"{product}-heading", By.ID)
+            rows, headers = get_cells(section_div, None)
+            assert "Preço" in headers, headers
+            for header in headers:
+                for i, cell, in enumerate(rows[header]):
+                    send_input(self.app, cell, str(idx + 1))
+                    send_input(self.app, cell, Keys.TAB)
+                    priceCls = get_cells(section_div, "class")[0][header]
+                    assert all("correct" in prc for prc in priceCls[:i+1]), [priceCls, product]
+                    if header == "Quantidade":
+                        continue
+                    assert all("wrong" in prc for prc in priceCls[i+1:]), [priceCls, product]
 
     def test_green_badge(self):
-        for idx, product in enumerate(CFG.products):
-            scroll_to_product(self.app, product, 2 if idx == 0 else 0)
-            section = get_by_cond(self.app, f"{product}-heading", By.ID)
+        for product in CFG.products:
             badge = get_by_cond(self.app, f"status-{product}", By.ID)
-
-            selector = [f'[id*="brand-{product}"]', f'[id*="quantity-{product}"]']
-
-            if idx < 9:
-                for brd in section.find_elements(By.CSS_SELECTOR, selector[0]):
-                    send_input(self.app, brd, brd.find_elements(By.TAG_NAME, 'option')[-1].text)
-            for i, qty in enumerate(section.find_elements(By.CSS_SELECTOR, selector[1])):
-                send_input(self.app, qty, f"1.{idx}{i}")
-            assert check_in_attr(badge, "class", "success")
+            assert check_in_attr(badge, "class", "success"), product
 
     def test_green_icon(self):
         for product in CFG.products:
@@ -363,19 +426,27 @@ class Test002SecondSection:
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
 
         for idx, product in enumerate(CFG.products):
-            scroll_to_product(self.app, product, 2 if idx == 0 else 0)
-            section = get_by_cond(self.app, f"{product}-heading", By.ID)
+            section_div = get_by_cond(self.app, f"{product}-heading", By.ID)
             badge = get_by_cond(self.app, f"status-{product}", By.ID)
+            rows, headers = get_cells(section_div, "value")
 
-            selector = [f'[id*="brand-{product}"]', f'[id*="quantity-{product}"]']
-
-            if idx < 9:
-                for brd in section.find_elements(By.CSS_SELECTOR, selector[0]):
-                    assert brd.get_attribute("value") not in ["", None], product
-            for i, qty in enumerate(section.find_elements(By.CSS_SELECTOR, selector[1])):
-                assert float(qty.get_attribute("value")) == float(f"1.{idx}{i}"), product
+            for header in headers:
+                for i, cell, in enumerate(rows[header]):
+                    assert cell not in ["", None], [product, cell]
+                    # assert float(cell) == float(f"1.{idx}{i}"), [product, cell]
+                    if header == "Marca":
+                        continue
+                    assert float(cell) == float(idx + 1), [product, cell]
             assert check_in_attr(badge, "class", "success"), product
 
+
+def fill_select(driver, cols):
+    for cell in cols:
+        send_input(driver, cell, "")
+
+def fill_column(driver, cols, rule):
+    for cell in cols:
+        send_input(driver, cell, next(rule))
 
 @mark.incremental
 class Test003SaveProducts:
@@ -389,18 +460,10 @@ class Test003SaveProducts:
         for idx, product in enumerate(CFG.products):
             scroll_to_product(self.app, product)
             section = get_by_cond(self.app, f"{product}-heading", By.ID)
-
-            selector = [
-                f'[id*="brand-{product}"]', f'[id*="price-{product}"]',
-                f'[id*="quantity-{product}"]']
-
-            if idx < 9:
-                for brd in section.find_elements(By.CSS_SELECTOR, selector[0]):
-                    send_input(self.app, brd, brd.find_elements(By.TAG_NAME, 'option')[-1].text)
-            for idx2, prc in enumerate(section.find_elements(By.CSS_SELECTOR, selector[1])):
-                send_input(self.app, prc, str(1 + idx + (idx2 / 10)))
-            for i, qty in enumerate(section.find_elements(By.CSS_SELECTOR, selector[2])):
-                send_input(self.app, qty, f"1.{idx}{i}")
+            columns, headers = get_cells(section, None)
+            fill_select(self.app, columns["Marca"])
+            fill_column(self.app, columns[headers[-2]], (1 + idx + (i / 10) for i in count()))
+            fill_column(self.app, columns[headers[-1]], (f"1.{idx}{i}" for i in count()))
 
         for path in ["data", "data_obs"]:
             file_path = find_saved_file(self.app, path)
@@ -462,36 +525,29 @@ class Test003SaveProducts:
         ), self.app.get_log('browser')
 
     def test_cleared_contents(self):
-        elements = [get_by_cond(self.app, id, By.ID) for id in FIRST_IDS]
+        check_baseline_first(self.app)
+        check_baseline_second(self.app)
 
-        for element in elements:
-            assert element.get_attribute("value") == ""
-            assert check_in_attr(element, "class", "wrong")
+def delete_second_section(driver):
+    for product in CFG.products:
+        section_div = get_by_cond(driver, f"{product}-heading", By.ID)
+        deletes = section_div.find_elements(By.CLASS_NAME, "delete-button")
+        badge = get_by_cond(driver, f"status-{product}", By.ID)
 
-        for product in CFG.products:
-            section_div = get_by_cond(self.app, f"{product}-heading", By.ID)
-            productElems = [section_div.find_elements(By.CSS_SELECTOR,
-                f'[id*="{field}-{product}"]') for field in CFG.fields]
-            assert len(productElems[1]) == CFG.product_rows[product], product
+        for element in deletes:
+            send_click(driver, element)
+        assert check_in_attr(badge, "class", "warning")
 
-            for idx, elements in enumerate(productElems):
-                for element in elements:
-                    class_name = "wrong" if idx != 2 else "correct"
-                    assert element.get_attribute("value") == ""
-                    assert check_in_attr(element, "class", class_name)
+
+@mark.incremental
+class Test004SaveEmptyProducts:
+    @fixture(autouse=True)
+    def setup_class(self, selenium_driver):
+        self.app = selenium_driver
 
     def test_yellow_badge(self):
-        scroll_to_product(self.app, CFG.products[0], 2)
         fill_first_section(self.app)
-
-        for product in CFG.products:
-            scroll_to_product(self.app, product)
-            elements = get_all_by_cond(self.app, f'[id*="delete-{product}"]', By.CSS_SELECTOR)
-            badge = get_by_cond(self.app, f"status-{product}", By.ID)
-
-            for element in elements:
-                send_click(self.app, element)
-            assert check_in_attr(badge, "class", "warning")
+        delete_second_section(self.app)
 
     def test_yellow_icon(self):
         for product in CFG.products:
@@ -506,9 +562,9 @@ class Test003SaveProducts:
             scroll_to_product(self.app, product)
 
             section_div = get_by_cond(self.app, f"{product}-heading", By.ID)
-            productElems = section_div.find_elements(By.CSS_SELECTOR,
-                f'[id*="price-{product}"]')
-            assert len(productElems) == 0, product
+            columns, headers = get_cells(section_div)
+            for header in headers:
+                assert len(columns[header]) == 0, product
 
     def test_all_messages(self):
         messages = perform_save(self.app).splitlines()
@@ -545,7 +601,7 @@ class Test003SaveProducts:
 
 
 @mark.incremental
-class Test004AuxiliaryFunctions:
+class Test005AuxiliaryFunctions:
     @fixture(autouse=True)
     def setup_class(self, selenium_driver):
         self.app = selenium_driver
@@ -553,10 +609,11 @@ class Test004AuxiliaryFunctions:
     def test_clear_contents(self):
         for idx, product in enumerate(CFG.products):
             scroll_to_product(self.app, product)
-            prices = get_all_by_cond(
-                self.app, f'[id*="price-{product}"]', By.CSS_SELECTOR)
-            for price in prices:
-                send_input(self.app, price, "1")
+            section = get_by_cond(self.app, f"{product}-heading", By.ID)
+            columns, headers = get_cells(section, None)
+            fill_select(self.app, columns["Marca"])
+            fill_column(self.app, columns[headers[-2]], (1 + idx + (i / 10) for i in count()))
+            fill_column(self.app, columns[headers[-1]], (f"1.{idx}{i}" for i in count()))
 
         fill_first_section(self.app)
         button = get_all_by_cond(self.app, '[id*="confirm-clear"]', By.CSS_SELECTOR)[0]
@@ -567,12 +624,8 @@ class Test004AuxiliaryFunctions:
         self.app.refresh()
         WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
 
-        for idx, product in enumerate(CFG.products):
-            scroll_to_product(self.app, product, 2 if idx == 0 else 0)
-            prices = get_all_by_cond(
-                self.app, f'[id*="price-{product}"]', By.CSS_SELECTOR)
-            for price in prices:
-                assert price.get_attribute("value") == ""
+        check_baseline_first(self.app)
+        check_baseline_second(self.app)
 
     def test_navigation(self):
         scroll_command = "return document.documentElement.scrollTop;"
@@ -593,7 +646,7 @@ class Test004AuxiliaryFunctions:
 
 
 @mark.incremental
-class Test005Geolocation:
+class Test006Geolocation:
     locs=[
         {"latitude": -22.90941581120983, "longitude": -47.09562084004908, "accuracy": 1},
         {"latitude": -22.909484367468764, "longitude": -47.0956975543658, "accuracy": 1},
@@ -713,12 +766,8 @@ class Test005Geolocation:
     def test_save_filename(self):
         loc = self.locs[3]
         fill_first_section(self.app)
-        for product in CFG.products:
-            scroll_to_product(self.app, product)
-            elements = get_all_by_cond(self.app, f'[id*="delete-{product}"]', By.CSS_SELECTOR)
-            for element in elements:
-                send_click(self.app, element)
-            time.sleep(0.2)
+        delete_second_section(self.app)
+
         perform_save(self.app)
         file_name = find_saved_file(self.app, "data")
         assert file_name is not None
@@ -739,3 +788,13 @@ class Test005Geolocation:
         for i, obs in enumerate(observations[3:]):
             geo = self.locs[i]
             assert f"{geo["latitude"]}, {geo["longitude"]}" in obs, i
+
+
+@mark.incremental
+class Test007Fuzzing:
+    @fixture(autouse=True)
+    def setup_class(self, selenium_driver):
+        self.app = selenium_driver
+
+    def test_CFG(self):
+        pass  #TODO

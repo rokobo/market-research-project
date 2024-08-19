@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html, _dash_renderer, Output, Input, callback
+from dash import Dash, dcc, html, _dash_renderer, Output, Input, callback, State
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
@@ -33,7 +33,10 @@ auth = dash_auth.BasicAuth(
 )
 
 app.layout = dmc.MantineProvider(html.Div([
-    dcc.Store(id="store", storage_type="local", data=[]),
+    dcc.Store(
+        id="grid-data", storage_type="local",
+        data=[[{}] * CFG.product_rows[prd] for prd in CFG.products]),
+    dcc.Store(id="info-data", storage_type="local", data=[None]*3),
     dcc.Store(id="config", storage_type="local", data=vars(CFG)),
     dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     dcc.Store(id="geo-history", storage_type="local", data=[]),
@@ -44,11 +47,16 @@ app.layout = dmc.MantineProvider(html.Div([
 
 @callback(
     Output('config', 'data'),
-    Input('config', 'data')
+    Output('grid-data', 'data'),
+    Output('info-data', 'data'),
+    Input('config', 'data'),
 )
 def check_version(config):
     if config is None or CFG.version != config.get('version'):
-        return vars(CFG)
+        out = [vars(CFG)]
+        out.append([[{}] * CFG.product_rows[prd] for prd in CFG.products])
+        out.append([None]*3)
+        return out
     return dash.no_update
 
 
@@ -69,8 +77,6 @@ def download_file(filename):
 
 if __name__ == "__main__":
     match getenv("TEST"):
-        case None:
-            app.run_server(host="0.0.0.0", port="8060")
         case "reloader":
             app.run_server(
                 port="8060", dev_tools_hot_reload=True, use_reloader=True)
@@ -78,3 +84,5 @@ if __name__ == "__main__":
             app.run_server(
                 port="8060", debug=True,
                 dev_tools_hot_reload=True, use_reloader=True)
+        case _:
+            app.run_server(host="0.0.0.0", port="8060")

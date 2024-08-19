@@ -25,8 +25,8 @@ def delete_data_files():
 def test_one_line() -> None:
     """"Dataframes with one line."""
     for i, product in enumerate(CFG.products):
-        product_data = [([], [], [])] * 13
-        product_data[i] = ([f"marca{i}"], [i], [i])
+        product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
+        product_data[i] = [{"Marca": f"marca{i}", "Preço": i, "Quantidade": i}]
         info = ["name", "date", "establishment"]
         df1 = save_products(product_data, info, None, None, None, True)
         df2 = pd.DataFrame({
@@ -38,15 +38,17 @@ def test_one_line() -> None:
             'Preço': [i],
             'Quantidade': [i]
         })
+        df2['Preço'] = df2['Preço'].astype(float)
+        df2['Quantidade'] = df2['Quantidade'].astype(float)
         assert df1 is not None
-        assert df1.equals(df2)
+        assert df1.equals(df2), product
 
 
 def test_two_lines() -> None:
     """"Dataframes with one line."""
-    product_data = [([], [], [])] * 13
-    product_data[0] = (["marca"], [2], [3])
-    product_data[1] = (["marca2"], [4], [5])
+    product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
+    product_data[0] = [{"Marca": "marca", "Preço": 2, "Quantidade": 3}]
+    product_data[1] = [{"Marca": "marca2", "Preço": 4, "Quantidade": 5}]
     info = ["name", "date", "establishment"]
     df1 = save_products(product_data, info, None, None, None, True)
     df2 = pd.DataFrame({
@@ -58,16 +60,18 @@ def test_two_lines() -> None:
         'Preço': [2, 4],
         'Quantidade': [3, 5]
     })
+    df2['Preço'] = df2['Preço'].astype(float)
+    df2['Quantidade'] = df2['Quantidade'].astype(float)
     assert df1 is not None
     assert df1.equals(df2)
 
 
 def test_banana_naming() -> None:
     delete_data_files()
-    product_data = [([], [], [])] * 13
-    product_data[0] = (["marca"], [2], [3])
-    product_data[CFG.products.index("banana")] = (
-        ["Nanica", "Prata"], [1, 2], [])
+    product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
+    product_data[0] = [{"Marca": "marca", "Preço": 2, "Quantidade": 3}]
+    product_data[CFG.products.index("banana")] = [
+        {"Marca": "Nanica", "Preço": 1}, {"Marca": "Prata", "Preço": 2}]
     info = ["name", "2024-01-01", "establishment"]
     save_products(product_data, info, None, None, None, False)
     df = aggregate_reports(["2024", "01"], True)
@@ -82,7 +86,7 @@ def test_banana_naming() -> None:
 
 def test_naming() -> None:
     delete_data_files()
-    product_data = [([], [], [])] * 13
+    product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
     info = ["name", "date", "establishment"]
     save_products(product_data, info, None, None, None)
     file_name = None
@@ -103,7 +107,7 @@ def test_naming() -> None:
 
 def test_naming_coordinates() -> None:
     delete_data_files()
-    product_data = [([], [], [])] * 13
+    product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
     info = ["name", "date", "establishment"]
     save_products(product_data, info, None, {
         'lat': -22.895, 'lon': -47.0439, 'accuracy': 1, 'alt': None,
@@ -128,7 +132,7 @@ def test_naming_coordinates() -> None:
 
 def test_short_geo_history() -> None:
     delete_data_files()
-    product_data = [([], [], [])] * 13
+    product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
     info = ["name", "date", "establishment"]
     geo_hist = [[1, 2, 3], [4, 5, 6]]
     save_products(product_data, info, None, None, geo_hist)
@@ -153,7 +157,7 @@ def test_short_geo_history() -> None:
 
 def test_longe_geo_history() -> None:
     delete_data_files()
-    product_data = [([], [], [])] * 13
+    product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
     info = ["name", "date", "establishment"]
     geo_hist = [[i, i+1, i+2] for i in range(100)]
     save_products(product_data, info, None, None, geo_hist)
@@ -179,8 +183,8 @@ def test_longe_geo_history() -> None:
 def test_delete_simple() -> None:
     delete_data_files()
     for i in range(10):
-        product_data = [([], [], [])] * 13
-        product_data[1] = ([f"marca{1}"], [1], [1])
+        product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
+        product_data[1] = [{"Marca": "marca", "Preço": 1, "Quantidade": 1}]
         info = [f"name{i}", "2020-06-28", "establishment"]
         save_products(product_data, info, None, None, None)
 
@@ -195,8 +199,8 @@ def test_delete_simple() -> None:
 def test_delete_4_months() -> None:
     delete_data_files()
     for i in range(10):
-        product_data = [([], [], [])] * 13
-        product_data[1] = ([f"marca{1}"], [1], [1])
+        product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
+        product_data[1] = [{"Marca": "marca", "Preço": 1, "Quantidade": 1}]
         info = [
             f"name{i}",
             (datetime.today()-relativedelta(months=4)).strftime('%Y-%m-%d'),
@@ -214,8 +218,8 @@ def test_delete_4_months() -> None:
 def test_delete_multiple() -> None:
     delete_data_files()
     for i in range(1, 10):
-        product_data = [([], [], [])] * 13
-        product_data[1] = ([f"marca{1}"], [1], [1])
+        product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
+        product_data[1] =[{"Marca": "marca", "Preço": 1, "Quantidade": 1}]
         info = [
             f"name{i}",
             (datetime.today()-relativedelta(months=6-i)).strftime('%Y-%m-%d'),

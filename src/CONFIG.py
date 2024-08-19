@@ -33,6 +33,7 @@ CFG = SimpleNamespace(**dict(
         "leite": 4, "manteiga": 4, "soja": 2, "banana": 2, "batata": 1,
         "tomate": 1, "carne": 1, "pao": 1},
     fields=["brand", "price", "quantity"],
+    field_names=["Marca", "Preço", "Quantidade"],
     product_fields={
         "acucar": [1, 1, 1], "arroz": [1, 1, 1], "cafe": [1, 1, 1],
         "farinha": [1, 1, 1], "feijao": [1, 1, 1], "leite": [1, 1, 1],
@@ -56,6 +57,7 @@ CFG.product_titles = {
     prd: f"{lbl[0]} - {quant[0]}{quant[1]}{lbl[1]}"
     for (prd, lbl), (_, quant) in zip(titles.items(), CFG.quantities.items())
 }
+CFG.product_index = {prd: i for i, prd in enumerate(CFG.products)}
 
 if not exists(CFG.data_agg_csv):
     makedirs(CFG.data_agg_csv, exist_ok=True)
@@ -96,22 +98,5 @@ assert set(ICONS.keys()) == set(CFG.products)
 
 
 BOLD = {'fontWeight': 'bold'}
-CENTER = {'text-align': 'center'}
-UNDERLINE = {'text-decoration': 'underline'}
-
-
-def INFO(comp_id):
-    return html.I(className="bi bi-info-circle mx-1 pulse-icon", id=comp_id)
-
-
-def CLEAR(comp_id, idx):
-    return dcc.ConfirmDialogProvider(
-        dbc.Button(
-            [html.I(className="bi bi-trash3"), " Limpar"],
-            color="warning"),
-        id={"type": comp_id, "index": idx},
-        message=(
-            "Você tem certeza que quer limpar todos os campos? "
-            "Essa ação não pode ser revertida! \n\nApós "
-            "limpar o cache, atualize a página para aplicar a limpeza.")
-    )
+CENTER = {'textAlign': 'center'}
+UNDERLINE = {'textDecoration': 'underline'}
