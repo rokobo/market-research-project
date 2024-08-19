@@ -261,6 +261,11 @@ def clear_storage(driver: webdriver.Chrome, name: str):
         "return window.localStorage.removeItem(arguments[0]);", name)
 
 
+def set_storage(driver: webdriver.Chrome, name: str, data: str):
+    return driver.execute_script(
+        "window.localStorage.setItem(arguments[0],arguments[1]);", name, data)
+
+
 def check_baseline_first(driver):
     for element in [get_by_cond(driver, id, By.ID) for id in FIRST_IDS]:
         assert element.get_attribute("value") == ""
@@ -600,7 +605,6 @@ class Test004SaveEmptyProducts:
         remove(obs_path)
 
 
-@mark.incremental
 class Test005AuxiliaryFunctions:
     @fixture(autouse=True)
     def setup_class(self, selenium_driver):
@@ -790,11 +794,32 @@ class Test006Geolocation:
             assert f"{geo["latitude"]}, {geo["longitude"]}" in obs, i
 
 
-@mark.incremental
 class Test007Fuzzing:
     @fixture(autouse=True)
     def setup_class(self, selenium_driver):
         self.app = selenium_driver
+        self.wait = WebDriverWait(self.app, timeout=15, poll_frequency=0.5)
 
-    def test_CFG(self):
-        pass  #TODO
+    def test_clear_CFG(self):
+        assert get_storage(self.app, "config") is not None
+        clear_storage(self.app, "config")
+        self.wait.until(lambda _: get_storage(self.app, "config") is not None)
+
+    def test_CFG_version(self):
+        set_storage(self.app, "config-timestamp", "1000")
+        set_storage(self.app, "config", "2000")
+        self.app.refresh()
+        self.wait.until(lambda _: get_storage(self.app, "config-timestamp") != "1000")
+        self.wait.until(lambda _: get_storage(self.app, "config") != "2000")
+
+    def test_clear_coordinates(self):
+        assert get_storage(self.app, "coordinates") is not None
+        clear_storage(self.app, "coordinates")
+        self.wait.until(lambda d: get_storage(self.app, "coordinates") is not None)
+
+    def test_coordinates_version(self):
+        set_storage(self.app, "coordinates-timestamp", "1000")
+        set_storage(self.app, "coordinates", "2000")
+        self.app.refresh()
+        self.wait.until(lambda _: get_storage(self.app, "coordinates-timestamp") != "1000")
+        self.wait.until(lambda _: get_storage(self.app, "coordinates") != "2000")

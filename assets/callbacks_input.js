@@ -20,6 +20,7 @@ const NOUPDATE=dash_clientside.no_update;
 const PRDOUT=new Array(13).fill(NOUPDATE);
 function INFO(...m){console.log(`%c${INFO.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#00252E;color:#25F5FC","background:#382C00;color:#FFC800",...m)}
 function ERROR(...m){console.log(`%cERROR ${ERROR.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#700000;color:#FFADAD","background:#382C00;color:#FFC800",...m)}
+async function SYNC(){if(CFG==null||null==localStorage.getItem("config")||COORDS==null||null==localStorage.getItem("coordinates")){ERROR("Reparing configuration...");location.reload()}}
 window.dash_clientside.input={
 add_row:function(...clk){out=[...PRDOUT];prd=dash_clientside.callback_context.triggered_id.slice(4);out[CFG.product_index[prd]]={"add":[{}]};INFO(prd);return out},
 clear_contents:function(...clk){if(clk[0].some(v=>typeof v==='number')){INFO("Memory deleted");return[[],[],'']}return NOUPDATE},
@@ -27,8 +28,7 @@ close_modal:function(clk){if(typeof clk!=='number'){return NOUPDATE};return fals
 theme_switcher:function(s){INFO(s,"mode");document.documentElement.setAttribute('data-bs-theme',s);return s},
 fill_date:function(_){return new Date().toLocaleDateString('en-CA')},
 update_badges:async function(_,pos,geo){
-    if(CFG==null){location.reload();INFO("CFG is null, reloading...")}
-    bdgOut=[];geoNow=null;
+    SYNC();bdgOut=[];geoNow=null;
     if(navigator.onLine){bdgOut=bdgOut.concat(["ONLINE","success"])}
     else {bdgOut=bdgOut.concat(["OFFLINE","danger"])};
     if(navigator.geolocation){try{LOC=await getPos(GEOOPTS);geoNow=[LOC.coords.latitude,LOC.coords.longitude,LOC.timestamp];bdgOut=bdgOut.concat([geoNow[0].toFixed(4)+", "+geoNow[1].toFixed(4),"secondary"])}
