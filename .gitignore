@@ -14,6 +14,4 @@ test*.*
 /data_obs
 gunicorn.log
 /data_agg_csv
-src/pages/report.py
-assets/callbacks_report.js
 assets/papaparse.min.js

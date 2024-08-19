@@ -1,4 +1,5 @@
 # flake8: noqa: E402
+import hashlib
 from dash import Dash, dcc, html, _dash_renderer, Output, Input, callback
 import dash
 import dash_bootstrap_components as dbc
@@ -6,9 +7,9 @@ import dash_mantine_components as dmc
 import dash_auth
 import sys
 from os.path import join, dirname
-from os import getenv
+from os import getenv, listdir
 from dotenv import load_dotenv
-from flask import send_from_directory
+from flask import Response, jsonify, request, send_from_directory
 
 sys.path.append(join(dirname(__file__), "pages"))
 sys.path.append(dirname(__file__))
@@ -41,6 +42,8 @@ app.layout = dmc.MantineProvider(html.Div([
     dcc.Store(id="config", storage_type="local", data=vars(CFG)),
     dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     dcc.Store(id="geo-history", storage_type="local", data=[]),
+    dcc.Store(id="files-hash", storage_type="local", data=0),
+    dcc.Store(id="files-data", storage_type="local", data=[]),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dash.page_container
 ]), id="mantine")
@@ -74,6 +77,17 @@ def check_version2(coords):
 @server.route('/data_agg_csv/<path:filename>')
 def download_file(filename):
     return send_from_directory(CFG.data_agg_csv, f"{filename}_Coleta.csv")
+
+
+@server.route('/get-file-names', methods=['POST'])
+def get_file_names() -> Response:
+    client_hash = request.json.get('hash', '')
+    file_names = sorted(listdir(CFG.data))
+    server_hash = hashlib.md5(''.join(file_names).encode()).hexdigest()
+
+    if client_hash == server_hash:
+        return jsonify({"updated": True})
+    return jsonify({"updated": False, "file_names": file_names, "hash": server_hash})
 
 
 if __name__ == "__main__":
