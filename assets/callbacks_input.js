@@ -22,10 +22,7 @@ function INFO(...m){console.log(`%c${INFO.caller.name.toUpperCase()} %c(${dash_c
 function ERROR(...m){console.log(`%cERROR ${ERROR.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#700000;color:#FFADAD","background:#382C00;color:#FFC800",...m)}
 window.dash_clientside.input={
 add_row:function(...clk){out=[...PRDOUT];prd=dash_clientside.callback_context.triggered_id.slice(4);out[CFG.product_index[prd]]={"add":[{}]};INFO(prd);return out},
-clear_contents:function(...clk){
-    if(clk[0].some(v=>typeof v==='number')){INFO("Memory deleted");return[[], [], '']}
-    return NOUPDATE;
-},
+clear_contents:function(...clk){if(clk[0].some(v=>typeof v==='number')){INFO("Memory deleted");return[[],[],'']}return NOUPDATE},
 close_modal:function(clk){if(typeof clk!=='number'){return NOUPDATE};return false},
 theme_switcher:function(s){INFO(s,"mode");document.documentElement.setAttribute('data-bs-theme',s);return s},
 fill_date:function(_){return new Date().toLocaleDateString('en-CA')},
@@ -80,12 +77,9 @@ validate_args:function(_,n,d,e, ...vals){
     INFO(firsts,badgeColor,out.slice(-9, -6),out.slice(-2),msg);
     out.push(msg);
     // Add scroll on focus event listeners
-    // document.querySelectorAll('.form-control').forEach(function(input){
-    //     if(!input.hasEventListener){
-    //         input.addEventListener('focus',function(){input.scrollIntoView({behavior:'instant',block:'center'})});
-    //         input.hasEventListener=true;
-    //     }
-    // })
+    document.querySelectorAll('.form-control').forEach(function(input){if(!input.hasEventListener){
+        input.addEventListener('focus',function(){input.closest('div[role="product-div"]').scrollIntoView({behavior:'smooth',block:'start'})});
+        input.hasEventListener=true}})
     return out;
 },
 establishment_address:function(est){

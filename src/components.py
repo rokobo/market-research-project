@@ -60,7 +60,7 @@ def product_grid(product):
             'cellClass': "correct form-control", "flex": 1
         })
 
-    return dbc.Row([
+    return html.Div([
         dbc.Col([
             html.Div(DangerouslySetInnerHTML(
                 ICONS[product]), style={"display": "inline-block"}),
@@ -93,10 +93,11 @@ def product_grid(product):
             style={"height": None},
             className="p-0 ag-theme-material",
         ),
-        dbc.Button(
+        html.Div(dbc.Button(
             html.I(className="bi bi-file-earmark-arrow-down"),
-            id=f"add-{product}", outline=True, color="secondary"),
-    ], className="mx-2 mt-4", id=f"{product}-heading")
+            id=f"add-{product}", outline=True, color="secondary"
+        ), className="d-grid gap-2")
+    ], className="mx-2 mt-4", id=f"{product}-heading", role="product-div")
 
 
 def wait_modal(id, source, index):
