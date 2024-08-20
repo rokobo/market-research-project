@@ -15,7 +15,8 @@ load_dotenv()
 layout = html.Div([
     dbc.Stack([
         html.H1("Relatórios"), html.Div(className="mx-auto"),
-        dbc.Button("Atualizar", id="refresh-files", disabled=True)
+        dcc.Loading(dbc.Button(
+            "Atualizar dados", id="refresh-files", disabled=True))
     ], direction="horizontal", className="m-2"),
     dbc.Row(
         dbc.Input(

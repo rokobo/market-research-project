@@ -6,7 +6,7 @@ refresh_files:async function(refr,disabled,fileHash,files){
     if(disabled){alert("ERRO");return [NOUPDATE,fileHash,files]}SYNC();
     if(!Array.isArray(fileHash)||fileHash.length!=2||files.length==0){fileHash=[0,0]}
     const response=await fetch('/get-file-names',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hash:fileHash[0]||''})});
-    const data=await response.json();
+    const data=await response.json();INFO(data);
     if(data.updated&&files.length==fileHash[1]){alert("Versão atual ok");INFO("File hash is the same");return [files,fileHash,files]}
     const agData=data.file_names.map(fileName=>{
         const parts=fileName.replace(".csv", "").split('|');
