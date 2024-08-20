@@ -42,8 +42,8 @@ app.layout = dmc.MantineProvider(html.Div([
     dcc.Store(id="config", storage_type="local", data=vars(CFG)),
     dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     dcc.Store(id="geo-history", storage_type="local", data=[]),
-    dcc.Store(id="files-hash", storage_type="local", data=0),
-    dcc.Store(id="files-data", storage_type="local", data=[]),
+    dcc.Store(id="files-hash", storage_type="local", data=[0, 0]),
+    dcc.Store(id="files-data", storage_type="local", data=[{}]),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dash.page_container
 ]), id="mantine")

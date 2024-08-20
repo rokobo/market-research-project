@@ -29,7 +29,7 @@ close_modal:function(clk){if(typeof clk!=='number'){return NOUPDATE};return fals
 theme_switcher:function(s){INFO(s,"mode");document.documentElement.setAttribute('data-bs-theme',s);return s},
 fill_date:function(_){return new Date().toLocaleDateString('en-CA')},
 update_badges:async function(_,pos,geo){
-    SYNC();bdgOut=[];geoNow=null;
+    SYNC();let bdgOut=[],geoNow=null;
     if(navigator.onLine){bdgOut=bdgOut.concat(["ONLINE","success"])}
     else {bdgOut=bdgOut.concat(["OFFLINE","danger"])};
     if(navigator.geolocation){try{LOC=await getPos(GEOOPTS);geoNow=[LOC.coords.latitude,LOC.coords.longitude,LOC.timestamp];bdgOut=bdgOut.concat([geoNow[0].toFixed(4)+", "+geoNow[1].toFixed(4),"secondary"])}
@@ -41,8 +41,8 @@ update_badges:async function(_,pos,geo){
     else if(geo.length==0||haversine(geo.at(-1),geoNow)>0.1){bdgOut.push(geo.concat([geoNow]))}
     else{{bdgOut.push(NOUPDATE)}}
     if(geo.length>CFG.geo_length){geo.shift()}
-    size = (Object.keys(localStorage).reduce((t,k)=>{return t+(localStorage[k].length+k.length)*2},0)/1024).toFixed(2);
-    bdgOut.push(size + " KB");
+    let size=(Object.keys(localStorage).reduce((t,k)=>{return t+(localStorage[k].length+k.length)*2},0)/1024).toFixed(2);
+    bdgOut.push(size+" KB");
     return bdgOut;
 },
 load_state:function(_, _,local,info){
