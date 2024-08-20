@@ -11,7 +11,8 @@ refresh_files:async function(refr,disabled,fileHash,files){
     const agData=data.file_names.map(fileName=>{
         const parts=fileName.replace(".csv", "").split('|');
         let fileRow={Nome:parts[2],Data:`${parts[0]}, ${new Date(parts[1]*1000).toLocaleString("en-CA",{hour12:false})}`};
-        if(!parts[4]||!parts[5]){fileRow.Loc="Sem coordenadas";fileRow.Estab=parts[3].split(" ")[0]}
+        if (!parts[3]){}
+        else if(!parts[4]||!parts[5]){fileRow.Loc="Sem coordenadas";fileRow.Estab=parts[3].split(" ")[0]}
         else {
             estabNear=nearest(parts[4],parts[5]);
             estabNear=`${estabNear[1].split(" ")[0]}, ${Math.round(estabNear[0]*1000)}`;
