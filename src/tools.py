@@ -6,6 +6,7 @@ from os import makedirs, listdir
 from send2trash import send2trash
 import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
 import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -329,3 +330,78 @@ def check_reports():
     df = df.set_axis(headers, axis=1)
     df = df.replace(0, "-")
     return df
+
+
+def path_map(date: str, width: int = 1000, height: int = 1000):
+    fig = go.Figure()
+    data = []
+    names = set()
+    estabs = set()
+    for i in listdir(CFG.data_obs):
+        if date not in i.split("|")[0]:
+            continue
+        names.add(i.split("|")[2].strip())
+        estabs.add(i.split("|")[3].split(" ")[0].strip())
+        with open(join(CFG.data_obs, i), "r") as file:
+            rows = file.read().split("localização")[-1].strip().split("\n")
+            processedRow = []
+            for row in rows:
+                time, coords = row.split(": ")
+                lat, lon = coords.split(", ")
+                processedRow.append((int(time), float(lat), float(lon)))
+            locDf = pd.DataFrame(
+                processedRow, columns=["time", "Latitude", "Longitude"])
+            locDf['time'] = pd.to_datetime(
+                locDf['time'], unit='ms').dt.strftime('%H:%M')
+            data.append(locDf)
+
+    df = pd.read_csv(join(CFG.home, "config/estabelecimentos.csv"))
+    condition = df['Estabelecimento'].apply(lambda x: any(estab in x for estab in estabs))
+    important = df[condition]
+    rest = df[~condition]
+
+    fig.add_trace(go.Scattermapbox(
+        lat=rest.Latitude, lon=rest.Longitude,
+        textposition="bottom center", mode='markers+text',
+        textfont=dict(size=10, color="black"),
+        marker=go.scattermapbox.Marker(size=10),
+        text=rest.Estabelecimento, name='Estabs.'))
+    fig.add_trace(go.Scattermapbox(
+        lat=important.Latitude, lon=important.Longitude,
+        textposition="bottom center", mode='markers+text',
+        textfont=dict(size=10, color="black"),
+        marker=go.scattermapbox.Marker(size=20),
+        text=important.Estabelecimento, name='Locais'))
+
+    for (i, d), name in zip(enumerate(data), listdir(CFG.data_obs)):
+        fig.add_trace(go.Scattermapbox(
+            lat=d.Latitude, lon=d.Longitude,
+            text=d.time, mode='lines+markers+text', textfont=dict(size=15),
+            marker=dict(size=10), line=dict(width=3),
+            name=f'{i+1}: {name.split("|")[3].split(" ")[0].strip()}'))
+
+    border = 0.015
+    fig.update_layout(
+        legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99),
+        title_text=f"Movimentação dos coletores no dia {date}, {names}",
+        margin={"r": 0, "t": 35, "l": 0, "b": 0},
+        mapbox=dict(
+            style="carto-positron",
+            center=dict(lat=df.Latitude.mean(), lon=df.Longitude.mean()),
+            bounds=dict(
+                west=df.Longitude.min() - border,
+                east=df.Longitude.max() + border,
+                south=df.Latitude.min() - border,
+                north=df.Latitude.max() + border - 0.01)),
+        width=width, height=height)
+
+    fig.update_layout(updatemenus=[dict(
+        buttons=list([
+            dict(label=i, args=["mapbox.style", i], method="relayout")
+            for i in ["open-street-map", "carto-positron"]]),
+        type="buttons", direction="up", showactive=True,
+        yanchor="top", y=0.99, xanchor="left", x=0.01)])
+
+    config = {'toImageButtonOptions': {
+        'format': 'png', 'filename': f'Mov {date}, {names}', 'scale':2}}
+    fig.show(config=config)
