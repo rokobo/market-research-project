@@ -355,13 +355,12 @@ clientside_callback(
     State("collection_date", "value"),
     State("establishment", "value"),
     State("general_observations", "value"),
-    State("geolocation", "position"),
     State('geo-history', 'data'),
     State('grid-data', 'data'),
     prevent_initial_call=True
 )
-def save_args(clicks, name, date, establishment, obs, pos, geo_hist, data):
+def save_args(clicks, name, date, estab, obs, geo_hist, data):
     if clicks is None:
         return dash.no_update
-    save_products(data, (name, date, establishment), obs, pos, geo_hist)
+    save_products(data, (name, date, estab), obs, geo_hist[-1], geo_hist)
     return ["reload"], [], [], "", True
