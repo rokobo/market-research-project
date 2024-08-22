@@ -94,11 +94,8 @@ def save_products(
         return df
     file_name = f"{info[1]}|{int(time.time())}|{info[0]}|{info[2]}"
 
-    if isinstance(position, dict):
-        if "lat" in position:
-            file_name += f"|{position["lat"]}"
-        if "lon" in position:
-            file_name += f"|{position["lon"]}"
+    if isinstance(position, list) and len(position) == 3:
+        file_name += f"|{position[0]}|{position[1]}"
     df.to_csv(
         f"data/{file_name}.csv",
         index=False)
@@ -356,7 +353,8 @@ def path_map(date: str, width: int = 1000, height: int = 1000):
             data.append(locDf)
 
     df = pd.read_csv(join(CFG.home, "config/estabelecimentos.csv"))
-    condition = df['Estabelecimento'].apply(lambda x: any(estab in x for estab in estabs))
+    condition = df['Estabelecimento'].apply(
+        lambda x: any(estab in x for estab in estabs))
     important = df[condition]
     rest = df[~condition]
 
@@ -403,5 +401,5 @@ def path_map(date: str, width: int = 1000, height: int = 1000):
         yanchor="top", y=0.99, xanchor="left", x=0.01)])
 
     config = {'toImageButtonOptions': {
-        'format': 'png', 'filename': f'Mov {date}, {names}', 'scale':2}}
+        'format': 'png', 'filename': f'Mov {date}, {names}', 'scale': 2}}
     fig.show(config=config)
