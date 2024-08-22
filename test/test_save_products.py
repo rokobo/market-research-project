@@ -109,9 +109,7 @@ def test_naming_coordinates() -> None:
     delete_data_files()
     product_data = [[{}] * CFG.product_rows[prd] for prd in CFG.products]
     info = ["name", "date", "establishment"]
-    save_products(product_data, info, None, {
-        'lat': -22.895, 'lon': -47.0439, 'accuracy': 1, 'alt': None,
-        'alt_accuracy': None, 'speed': None, 'heading': None}, None)
+    save_products(product_data, info, None, [-22.895, -47.0439, 1], None)
     file_name = None
 
     for file in listdir(CFG.data):
