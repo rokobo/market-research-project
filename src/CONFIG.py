@@ -2,8 +2,6 @@ from os.path import dirname, join, getmtime, exists
 from os import listdir, makedirs
 from types import SimpleNamespace
 import pandas as pd
-from dash import html, dcc
-import dash_bootstrap_components as dbc
 
 
 update_time = f"{int(getmtime(__file__)):,}".replace(",", ".")
@@ -40,7 +38,16 @@ CFG = SimpleNamespace(**dict(
         "manteiga": [1, 1, 1], "soja": [1, 1, 1], "banana": [1, 1, 1],
         "batata": [0, 1, 1], "tomate": [0, 1, 1], "carne": [0, 1, 1],
         "pao": [0, 1, 1]},
-    geo_length=100
+    geo_length=100,
+    expected_storage=[
+        "geo-history", "geo-history-timestamp",
+        "coordinates", "coordinates-timestamp",
+        "files-hash", "files-hash-timestamp",
+        "info-data", "info-data-timestamp",
+        "config", "config-timestamp",
+        "files-data", "files-data-timestamp",
+        "grid-data", "grid-data-timestamp",
+    ]
 ))
 
 titles = {

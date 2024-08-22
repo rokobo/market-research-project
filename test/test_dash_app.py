@@ -263,7 +263,7 @@ def clear_storage(driver: webdriver.Chrome, name: str):
 
 def set_storage(driver: webdriver.Chrome, name: str, data: str):
     return driver.execute_script(
-        "window.localStorage.setItem(arguments[0],arguments[1]);", name, data)
+        "window.localStorage.setItem(arguments[0], JSON.stringify(arguments[1]));", name, data)
 
 
 def check_baseline_first(driver):
@@ -647,6 +647,16 @@ class Test005AuxiliaryFunctions:
             assert posY > old_posY, product
             assert url != old_url, product
             old_posY, old_url = posY, url
+
+    def test_localStorage_cleanup(self):
+        set_storage(self.app, "testing_storage1", "test1")
+        set_storage(self.app, "testing_storage2", "test2")
+        assert get_storage(self.app, "testing_storage1") == "test1"
+        assert get_storage(self.app, "testing_storage2") == "test2"
+        self.app.refresh()
+        WebDriverWait(self.app, 10).until(EC.title_is("ICB"))
+        assert get_storage(self.app, "testing_storage1") is None
+        assert get_storage(self.app, "testing_storage2") is None
 
 
 @mark.incremental

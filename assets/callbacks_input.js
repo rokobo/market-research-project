@@ -46,6 +46,8 @@ update_badges:async function(_,pos,geo){
     return bdgOut;
 },
 load_state:function(_, _,local,info){
+    let lcl=Object.keys(localStorage);
+    for(let i=0;i<lcl.length;i++){let s=lcl[i];if(s[0]!="_"&&!CFG.expected_storage.includes(s)){INFO("Deleting:",s);localStorage.removeItem(s)}}
     if(info.length!=3){info=[null,null,null]}
     if(local==["reload"]){location.reload(true)}
     if(!Array.isArray(local)|local.length!=CFG.products.length){local=CFG.products.map(p=>Array(CFG.product_rows[p]).fill({}))}
