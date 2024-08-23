@@ -816,11 +816,9 @@ class Test007Fuzzing:
         self.wait.until(lambda _: get_storage(self.app, "config") is not None)
 
     def test_CFG_version(self):
-        set_storage(self.app, "config-timestamp", "1000")
-        set_storage(self.app, "config", "2000")
+        set_storage(self.app, "config", {"version": "1"})
         self.app.refresh()
-        self.wait.until(lambda _: get_storage(self.app, "config-timestamp") != "1000")
-        self.wait.until(lambda _: get_storage(self.app, "config") != "2000")
+        self.wait.until(lambda _: get_storage(self.app, "config") != {"version": "1"})
 
     def test_clear_coordinates(self):
         assert get_storage(self.app, "coordinates") is not None
@@ -828,8 +826,6 @@ class Test007Fuzzing:
         self.wait.until(lambda d: get_storage(self.app, "coordinates") is not None)
 
     def test_coordinates_version(self):
-        set_storage(self.app, "coordinates-timestamp", "1000")
-        set_storage(self.app, "coordinates", "2000")
+        set_storage(self.app, "coordinates", {"version": "1"})
         self.app.refresh()
-        self.wait.until(lambda _: get_storage(self.app, "coordinates-timestamp") != "1000")
-        self.wait.until(lambda _: get_storage(self.app, "coordinates") != "2000")
+        self.wait.until(lambda _: get_storage(self.app, "coordinates") != {"version": "1"})

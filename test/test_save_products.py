@@ -79,8 +79,10 @@ def test_banana_naming() -> None:
     mask = df['Produto'].str.contains("banana")
     assert len(df) == 3, df
     assert all(not val for val in df.loc[mask, 'Marca']), df.Marca.to_list()
-    assert "banana nanica" in df.loc[mask, 'Produto'].to_list(), df.Produto.to_list()
-    assert "banana prata" in df.loc[mask, 'Produto'].to_list(), df.Produto.to_list()
+    assert "Banana Nanica" in df.Produto.to_list()
+    assert "Banana Prata" in df.Produto.to_list()
+    assert "Nanica" not in df.Marca.to_list()
+    assert "Prata" not in df.Marca.to_list()
     delete_data_files()
 
 
@@ -201,7 +203,7 @@ def test_delete_4_months() -> None:
         product_data[1] = [{"Marca": "marca", "Preço": 1, "Quantidade": 1}]
         info = [
             f"name{i}",
-            (datetime.today()-relativedelta(months=4)).strftime('%Y-%m-%d'),
+            (datetime.today()-relativedelta(months=CFG.report_timeout_months+1)).strftime('%Y-%m-%d'),
             "establishment"]
         save_products(product_data, info, None, None, None)
 
@@ -220,7 +222,8 @@ def test_delete_multiple() -> None:
         product_data[1] =[{"Marca": "marca", "Preço": 1, "Quantidade": 1}]
         info = [
             f"name{i}",
-            (datetime.today()-relativedelta(months=6-i)).strftime('%Y-%m-%d'),
+            (datetime.today()-relativedelta(
+                months=3 + CFG.report_timeout_months - i)).strftime('%Y-%m-%d'),
             "establishment"]
         save_products(product_data, info, None, None, None)
 
@@ -228,7 +231,5 @@ def test_delete_multiple() -> None:
 
     delete_old_reports()
 
-    assert len(listdir(CFG.data)) == 7
-    for file in listdir(CFG.data):
-        remove(join(CFG.data, file))
+    assert len(listdir(CFG.data)) == 4 + CFG.report_timeout_months
     delete_data_files()
