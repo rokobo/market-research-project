@@ -112,4 +112,5 @@ def update_result(_, month, products):
     df = df.groupby('Produto').agg(
         {'Preço': 'mean', 'Quantidade': 'mean'}).reset_index()
     df['Preço'] = df['Preço'].round(3)
+    df['Quantidade'] = df['Quantidade'].round(3)
     return df[df['Produto'].isin(products)].to_dict(orient='records')
