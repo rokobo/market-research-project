@@ -48,7 +48,7 @@ CFG = SimpleNamespace(**dict(
         "files-data", "files-data-timestamp",
         "grid-data", "grid-data-timestamp",
     ],
-    report_timeout_months=4
+    report_timeout_months=3
 ))
 
 titles = {
