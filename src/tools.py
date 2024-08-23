@@ -74,8 +74,8 @@ def save_products(
     data, info, obs: Optional[str],
     position: Optional[dict[str, Any]], geo_hist: Optional[list], test=False
 ):
-    check_folder("data")
-    check_folder("data_obs")
+    check_folder(CFG.data)
+    check_folder(CFG.data_obs)
 
     df = pd.DataFrame([
         row | {"Produto": prd}
@@ -118,14 +118,14 @@ def save_products(
 def delete_old_reports():
     now = datetime.now()
     current_date = datetime(now.year, now.month, 1)
-    two_months_ago = current_date - relativedelta(months=3)
+    months_ago = current_date - relativedelta(months=CFG.report_timeout_months)
     scheduled_delete = []
     for file in listdir(CFG.data):
         if not file.endswith(".csv"):
             continue
         year, month, day = file.split("|")[0].split("-")
         file_datetime = datetime(int(year), int(month), int(day))
-        if file_datetime < two_months_ago:
+        if file_datetime < months_ago:
             scheduled_delete.append(file)
 
     if scheduled_delete == []:
@@ -172,8 +172,14 @@ def aggregate_reports(date, test=False):
     coleta_mes.Marca = coleta_mes.Marca.fillna("")
     mask = coleta_mes['Produto'] == 'banana'
     coleta_mes.loc[
-        mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca'].str.lower()
+        mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca']
     coleta_mes.loc[mask, "Marca"] = ""
+
+    coleta_mes["Produto"] = coleta_mes["Produto"].map(
+        lambda x: x.replace(
+            x.split()[0], CFG.product_titles[x.split()[0]].split(" - ")[0]
+        ))
+
     coleta_mes.to_csv(join(
         CFG.home, f"data_agg_csv/{date[0]}_{date[1]}_Coleta.csv"), index=False)
     coleta_mes["PPK"] = [
