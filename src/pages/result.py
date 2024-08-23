@@ -1,10 +1,10 @@
+# flake8: noqa: E501
 from datetime import datetime
 from os import getenv
 from dateutil.relativedelta import relativedelta
 import dash
 import dash_ag_grid as dag
-from dash import html, Input, Output, dcc, clientside_callback, \
-    ClientsideFunction, callback, State
+from dash import html, Input, Output, dcc, callback, State
 import dash_bootstrap_components as dbc
 from dotenv import load_dotenv
 from CONFIG import CFG, BOLD
