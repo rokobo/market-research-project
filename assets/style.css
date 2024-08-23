@@ -12,7 +12,7 @@ html{scroll-padding-top:80px}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}}
 .pulse-icon{float:inline-end;animation:pulse 2s ease-in-out infinite}
 .tooltip-inner{max-width:90vw}
-.ag-theme-material{--ag-background-color:var(--bs-body-bg)!important;--ag-header-background-color:var(--bs-body-bg)!important;--ag-odd-row-background-color:hsla(0,0%,100%,0)!important;--ag-foreground-color:var(--bs-body-color)!important;--ag-header-foreground-color:var(--bs-body-color)!important}
+.ag-theme-material{--ag-background-color:var(--bs-body-bg)!important;--ag-header-background-color:var(--bs-body-bg)!important;--ag-odd-row-background-color:rgba(255,0,0,0.01)!important;--ag-foreground-color:var(--bs-body-color)!important;--ag-header-foreground-color:var(--bs-body-color)!important}
 .ag-center-cols-viewport{min-height:0!important;}
 .ag-header-cell-label{justify-content:center}
 .ag-header-cell{padding-right:0px!important;padding-left:0!important}

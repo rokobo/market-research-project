@@ -13,17 +13,6 @@ load_dotenv()
 
 
 layout = html.Div([
-    dbc.Stack([
-        html.H1("Relatórios"), html.Div(className="mx-auto"),
-        dcc.Loading(dbc.Button(
-            "Atualizar dados", id="refresh-files", disabled=True))
-    ], direction="horizontal", className="m-2"),
-    dbc.Row(
-        dbc.Input(
-            id="password-report", type="text", debounce=True,
-            placeholder="Senha de administrador", persistence=True,
-            persistence_type="local"
-    ), className="m-2"),
     dbc.Alert([
         html.H5([
             html.I(className="bi bi-info-circle-fill"),
@@ -38,6 +27,17 @@ layout = html.Div([
             **Loc**: Latidude e Longitude na hora do envio, distância e nome do estabelecimento mais perto na hora do envio.''',
         style={'whiteSpace': 'pre-line'}, className="mb-0")
     ], dismissable=False, color="warning"),
+    dbc.Stack([
+        html.H1("Relatórios"), html.Div(className="mx-auto"),
+        dcc.Loading(dbc.Button(
+            "Atualizar dados", id="refresh-files", disabled=True))
+    ], direction="horizontal", className="m-2"),
+    dbc.Row(
+        dbc.Input(
+            id="password-report", type="text", debounce=True,
+            placeholder="Senha de administrador", persistence=True,
+            persistence_type="local"
+    ), className="m-2"),
     dbc.Row(
         dag.AgGrid(
             id="ag-grid-files",

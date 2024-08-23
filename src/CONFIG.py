@@ -17,9 +17,9 @@ CFG = SimpleNamespace(**dict(
         "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
         "soja", "banana", "batata", "tomate", "carne", "pao"],
     excel_products=[
-        "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
-        "soja", "banana prata", "banana nanica", "batata", "tomate", "carne",
-        "pao"],
+        "Açúcar", "Arroz", "Café", "Farinha", "Feijão", "Leite", "Manteiga",
+        "Óleo", "Banana Prata", "Banana Nanica", "Batata", "Tomate",
+        "Carne", "Pão"],
     quantities={
         "acucar": [1, "kg"], "arroz": [5, "kg"], "cafe": [0.5, "kg"],
         "farinha": [1, "kg"], "feijao": [1, "kg"], "leite": [1, "L"],
@@ -47,18 +47,19 @@ CFG = SimpleNamespace(**dict(
         "config", "config-timestamp",
         "files-data", "files-data-timestamp",
         "grid-data", "grid-data-timestamp",
-    ]
+    ],
+    report_timeout_months=4
 ))
 
 titles = {
     "acucar": ["Açúcar", ""], "arroz": ["Arroz", ""], "cafe": ["Café", ""],
     "farinha": ["Farinha", ""], "feijao": ["Feijão", ""],
     "leite": ["Leite", ""], "manteiga": ["Manteiga", ""],
-    "soja": ["Óleo de soja", ""], "banana": ["Banana", " (Nanica e Prata)"],
+    "soja": ["Óleo", " (de soja)"], "banana": ["Banana", " (Nanica e Prata)"],
     "batata": ["Batata", " (mais barata)"],
     "tomate": ["Tomate", " (mais barato)"],
     "carne": ["Carne", " (Coxão Mole)"],
-    "pao": ["Pão Francês", ""]}
+    "pao": ["Pão", " (Francês)"]}
 
 CFG.product_titles = {
     prd: f"{lbl[0]} - {quant[0]}{quant[1]}{lbl[1]}"

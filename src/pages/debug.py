@@ -10,7 +10,7 @@ layout = html.Div([
         html.H1("Debug"), html.H6(id="debug-time", className="mx-auto"),
         dcc.Loading(dbc.Button(
             "Atualizar", id="refresh-debug"))
-    ], direction="horizontal", className="m-2", style={"font-size": "0.8em"}),
+    ], direction="horizontal", className="m-2"),
     dcc.Markdown(id="debug-content", className="m-2")
 ])
 
