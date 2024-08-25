@@ -114,3 +114,12 @@ def wait_modal(id, source, index):
         dbc.ModalFooter([
             html.H6("Ou limpe o cache:"), CLEAR("confirm-clear", index)])
     ], id=id, is_open=True, centered=True, keyboard=False, backdrop="static")
+
+
+def adm_nav(source):
+    pages = {
+        "report": "Relatórios", "result": "Resultados", "excel": "Excel"
+    }
+    return dbc.Row(dbc.Nav([dbc.NavItem(dbc.NavLink(
+        name, href=f"/{page}", active=page == source.split(".")[1]
+    )) for page, name in pages.items()], pills=True), className="m-2")

@@ -9,6 +9,7 @@ import dash_bootstrap_components as dbc
 from dotenv import load_dotenv
 from CONFIG import CFG, BOLD
 from tools import aggregate_reports
+from components import adm_nav
 
 dash.register_page(__name__)
 load_dotenv()
@@ -17,6 +18,7 @@ now = datetime.now()
 current_date = datetime(now.year, now.month, 1)
 
 layout = html.Div([
+    adm_nav(__name__),
     dbc.Alert([
         html.H5([
             html.I(className="bi bi-info-circle-fill"),
@@ -24,9 +26,9 @@ layout = html.Div([
         ], className="alert-heading", style=BOLD),
         dcc.Markdown(
             '''
-            Selecione o mês e os produtos que deseja visualizar. Clique em "Atualizar" para gerar o relatório.
+            Só é possível atualizar quando a senha correta está no campo abaixo. Somente use quando necessário!
 
-            Somente atualize a tabela quando necessário!''',
+            Selecione o mês e os produtos que deseja visualizar. Clique em "Atualizar" para gerar o relatório.''',
             style={'whiteSpace': 'pre-line'}, className="mb-0")
     ], dismissable=False, color="warning"),
     dbc.Stack([

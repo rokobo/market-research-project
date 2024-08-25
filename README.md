@@ -8,6 +8,7 @@
   - [Additional checks](#additional-checks)
   - [Environment file](#environment-file)
   - [Minify assets](#minify-assets)
+  - [Administration tools and pages](#administration-tools-and-pages)
   - [AWS deployment to EC2](#aws-deployment-to-ec2)
     - [Launch instance and get key pair credential](#launch-instance-and-get-key-pair-credential)
     - [Configure network settings](#configure-network-settings)
@@ -16,7 +17,6 @@
     - [Changing code, re-deploying and aliases](#changing-code-re-deploying-and-aliases)
   - [End-to-end testing](#end-to-end-testing)
     - [Testing environment and fixtures](#testing-environment-and-fixtures)
-
 
 To the next developer that takes over this project, here are some important considerations and guidelines to ensure a smooth setup and maintenance of the infrastructure. This project requires careful attention to detail during the initial setup phase, as well as ongoing management to keep everything running smoothly.
 
@@ -45,9 +45,10 @@ That said, the only cost that this project is supposed to possibly have is if th
 
 To prevent possibly having a large AWS bill, the data being sent out of EC2 must be minimized. To achieve this:
 
-1. Clientside callbacks were used because they do not send or receive data from the EC2 server. Some functions still had to be server callbacks because they either need to send data or need to create components dynamically (although I imagine it is possible to do this through clientside callbacks).
+1. Clientside callbacks were used because they do not send or receive data from the EC2 server. Some functions still had to be server callbacks because they need to send data from the server.
 2. `dash_auth` was used to prevent page load and minimize data sent out from the server to people who are not involved in the project. Considerations about the user/password duo is explained in the next section.
-3. One common mistake when creating callbacks in dash is not understanding the order in which the callbacks are called. Sometimes they are not even constant. One way to handle this is to use dummy inputs and outputs. If only one function outputs to a dummy container, then you can use as an input for a callback you want executed later.
+3. Administration pages receive a secondary password stored in the `.env` file under the `ADM_PASSWORD` key.
+4. One common mistake when creating callbacks in dash is not understanding the order in which the callbacks are called. Sometimes they are not even constant. One way to handle this is to use dummy inputs and outputs. If only one function outputs to a dummy container, then you can use as an input for a callback you want executed later.
 
 ## Configuration files
 
@@ -70,6 +71,30 @@ If you see in the `main.py` script, I made calls `getenv()`. This function is us
 In order to decrease outgoing data from the application server, minifying the assets can decrease the data sent from the server to the user. SVG, CSS and Javascript files can be minified before setting up the web server. However, this is not strictly necessary, since the assets will be compressed by the Nginx server. Minifying will help decrease the size a little, although compression seems to be enough.
 
 It is worth noting that partially minifying the assets is a good alternative. Simply avoid spaces and newlines when possible. Personally, I remove spaces and newlines on parts of the code that will not make the code overly cluttered and hard to read.
+
+## Administration tools and pages
+
+Using the administration password, an admin can get access to new pages used to see server-restricted information:
+
+1. `debug.py`: Shows all `localStorage` items, used for debugging a mobile phone on-the-go.
+2. `report.py`: Shows information about the files stored in the server. Used for seeing a summary of the reports in terms of product count, report dates and brands collected.
+3. `result.py`: Shows monthly aggregation from selected month and products.
+
+Additional tools for the server admin:
+
+1. `paths.ipynb`: Shows the path that collectors took in a specified day, used to verify if the work was done accurately.
+2. `aggregate.py`: Used to aggregate the collection reports into an Excel workbook.
+3. `scp` command: Used for transfering files from the EC2 instance to your computer:
+
+    ```sh
+    scp -i /path/to/your-key.pem ec2-user@ec2-ip:/path/to/remote/file /path/to/local/destination
+    ```
+
+    Using it from the project folder would look like:
+
+    ```sh
+    scp -i ./key.pem ubuntu@ec2-ip:~/market-research-project/data_agg/2020_01_Coleta.xlsx ./2020_01_Coleta.xslx
+    ```
 
 ## AWS deployment to EC2
 

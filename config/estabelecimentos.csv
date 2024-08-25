@@ -1,6 +1,7 @@
 Estabelecimento,Latitude,Longitude,Endereço
 "ASI-SS (Assaí Sen. Saraiva)",-22.90403818062366,-47.0655877891341,"Av. Senador Saraiva,835 - Centro - 13013-061"
 "ATC-JB (Atacadão John Boyd)",-22.90822842727822,-47.092932681520594,"Av. Império do Sol Nascente, 52 - Jardim Aurelia - 13033-050"
+"ATC-DP (Atacadão Dom Pedro)",-22.845250553080163,-47.090474119796795,"Rod. Dom Pedro I, KM 139 - 9 - Jardim Santa Genebra - 13080-395"
 "ATC_DP (Atacadão Dom Pedro)",-22.845250553080163,-47.090474119796795,"Rod. Dom Pedro I, KM 139 - 9 - Jardim Santa Genebra - 13080-395"
 "BRSA-PCA (Baronesa Supermercado)",-22.917640949605268,-47.03614293590062,"R. Serra Dourada, 610 - Jardim Baroneza - 13100-310"
 "CAE-JB (Superm. Caetano)",-22.910556226900443,-47.09494961939321,"Av. John Boyd Dunlop, 375 - Vila Aurocan - 13034-685"
@@ -22,6 +23,7 @@ Estabelecimento,Latitude,Longitude,Endereço
 "SPM-TAQ (SuperMercado Taquaral)",-22.88113725913633,-47.050196017801646,"Av. Nossa Sra. de Fátima, 586/608 - Taquaral - 13076-008"
 "SSC-JB (Supermerc. Santa Catarina)",-22.908655538367423, -47.08682506591064,"R. José Maria Lisboa, 33 - Vila Teixeira - 13032-480"
 "SVG-BFG (Savegnago Botafogo)",-22.897403162980076,-47.07057860871792,"R. Mário Siqueira, 221 - Botafogo - 13020-210"
+"SVG-ORO (Savegnago Orozimbo)",-22.88993859916899,-47.05850436044858,"Av. Orosimbo Maia, 1309 - Vila Itapura - 13023-002"
 "SVG-ORO (Savegnago_Orozimbo)",-22.88993859916899,-47.05850436044858,"Av. Orosimbo Maia, 1309 - Vila Itapura - 13023-002"
 "TDA-DPE (Tenda Dom Pedro)",-22.846786080576,-47.10002617572391,"Rod. D. Pedro I, km 140,5 Ceasa - Jardim Santa Monica - 13080-395"
 "TDA-LAG (Tenda Jardim do Lago)",-22.926348640520946,-47.081029144215265,"Rua Padre Bernardo da Silva, 1111 - São Bernardo - 13030-710"

@@ -28,7 +28,7 @@ clear_contents:function(...clk){if(clk[0].some(v=>typeof v==='number')){INFO("Me
 close_modal:function(clk){if(typeof clk!=='number'){return NOUPDATE};return false},
 theme_switcher:function(s){INFO(s,"mode");document.documentElement.setAttribute('data-bs-theme',s);return s},
 fill_date:function(_){return new Date().toLocaleDateString('en-CA')},
-update_badges:async function(_,pos,geo){
+update_badges:async function(_,geo){
     SYNC();let bdgOut=[],geoNow=null;
     if(navigator.onLine){bdgOut=bdgOut.concat(["ONLINE","success"])}
     else {bdgOut=bdgOut.concat(["OFFLINE","danger"])};

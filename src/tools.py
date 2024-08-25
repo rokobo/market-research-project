@@ -147,6 +147,7 @@ def aggregate_reports(date, test=False):
     assert len(date[0]) == 4, date
     assert len(date[1]) == 2, date
 
+    # Load all reports for the given month
     for file in listdir(CFG.data):
         if not file.endswith(".csv"):
             continue
@@ -159,6 +160,7 @@ def aggregate_reports(date, test=False):
         df = pd.read_csv(join(CFG.home, f"data/{file}"))
         if df.empty:
             continue
+        # Skip test reports
         if "TESTE" in df.loc[0, "Estabelecimento"]:
             continue
         reports.append(df)
@@ -168,13 +170,16 @@ def aggregate_reports(date, test=False):
         return
     print("Number of reports: ", len(reports))
 
+    # Concatenate all reports
     coleta_mes = pd.concat(reports)
     coleta_mes.Marca = coleta_mes.Marca.fillna("")
+    # Split banana into two products (Nanica and Prata)
     mask = coleta_mes['Produto'] == 'banana'
     coleta_mes.loc[
         mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca']
     coleta_mes.loc[mask, "Marca"] = ""
 
+    # Replace by the correct product names (e.g. "acucar" -> "Açúcar")
     coleta_mes["Produto"] = coleta_mes["Produto"].map(
         lambda x: x.replace(
             x.split()[0], CFG.product_titles[x.split()[0]].split(" - ")[0]
@@ -359,6 +364,7 @@ def path_map(date: str, width: int = 1000, height: int = 1000):
             data.append(locDf)
 
     df = pd.read_csv(join(CFG.home, "config/estabelecimentos.csv"))
+    # Split the data based on which establishments appear in the files
     condition = df['Estabelecimento'].apply(
         lambda x: any(estab in x for estab in estabs))
     important = df[condition]
@@ -377,6 +383,7 @@ def path_map(date: str, width: int = 1000, height: int = 1000):
         marker=go.scattermapbox.Marker(size=20),
         text=important.Estabelecimento, name='Locais'))
 
+    # Add the data from the files (the movement of the collectors)
     for (i, d), name in zip(enumerate(data), listdir(CFG.data_obs)):
         fig.add_trace(go.Scattermapbox(
             lat=d.Latitude, lon=d.Longitude,

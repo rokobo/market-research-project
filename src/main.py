@@ -1,6 +1,7 @@
 # flake8: noqa: E402
 import hashlib
-from dash import Dash, dcc, html, _dash_renderer, Output, Input, callback
+from dash import Dash, dcc, html, _dash_renderer, Output, Input, callback, \
+    clientside_callback, ClientsideFunction, State
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
@@ -10,6 +11,7 @@ from os.path import join, dirname
 from os import getenv, listdir
 from dotenv import load_dotenv
 from flask import Response, jsonify, request, send_from_directory
+import pandas as pd
 
 sys.path.append(join(dirname(__file__), "pages"))
 sys.path.append(dirname(__file__))
@@ -43,10 +45,40 @@ app.layout = dmc.MantineProvider(html.Div([
     dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     dcc.Store(id="geo-history", storage_type="local", data=[]),
     dcc.Store(id="files-hash", storage_type="local", data=[0, 0]),
-    dcc.Store(id="files-data", storage_type="local", data=[{}]),
+    dcc.Store(id="files-data", storage_type="local", data=[]),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
+    dbc.Modal(
+        id="geo-loading-modal", is_open=False,
+        centered=True, keyboard=False, backdrop="static"),
+    dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
+    dcc.Interval(id="10-seconds", interval=5*1000),
+    html.Div(
+        dbc.Stack([
+            dbc.Badge("", color="primary", id="size-badge"),
+            dbc.Badge("", color="secondary", id="geolocation-badge"),
+            dbc.Badge("", color="success", id="online-badge"),
+        ], direction="horizontal"),
+        style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
     dash.page_container
 ]), id="mantine")
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='input',
+        function_name='update_badges'
+    ),
+    Output('online-badge', 'children'),
+    Output('online-badge', 'color'),
+    Output('geolocation-badge', 'children'),
+    Output('geolocation-badge', 'color'),
+    Output("geo-loading-modal", "is_open"),
+    Output("geo-loading-modal", "children"),
+    Output('geo-history', 'data'),
+    Output("size-badge", "children"),
+    Input("10-seconds", "n_intervals"),
+    State('geo-history', 'data'),
+)
 
 
 @callback(
@@ -79,15 +111,22 @@ def download_file(filename):
     return send_from_directory(CFG.data_agg_csv, f"{filename}_Coleta.csv")
 
 
-@server.route('/get-file-names', methods=['POST'])
+@server.route('/get-file-info', methods=['POST'])
 def get_file_names() -> Response:
     client_hash = request.json.get('hash', '')
-    file_names = sorted(listdir(CFG.data))
+    file_names = sorted([i for i in listdir(CFG.data) if i.endswith('.csv')])
     server_hash = hashlib.md5(''.join(file_names).encode()).hexdigest()
+    info = {}
+    for name in file_names:
+        df = pd.read_csv(join(CFG.data, name))
+        info[name] = df.groupby('Produto').apply(lambda x: {
+            'Quant': len(x['Marca']),
+            'Marca': x['Marca'].value_counts().to_dict()
+        }).to_dict()
 
     if client_hash == server_hash:
         return jsonify({"updated": True})
-    return jsonify({"updated": False, "file_names": file_names, "hash": server_hash})
+    return jsonify({"updated": False, "info": info, "hash": server_hash})
 
 
 if __name__ == "__main__":

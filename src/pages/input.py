@@ -180,38 +180,7 @@ layout = html.Div([
             ("page-loading-modal", "Validando campos"),
             ("state-loading-modal", "Carregando dados"),
         ])]),
-    dbc.Modal(
-        id="geo-loading-modal", is_open=False,
-        centered=True, keyboard=False, backdrop="static"),
-    dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
-    dcc.Interval(id="10-seconds", interval=5*1000),
-    html.Div(
-        dbc.Stack([
-            dbc.Badge("", color="primary", id="size-badge"),
-            dbc.Badge("", color="secondary", id="geolocation-badge"),
-            dbc.Badge("", color="success", id="online-badge"),
-        ], direction="horizontal"),
-        style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
 ])
-
-
-clientside_callback(
-    ClientsideFunction(
-        namespace='input',
-        function_name='update_badges'
-    ),
-    Output('online-badge', 'children'),
-    Output('online-badge', 'color'),
-    Output('geolocation-badge', 'children'),
-    Output('geolocation-badge', 'color'),
-    Output("geo-loading-modal", "is_open"),
-    Output("geo-loading-modal", "children"),
-    Output('geo-history', 'data'),
-    Output("size-badge", "children"),
-    Input("10-seconds", "n_intervals"),
-    State("geolocation", "position"),
-    State('geo-history', 'data'),
-)
 
 
 clientside_callback(

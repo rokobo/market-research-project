@@ -30,8 +30,8 @@ from CONFIG import CFG
 chromedriver_autoinstaller.install()
 load_dotenv()
 FIRST_IDS = ["collector_name", "collection_date", "establishment"]
-RAW_INPUTS = ["NameName", "02212020", "AAA_TESTE"]
-STORED_INPUTS = ["NameName", "2020-02-21", "AAA_TESTE (para Teste)"]
+RAW_INPUTS = ["NameName", "02212020", "AAA-TESTE"]
+STORED_INPUTS = ["NameName", "2020-02-21", "AAA-TESTE (para Teste)"]
 CSV_COLUMNS = [
     'Nome', 'Data', 'Estabelecimento',
     'Produto','Marca', 'Preço', 'Quantidade']
