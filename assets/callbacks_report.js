@@ -22,7 +22,7 @@ refresh_files:async function(refr,disabled,fileHash,files){
     const retrn=[files,fileHash,files].concat(AgData(files));
     if(!refr>0){return retrn}
     if(disabled){alert("ERRO");return retrn}SYNC()
-    if(!Array.isArray(fileHash)||fileHash.length!=2||files.length===0||Object.keys(files[0]).length===0){fileHash=[0,0]}INFO("Fetching new data...");
+    if(!Array.isArray(fileHash)||fileHash.length!=2||files.length===0||Object.keys(files[0]).length<5){fileHash=[0,0]}INFO("Fetching new data...");
     const response=await fetch('/get-file-info',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hash:fileHash[0]||''})});
     const data=await response.json();INFO(data);
     if(data.updated&&files.length==fileHash[1]){alert("Versão atual ok");INFO("File hash is the same");return retrn}
