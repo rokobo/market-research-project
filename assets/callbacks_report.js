@@ -29,7 +29,7 @@ refresh_files:async function(refr,disabled,fileHash,files){
     const Arquivos=Object.entries(data.info).map(([fileName,fileInfo])=>{
         const parts=fileName.replace(".csv","").split('|');
         let fileRow={Nome:parts[2],Data:`${parts[0]}, ${new Date(parts[1]*1000).toLocaleString("en-CA",{hour12:false})}`};
-        if (!parts[3]){}
+        if (!parts[3]){fileRow.Estab="Sem estabelecimento";fileRow.Loc="Sem coordenadas"}
         else if(!parts[4]||!parts[5]){fileRow.Loc="Sem coordenadas";fileRow.Estab=parts[3].split(" ")[0]}
         else {
             let estabNear=nearest(parts[4],parts[5]);

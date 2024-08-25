@@ -15,3 +15,4 @@ test*.*
 gunicorn.log
 /data_agg_csv
 assets/papaparse.min.js
+id_ed25519*
