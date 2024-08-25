@@ -119,7 +119,7 @@ def get_file_names() -> Response:
     info = {}
     for name in file_names:
         df = pd.read_csv(join(CFG.data, name))
-        df.Marca = df.Marca.fillna("-")
+        df.Marca = df.Marca.fillna("SEM MARCA")
         info[name] = df.groupby('Produto').apply(lambda x: {
             'Quant': len(x['Marca']),
             'Marca': x['Marca'].value_counts().to_dict()
