@@ -1,6 +1,6 @@
 if(!window.dash_clientside){window.dash_clientside={}}
 function AgData(arq){
-    if(arq.length===0||Object.keys(arq[0]).length===0){return[]}
+    if(arq.length===0||Object.keys(arq[0]).length<5){return[]}
     const Data=arq.map(({Data,Estab,...e})=>{return{Data:Data.split(",")[0],Estab:Estab.split(",")[0]}});
     const Datas=[...new Set(Data.map(JSON.stringify))].map(JSON.parse);
     const Marcas=arq.map(({Estab,Loc,Nome,...rest})=>{return rest}).reduce((acc,curr)=>{
