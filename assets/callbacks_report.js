@@ -18,13 +18,13 @@ function AgData(arq){
     return [Datas,aggregatedData]};
 window.dash_clientside.report={
 refresh_files:async function(refr,disabled,fileHash,files){
-    INFO(refr,disabled,fileHash);
+    INFO("Args:",refr,disabled,fileHash);
     const retrn=[files,fileHash,files].concat(AgData(files));
-    if(!refr>0){return retrn}
-    if(disabled){alert("ERRO");return retrn}SYNC()
-    if(!Array.isArray(fileHash)||fileHash.length!=2||files.length===0||Object.keys(files[0]).length<5){fileHash=[0,0]}INFO("Fetching new data...");
+    if(!refr>0){INFO("No update");return retrn}
+    if(disabled){alert("ERRO");return retrn}SYNC();
+    if(!Array.isArray(fileHash)||fileHash.length!=2||files.length===0||Object.keys(files[0]).length<5){fileHash=[0,0];INFO("Fetching new data...")}
     const response=await fetch('/get-file-info',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hash:fileHash[0]||''})});
-    const data=await response.json();INFO(data);
+    const data=await response.json();INFO("Data:",data);
     if(data.updated&&files.length==fileHash[1]){alert("Versão atual ok");INFO("File hash is the same");return retrn}
     const Arquivos=Object.entries(data.info).map(([fileName,fileInfo])=>{
         const parts=fileName.replace(".csv","").split('|');
