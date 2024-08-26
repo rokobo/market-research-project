@@ -2,16 +2,20 @@
 import dash
 from dash import html, callback, Input, Output, State, dcc, \
     clientside_callback, ClientsideFunction
-from CONFIG import BOLD, CFG
+from CONFIG import BOLD, CFG, COORDINATES
 import dash_bootstrap_components as dbc
 from os import getenv
 import dash_ag_grid as dag
 from dotenv import load_dotenv
 from components import adm_nav
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
 dash.register_page(__name__)
 load_dotenv()
+now = datetime.now()
+current_date = datetime(now.year, now.month, 1)
 
 
 layout = html.Div([
@@ -41,6 +45,30 @@ layout = html.Div([
             placeholder="Senha de administrador", persistence=True,
             persistence_type="local"
     ), className="m-2"),
+    dbc.Row([
+        dbc.InputGroup([dbc.Select(
+            id='filter-report-date', value="Todos",
+            options=[{"label": "Todos", "value": "Todos"}] + [{
+                "label": (current_date - relativedelta(months=i)).strftime("%Y-%m"),
+                "value": f"{(current_date - relativedelta(months=i)).strftime('%Y-%m')}"
+            } for i in range(0, CFG.report_timeout_months + 1)],
+        ), dbc.InputGroupText("Data")]),
+        dbc.InputGroup([dbc.Select(
+            id='filter-report-product', value="Todos",
+            options=[{"label": "Todos", "value": "Todos"}] + [{
+                "label": prd, "value": prd
+            } for prd in CFG.products],
+        ), dbc.InputGroupText("Produto")]),
+        dbc.InputGroup([dbc.Select(
+            id='filter-report-estab', value="Todos",
+            options=[
+                {"label": "Todos", "value": "Todos"},
+                {"label": "Sem estabelecimento", "value": "Sem"}
+            ] + [{
+                "label": est.split(" ")[0], "value": est.split(" ")[0]
+            } for est in COORDINATES.keys()],
+        ), dbc.InputGroupText("Estab")])
+    ], className="m-2"),
     dbc.Row(dbc.Tabs([
         dbc.Tab(dag.AgGrid(
             id="ag-grid-files",
@@ -55,7 +83,8 @@ layout = html.Div([
                 "cellStyle": {"padding": 0}, "wrapText": True, "autoHeight": True
             },
             dashGridOptions={
-                "animateRows": True, "domLayout": "autoHeight", 'headerHeight': 30,
+                "animateRows": True, "domLayout": "autoHeight",
+                'headerHeight': 30, "externalFilter": True
             },
             style={"height": None},
             className="p-0 ag-theme-material",
@@ -91,8 +120,22 @@ layout = html.Div([
             className="p-0 ag-theme-material"
         ), label="Marcas"),
     ]), className="m-2")
-
 ], className="mb-20")
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='report',
+        function_name='filter_grid'
+    ),
+    Output("ag-grid-files", "dashGridOptions"),
+    Output("ag-grid-brands", "dashGridOptions"),
+    Output("ag-grid-dates", "dashGridOptions"),
+    Input("filter-report-date", "value"),
+    Input("filter-report-product", "value"),
+    Input("filter-report-estab", "value"),
+    prevent_initial_call=True
+)
 
 
 clientside_callback(

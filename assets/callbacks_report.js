@@ -40,5 +40,14 @@ refresh_files:async function(refr,disabled,fileHash,files){
         fileRow=Object.assign({},fileRow,fileInfo);
         return fileRow});
     fileHash=[data.hash,Arquivos.length];alert("Versão atualizada");INFO("File hash updated",Arquivos.length,data,Arquivos);return[Arquivos,fileHash,Arquivos].concat(AgData(Arquivos))
+},
+filter_grid:function(date_f,prd_f,est_f){
+    function on(){return date_f!=='Todos'||prd_f!=='Todos'||est_f!=='Todos'}
+    function pass(node){
+        const data=node.data;if(date_f==='Todos'&&prd_f==='Todos'&&est_f==='Todos'){return true}
+        let date=data.Data?data.Data:data["Data-Produto"],prd=data["Data-Produto"]?data["Data-Produto"]:'',estab=data.Estab?data.Estab:'';
+        return(date.includes(date_f)||"Todos"===date_f)&&(prd.includes(prd_f)||"Todos"===prd_f)&&(estab.includes(est_f)||"Todos"===est_f)}
+    let out={isExternalFilterPresent:on,doesExternalFilterPass:pass};
+    INFO(date_f,prd_f,est_f);return[out,out,out]
 }
 }
