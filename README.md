@@ -17,6 +17,7 @@
     - [Changing code, re-deploying and aliases](#changing-code-re-deploying-and-aliases)
   - [End-to-end testing](#end-to-end-testing)
     - [Testing environment and fixtures](#testing-environment-and-fixtures)
+  - [Data analysis recommended setup](#data-analysis-recommended-setup)
 
 To the next developer that takes over this project, here are some important considerations and guidelines to ensure a smooth setup and maintenance of the infrastructure. This project requires careful attention to detail during the initial setup phase, as well as ongoing management to keep everything running smoothly.
 
@@ -64,7 +65,13 @@ To prevent possibly having a large AWS bill, the data being sent out of EC2 must
 
 ## Environment file
 
-If you see in the `main.py` script, I made calls `getenv()`. This function is using a `.env` file in my directory to load certain variables. This file must **NEVER** be publicly available. In case it ever is, change all passwords and authentication tokens immediately. This file must be passed configured manually and not via GitHub.
+If you see in the `main.py` script, I made calls `getenv()`. This function is using a `.env` file in my directory to load certain variables. This file must **NEVER** be publicly available. In case it ever is, change all passwords and authentication tokens immediately. This file must be passed configured manually and not via GitHub. It has the following parameters:
+
+- `SECRET_KEY` - String used for security-related operations of the Flask server that the app uses.
+- `APP_USERNAME` - Username for the initial app log in.
+- `APP_PASSWORD` - Password for the initial app log in.
+- `ADM_PASSWORD` - Password for administration pages.
+- `TEST` - Server initialization parameter (`reloader`, `debug` or empty).
 
 ## Minify assets
 
@@ -118,9 +125,9 @@ Then, enable security groups, which act as virtual firewalls for your EC2 instan
 
 Security groups are important because they can prevent DDoS attacks and potentially decrease the outgoing data from the instance, which will save money. Configure your security groups to allow connections from:
 
-+ SSH (port 22)
-+ HTTP (port 80)
-+ HTTPS (port 443)
+- SSH (port 22)
+- HTTP (port 80)
+- HTTPS (port 443)
 
 After this step, launch the instance.
 
@@ -134,7 +141,7 @@ ssh -i "<key-pair-name.pem>" <ec2-user>@<your-ec2-ip>
 
 Check if SSH response that is printed on your terminal matches the fingerprint of your instance. You will need to go to the web console and check the system logs to find the fingerprint and check if they are the same. **DO NOT** continue if the fingerprints do not match. Here is an example response:
 
-```
+```text
 The authenticity of host 'ec2-198-51-100-1.us-east-2.compute.amazonaws.com (198-51-100-1)' can't be established.
 ECDSA key fingerprint is l4UB/neBad9tvkgJf1QZWxheQmR59WgrgzEimCG6kZY.
 Are you sure you want to continue connecting (yes/no)?
@@ -381,3 +388,17 @@ To simply using Selenium, we use `chromedriver_autoinstaller` to manage the Chro
 Also note that the `app()` fixture tries to get the website three times. The first is to get authenticated and save the credentials as cookies. The second and third are to get the site as it normally would be like.
 
 The `@mark.incremental` fixture works by performing the tests in a class sequentially. If a test fails, all further tests get skipped, due to their incremental nature. While this is not how PyTest is usually used, it is a good way to test how the app behaves in a scenario where multiple actions happen sequentially.
+
+## Data analysis recommended setup
+
+To get access to the latest data available, I recommend using Rclone to mount the project's OneDrive folder to this repository's local folder. Additionally, since it is only going to be used for retrieving data, it is **ESSENTIAL**, that it is setup in read-only mode. To run the commands, I use a Gnome extension that can add menu toggles that run commands on toggle on and toggle off:
+
+```sh
+rclone mount <rclone-remote-config-name>:<onedrive-path> <project-folder> --read-only --daemon
+```
+
+```sh
+fusermount -u <project-folder>
+```
+
+One caveat of this is that, at the time of writing, Rclone does not show shared sharepoint folders that belong to another person. However, you can still navigate to shared folders, at which point you will be able to see the files inside it. Just setup OneDrive normally and add a shortcut to the desired OneDrive folder to your own OneDrive.
