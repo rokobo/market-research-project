@@ -17,3 +17,5 @@ gunicorn.log
 assets/papaparse.min.js
 id_ed25519*
 /ICB
+*.xlsm
+/ICB_EC2

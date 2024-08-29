@@ -340,61 +340,89 @@ def check_reports():
     return df
 
 
-def path_map(date: str, width: int = 1000, height: int = 1000):
+def path_map(width: int = 1000, height: int = 1000):
     fig = go.Figure()
-    data = []
-    names = set()
-    estabs = set()
-    for i in listdir(CFG.data_obs):
-        if date not in i.split("|")[0]:
+    names = {}
+    estabs = {}
+    dates = {}
+    path = join(CFG.home, "ICB_EC2/data_obs")
+    ests = pd.read_csv(join(CFG.home, "config/estabelecimentos.csv"))
+    ests["Estabelecimento"] = ests["Estabelecimento"].str.split(" ").str[0]
+    for i in listdir(path):
+        date = i.split("|")[0]
+        if not date[0].isdigit():
             continue
-        names.add(i.split("|")[2].strip())
-        estabs.add(i.split("|")[3].split(" ")[0].strip())
-        with open(join(CFG.data_obs, i), "r") as file:
-            rows = file.read().split("localização")[-1].strip().split("\n")
+        dates.setdefault(date, [])
+        names.setdefault(date, set())
+        estabs.setdefault(date, set())
+
+        with open(join(path, i), "r") as file:
+            lines = file.readlines()
+            if not any("localização" in line for line in lines):
+                continue
+
+            rows = lines[next(
+                i for i, v
+                in enumerate(lines) if "localização" in v) + 1:]
             processedRow = []
             for row in rows:
-                time, coords = row.split(": ")
-                lat, lon = coords.split(", ")
+                time, coords = row.split(":")
+                lat, lon = coords.split(",")
                 processedRow.append((int(time), float(lat), float(lon)))
             locDf = pd.DataFrame(
                 processedRow, columns=["time", "Latitude", "Longitude"])
             locDf['time'] = pd.to_datetime(
                 locDf['time'], unit='ms').dt.strftime('%H:%M')
-            data.append(locDf)
+            dates[date].append(locDf)
 
-    df = pd.read_csv(join(CFG.home, "config/estabelecimentos.csv"))
-    # Split the data based on which establishments appear in the files
-    condition = df['Estabelecimento'].apply(
-        lambda x: any(estab in x for estab in estabs))
-    important = df[condition]
-    rest = df[~condition]
+        names[date].add(i)
+        estabs[date].add(i.split("|")[3].split(" ")[0].strip())
 
-    fig.add_trace(go.Scattermapbox(
-        lat=rest.Latitude, lon=rest.Longitude,
-        textposition="bottom center", mode='markers+text',
-        textfont=dict(size=10, color="black"),
-        marker=go.scattermapbox.Marker(size=10),
-        text=rest.Estabelecimento, name='Estabs.'))
-    fig.add_trace(go.Scattermapbox(
-        lat=important.Latitude, lon=important.Longitude,
-        textposition="bottom center", mode='markers+text',
-        textfont=dict(size=10, color="black"),
-        marker=go.scattermapbox.Marker(size=20),
-        text=important.Estabelecimento, name='Locais'))
+    for i in list(dates.keys()):
+        if len(dates[i]) == 0:
+            del dates[i]
+            continue
 
-    # Add the data from the files (the movement of the collectors)
-    for (i, d), name in zip(enumerate(data), listdir(CFG.data_obs)):
+    traces = []
+
+    for k in dates.keys():
+        name = list(names[k])
+        estab = list(estabs[k])
+        data = dates[k]
+        df = ests.copy()
+
+        # Split the data based on which establishments appear in the files
+        condition = df['Estabelecimento'].apply(
+            lambda x: any(est == x for est in estab))
+        important = df[condition]
+        rest = df[~condition]
+
         fig.add_trace(go.Scattermapbox(
-            lat=d.Latitude, lon=d.Longitude,
-            text=d.time, mode='lines+markers+text', textfont=dict(size=15),
-            marker=dict(size=10), line=dict(width=3),
-            name=f'{i+1}: {name.split("|")[3].split(" ")[0].strip()}'))
+            lat=rest.Latitude, lon=rest.Longitude,
+            textposition="bottom center", mode='markers+text',
+            textfont=dict(size=10, color="black"),
+            marker=go.scattermapbox.Marker(size=10),
+            text=rest.Estabelecimento, name='Estabs.'))
+        fig.add_trace(go.Scattermapbox(
+            lat=important.Latitude, lon=important.Longitude,
+            textposition="bottom center", mode='markers+text',
+            textfont=dict(size=10, color="black"),
+            marker=go.scattermapbox.Marker(size=20),
+            text=important.Estabelecimento, name='Objetivos'))
+        traces.extend([k, k])
+
+        # Add the data from the files (the movement of the collectors)
+        for (i, d), name in zip(enumerate(data), name):
+            traces.append(k)
+            fig.add_trace(go.Scattermapbox(
+                lat=d.Latitude, lon=d.Longitude,
+                text=d.time, mode='lines+markers+text', textfont=dict(size=15),
+                marker=dict(size=10), line=dict(width=3),
+                name=f'{i+1}: {name.split("|")[3].split(" ")[0].strip()}'))
 
     border = 0.015
     fig.update_layout(
         legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99),
-        title_text=f"Movimentação dos coletores no dia {date}, {names}",
         margin={"r": 0, "t": 35, "l": 0, "b": 0},
         mapbox=dict(
             style="carto-positron",
@@ -406,12 +434,22 @@ def path_map(date: str, width: int = 1000, height: int = 1000):
                 north=df.Latitude.max() + border - 0.01)),
         width=width, height=height)
 
-    fig.update_layout(updatemenus=[dict(
-        buttons=list([
-            dict(label=i, args=["mapbox.style", i], method="relayout")
-            for i in ["open-street-map", "carto-positron"]]),
-        type="buttons", direction="up", showactive=True,
-        yanchor="top", y=0.99, xanchor="left", x=0.01)])
+    fig.update_layout(updatemenus=[
+        dict(
+            buttons=list([dict(
+                args=[
+                    {"visible": [v == date for v in traces]},
+                    {"title": (
+                        f"Movimentação dos coletores no dia {date}, "
+                        f"{set(n.split("|")[2].strip() for n in names[date])}"
+                    )}
+                ],
+                label=date, method="update")
+                for i, date in enumerate(dates.keys())]),
+            showactive=True, y=1, x=0, yanchor='top', xanchor='left'
+        )
+    ])
+    fig.update_traces(visible=False)
 
     config = {'toImageButtonOptions': {
         'format': 'png', 'filename': f'Mov {date}, {names}', 'scale': 2}}
