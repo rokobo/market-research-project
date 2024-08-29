@@ -394,11 +394,23 @@ The `@mark.incremental` fixture works by performing the tests in a class sequent
 To get access to the latest data available, I recommend using Rclone to mount the project's OneDrive folder to this repository's local folder. Additionally, since it is only going to be used for retrieving data, it is **ESSENTIAL**, that it is setup in read-only mode. To run the commands, I use a Gnome extension that can add menu toggles that run commands on toggle on and toggle off:
 
 ```sh
-rclone mount <rclone-remote-config-name>:<onedrive-path> <project-folder> --read-only --daemon
+rclone mount <rclone-remote-config-name>:<onedrive-path> <local-folder-path>/ICB --read-only  --daemon --vfs-cache-mode full; notify-send "ICB mount complete"
 ```
 
 ```sh
-fusermount -u <project-folder>
+fusermount -u -z <local-folder-path>/ICB
+```
+
+In addition to this folder, also mount the reports folder without read-only mode, so that you may make corrections to the report files. **KEEP THE ORIGINALS** somewhere else and never touch them.
+
+```sh
+rclone mount <rclone-remote-config-name>:<onedrive-path> <local-folder-path>/ICB_Data --daemon --vfs-cache-mode full; notify-send "ICB_Data mount complete"
+```
+
+Finally, setup a sync command to copy EC2's `data` and `data_obs` to a local folder. Use `--checksum` to minimize data transfer.
+
+```sh
+rclone sync EC2:/market-research-project/data <local-folder-path>/ICB_EC2/data --checksum; rclone sync EC2:/market-research-project/data_obs <local-folder-path>/ICB_EC2/data_obs --checksum; notify-send "EC2 sync complete"
 ```
 
 One caveat of this is that, at the time of writing, Rclone does not show shared sharepoint folders that belong to another person. However, you can still navigate to shared folders, at which point you will be able to see the files inside it. Just setup OneDrive normally and add a shortcut to the desired OneDrive folder to your own OneDrive.
