@@ -1,8 +1,7 @@
 # flake8: noqa: E501
 from datetime import datetime
 import dash
-from dash import html, callback, Input, Output, State, dcc, \
-    clientside_callback, ClientsideFunction
+from dash import html, callback, Input, Output, State, dcc
 from CONFIG import BOLD, CFG
 from dateutil.relativedelta import relativedelta
 import dash_bootstrap_components as dbc
@@ -16,8 +15,6 @@ from tools import aggregate_reports
 
 dash.register_page(__name__)
 load_dotenv()
-now = datetime.now()
-current_date = datetime(now.year, now.month, 1)
 
 
 layout = html.Div([
@@ -39,9 +36,6 @@ layout = html.Div([
         dbc.Stack([
             dbc.Select(
                 id="month-excel",
-                options=[
-                    (current_date - relativedelta(months=i)).strftime("%Y-%m")
-                    for i in range(0, CFG.report_timeout_months + 1)],
                 persistence=True, persistence_type="local"
             ),
             dcc.Loading(
@@ -61,11 +55,17 @@ layout = html.Div([
 
 @callback(
     Output('refresh-excel', 'disabled'),
+    Output("month-excel", "options"),
     Input('password-excel', 'value'),
 )
 def unlock_content(password):
     ADM_PASSWORD = getenv("ADM_PASSWORD")
-    return not ((password == ADM_PASSWORD) and (ADM_PASSWORD is not None))
+    now = datetime.now()
+    current_date = datetime(now.year, now.month, 1)
+    dts = [
+        (current_date - relativedelta(months=i)).strftime("%Y-%m")
+        for i in range(0, CFG.report_timeout_months + 1)]
+    return not ((password == ADM_PASSWORD) and (ADM_PASSWORD is not None)), dts
 
 
 @callback(

@@ -1,8 +1,8 @@
 # flake8: noqa: E501
-from datetime import datetime
 from os import getenv
-from dateutil.relativedelta import relativedelta
 import dash
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
 import dash_ag_grid as dag
 from dash import html, Input, Output, dcc, callback, State
 import dash_bootstrap_components as dbc
@@ -14,8 +14,6 @@ from components import adm_nav
 dash.register_page(__name__)
 load_dotenv()
 
-now = datetime.now()
-current_date = datetime(now.year, now.month, 1)
 
 layout = html.Div([
     adm_nav(__name__),
@@ -37,9 +35,6 @@ layout = html.Div([
         dbc.Stack([
             dbc.Select(
                 id="month-result",
-                options=[
-                    (current_date - relativedelta(months=i)).strftime("%Y-%m")
-                    for i in range(0, CFG.report_timeout_months + 1)],
                 persistence=True, persistence_type="local"
             ),
             dbc.Button("Atualizar", id="refresh-result", disabled=True)
@@ -92,11 +87,17 @@ layout = html.Div([
 
 @callback(
     Output('refresh-result', 'disabled'),
+    Output("month-result", "options"),
     Input('password-result', 'value'),
 )
 def unlock_content(password):
     ADM_PASSWORD = getenv("ADM_PASSWORD")
-    return not ((password == ADM_PASSWORD) and (ADM_PASSWORD is not None))
+    now = datetime.now()
+    current_date = datetime(now.year, now.month, 1)
+    dts = [
+        (current_date - relativedelta(months=i)).strftime("%Y-%m")
+        for i in range(0, CFG.report_timeout_months + 1)]
+    return not ((password == ADM_PASSWORD) and (ADM_PASSWORD is not None)), dts
 
 
 @callback(

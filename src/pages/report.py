@@ -8,14 +8,10 @@ from os import getenv
 import dash_ag_grid as dag
 from dotenv import load_dotenv
 from components import adm_nav
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
 
 dash.register_page(__name__)
 load_dotenv()
-now = datetime.now()
-current_date = datetime(now.year, now.month, 1)
 
 
 layout = html.Div([
@@ -48,10 +44,6 @@ layout = html.Div([
     dbc.Row([
         dbc.InputGroup([dbc.Select(
             id='filter-report-date', value="Todos",
-            options=[{"label": "Todos", "value": "Todos"}] + [{
-                "label": (current_date - relativedelta(months=i)).strftime("%Y-%m"),
-                "value": f"{(current_date - relativedelta(months=i)).strftime('%Y-%m')}"
-            } for i in range(0, CFG.report_timeout_months + 1)],
         ), dbc.InputGroupText("Data")]),
         dbc.InputGroup([dbc.Select(
             id='filter-report-product', value="Todos",
@@ -143,6 +135,7 @@ clientside_callback(
         namespace='report',
         function_name='refresh_files'
     ),
+    Output("filter-report-date", "options"),
     Output("ag-grid-files", "rowData"),
     Output("files-hash", "data"),
     Output("files-data", "data"),

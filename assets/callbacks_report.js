@@ -19,7 +19,10 @@ function AgData(arq){
 window.dash_clientside.report={
 refresh_files:async function(refr,disabled,fileHash,files){
     INFO("Args:",refr,disabled,fileHash);
-    const retrn=[files,fileHash,files].concat(AgData(files));
+    const cDate=new Date();
+    const dates=[{label:'Todos',value:'Todos'}];
+    for(let i=0;i<5;i++){const fDate=`${cDate.getFullYear()}-${(cDate.getMonth()-i+1).toString().padStart(2,'0')}`;dates.push({label:fDate,value:fDate})}
+    const retrn=[dates,files,fileHash,files].concat(AgData(files));
     if(!refr>0){INFO("No update");return retrn}
     if(disabled){alert("ERRO");return retrn}SYNC();
     if(!Array.isArray(fileHash)||fileHash.length!=2||files.length===0||Object.keys(files[0]).length<5){fileHash=[0,0];INFO("Fetching new data...")}
@@ -39,7 +42,7 @@ refresh_files:async function(refr,disabled,fileHash,files){
             fileRow.Estab=`${parts[3].split(" ")[0]}, ${distEstab}m`}
         fileRow=Object.assign({},fileRow,fileInfo);
         return fileRow});
-    fileHash=[data.hash,Arquivos.length];alert("Versão atualizada");INFO("File hash updated",Arquivos.length,data,Arquivos);return[Arquivos,fileHash,Arquivos].concat(AgData(Arquivos))
+    fileHash=[data.hash,Arquivos.length];alert("Versão atualizada");INFO("File hash updated",Arquivos.length,data,Arquivos);return[dates,Arquivos,fileHash,Arquivos].concat(AgData(Arquivos))
 },
 filter_grid:function(date_f,prd_f,est_f){
     function on(){return date_f!=='Todos'||prd_f!=='Todos'||est_f!=='Todos'}
