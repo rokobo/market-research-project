@@ -58,7 +58,7 @@ validate_args:function(_,n,d,e, ...vals){
     vals=vals.splice(CFG.products.length);
     firsts=vals.splice(CFG.products.length);
     if(vals[0]===undefined){return NOUPDATE}
-    vals=vals.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill({}):v);
+    vals=vals.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill().map(()=>({})):v);
     var badgeText=[],badgeColor=[], icons=[],ctx=dash_clientside.callback_context.triggered_id;
     for(var i=0;i<vals.length;i++){
         prd = CFG.products[i];
