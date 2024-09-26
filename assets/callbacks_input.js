@@ -50,8 +50,8 @@ load_state:function(_, _,local,info){
     for(let i=0;i<lcl.length;i++){let s=lcl[i];if(s[0]!="_"&&!CFG.expected_storage.includes(s)){INFO("Deleting:",s);localStorage.removeItem(s)}}
     if(info.length!=3){info=[null,null,null]}
     if(local==["reload"]){location.reload(true)}
-    if(!Array.isArray(local)|local.length!=CFG.products.length){local=CFG.products.map(p=>Array(CFG.product_rows[p]).fill({}))}
-    local=local.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill({}):v);
+    if(!Array.isArray(local)|local.length!=CFG.products.length){local=CFG.products.map(p=>Array(CFG.product_rows[p]).fill().map(()=>({})))}
+    local=local.map((v,i)=>v===''?Array(CFG.product_rows[CFG.products[i]]).fill().map(()=>({})):v);
     INFO("");local.push("");
     local=local.concat(info);local.push(false);return local},
 validate_args:function(_,n,d,e, ...vals){
