@@ -50,7 +50,10 @@ app.layout = dmc.MantineProvider(html.Div([
     dbc.Alert(
         id="geo-loading-modal", className="m-2",
         dismissable=False, color="danger",
-        style={"position": "fixed", "bottom": 0, "left": 0, "zIndex": 5},
+        style={
+            "position": "fixed", "bottom": 25, "left": 0, "zIndex": 5,
+            "width": "100%"
+        },
     ),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
     dcc.Interval(id="10-seconds", interval=5*1000),
