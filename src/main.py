@@ -49,7 +49,8 @@ app.layout = dmc.MantineProvider(html.Div([
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dbc.Alert(
         id="geo-loading-modal", className="m-2",
-        dismissable=False, color="danger"
+        dismissable=False, color="danger",
+        style={"position": "fixed", "bottom": 0, "left": 0, "zIndex": 5},
     ),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
     dcc.Interval(id="10-seconds", interval=5*1000),

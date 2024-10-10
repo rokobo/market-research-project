@@ -22,7 +22,6 @@ default:"ERRO DESCONHECIDO"};
 const errTxt=(e)=>{return ERRS[e]||ERRS.default};
 const errTxt2=(e)=>{return ERRS2[e]||ERRS2.default};
 const BR={type:"Br",namespace:"dash_html_components",props:{}};
-const HR={type:"Hr",namespace:"dash_html_components",props:{}};
 const STRONG=(str)=>{return{type:"Strong",namespace:"dash_html_components",props:{children:str}}};
 const NOUPDATE=dash_clientside.no_update;
 const PRDOUT=new Array(13).fill(NOUPDATE);
@@ -44,7 +43,7 @@ update_badges:async function(_,geo){
         catch(e){LOC=e.code;bdgOut=bdgOut.concat([errTxt2(LOC),"danger"])}}
     else{LOC=4;bdgOut=bdgOut.concat([errTxt2(LOC),"danger"])}
     if(bdgOut[3]=="secondary"){bdgOut=bdgOut.concat([false,NOUPDATE])}
-    else {bdgOut=bdgOut.concat([true,[STRONG("REQUISITO PENDENTE:"),HR,errTxt(LOC),BR]])}
+    else {bdgOut=bdgOut.concat([true,[STRONG("REQUISITO PENDENTE:"),BR,errTxt(LOC)]])}
     if(geoNow==null){bdgOut.push(NOUPDATE)}
     else if(geo.length==0||haversine(geo.at(-1),geoNow)>0.1){bdgOut.push(geo.concat([geoNow]))}
     else{{bdgOut.push(NOUPDATE)}}
