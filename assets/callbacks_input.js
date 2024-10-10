@@ -8,13 +8,21 @@ const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:10000};
 let LOC=null;
 const getPos=(options)=>{return new Promise((resolve,reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 const ERRS={
-1:"Permita o uso de localização e tente novamente!",
-2:"Posição indisponível, tente novamente!",
-3:"Dispositivo não respondeu com a localização, espere ou tente novamente!",
+1:"Permita o uso de localização no navegador!",
+2:"Posição indisponível, dispositivo não conseguir determinar posição!",
+3:"Dispositivo não respondeu com a localização a tempo!",
 4:"Localização não é suportada nesse browser!",
 default:"Erro desconhecido!"};
+const ERRS2={
+1: "LOCALIZAÇÃO NEGADA",
+2: "POSIÇÃO INDISPONÍVEL",
+3: "DISPOSITIVO LENTO",
+4: "NAVEGADOR INCOMPATÍVEL",
+default:"ERRO DESCONHECIDO"};
 const errTxt=(e)=>{return ERRS[e]||ERRS.default};
+const errTxt2=(e)=>{return ERRS2[e]||ERRS2.default};
 const BR={type:"Br",namespace:"dash_html_components",props:{}};
+const HR={type:"Hr",namespace:"dash_html_components",props:{}};
 const STRONG=(str)=>{return{type:"Strong",namespace:"dash_html_components",props:{children:str}}};
 const NOUPDATE=dash_clientside.no_update;
 const PRDOUT=new Array(13).fill(NOUPDATE);
@@ -33,10 +41,10 @@ update_badges:async function(_,geo){
     if(navigator.onLine){bdgOut=bdgOut.concat(["ONLINE","success"])}
     else {bdgOut=bdgOut.concat(["OFFLINE","danger"])};
     if(navigator.geolocation){try{LOC=await getPos(GEOOPTS);geoNow=[LOC.coords.latitude,LOC.coords.longitude,LOC.timestamp];bdgOut=bdgOut.concat([geoNow[0].toFixed(4)+", "+geoNow[1].toFixed(4),"secondary"])}
-        catch(e){LOC=e.code;bdgOut=bdgOut.concat(["LOCALIZAÇÃO NEGADA","danger"])}}
-    else{LOC=4;bdgOut=bdgOut.concat(["ERRO LOCALIZAÇÃO","danger"])}
+        catch(e){LOC=e.code;bdgOut=bdgOut.concat([errTxt2(LOC),"danger"])}}
+    else{LOC=4;bdgOut=bdgOut.concat([errTxt2(LOC),"danger"])}
     if(bdgOut[3]=="secondary"){bdgOut=bdgOut.concat([false,NOUPDATE])}
-    else {bdgOut=bdgOut.concat([true,[BR,BR,STRONG("REQUISITO PENDENTE:"),errTxt(LOC),BR,BR]])}
+    else {bdgOut=bdgOut.concat([true,[STRONG("REQUISITO PENDENTE:"),HR,errTxt(LOC),BR]])}
     if(geoNow==null){bdgOut.push(NOUPDATE)}
     else if(geo.length==0||haversine(geo.at(-1),geoNow)>0.1){bdgOut.push(geo.concat([geoNow]))}
     else{{bdgOut.push(NOUPDATE)}}
