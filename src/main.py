@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 import dash_auth
 import sys
-from os.path import join, dirname
+from os.path import join, dirname, exists
 from os import getenv, listdir
 from dotenv import load_dotenv
 from flask import Response, jsonify, request, send_from_directory
@@ -118,21 +118,25 @@ def download_file(filename):
 
 @server.route('/get-file-info', methods=['POST'])
 def get_file_names() -> Response:
-    client_hash = request.json.get('hash', '')
     file_names = sorted([i for i in listdir(CFG.data) if i.endswith('.csv')])
-    server_hash = hashlib.md5(''.join(file_names).encode()).hexdigest()
     info = {}
     for name in file_names:
         df = pd.read_csv(join(CFG.data, name))
+        obs_name = name.replace('.csv', '.txt')
+        obs_name = join(CFG.data_obs, obs_name)
+        if exists(obs_name):
+            with open(obs_name, 'r') as obs_file:
+                obs = obs_file.read().strip()
+        else:
+            obs = "Sem observações"
+        obs = obs.split('Histórico de geolocalização')[0]
         df.Marca = df.Marca.fillna("SEM MARCA")
         info[name] = df.groupby('Produto').apply(lambda x: {
             'Quant': len(x['Marca']),
             'Marca': x['Marca'].value_counts().to_dict()
-        }).to_dict()
-
-    if client_hash == server_hash:
-        return jsonify({"updated": True})
-    return jsonify({"updated": False, "info": info, "hash": server_hash})
+        }, include_groups=False).to_dict()
+        info[name]['obs'] = obs.strip()
+    return jsonify({"info": info})
 
 
 if __name__ == "__main__":

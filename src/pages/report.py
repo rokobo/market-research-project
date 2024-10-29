@@ -111,6 +111,21 @@ layout = html.Div([
             style={"height": None},
             className="p-0 ag-theme-material"
         ), label="Marcas"),
+        dbc.Tab(dag.AgGrid(
+            id="ag-grid-obs",
+            rowData=[{}],
+            columnDefs=[{'field': 'Data', "sort": "desc"}, {'field': 'obs'}],
+            columnSize="responsiveSizeToFit",
+            defaultColDef={
+                "editable": False, "sortable": True, "resizable": True,
+                "cellStyle": {"padding": 0}, "wrapText": True, "autoHeight": True
+            },
+            dashGridOptions={
+                "animateRows": True, "domLayout": "autoHeight", 'headerHeight': 30,
+            },
+            style={"height": None},
+            className="p-0 ag-theme-material"
+        ), label="Obs"),
     ]), className="m-2")
 ], className="mb-20")
 
@@ -137,13 +152,12 @@ clientside_callback(
     ),
     Output("filter-report-date", "options"),
     Output("ag-grid-files", "rowData"),
-    Output("files-hash", "data"),
     Output("files-data", "data"),
     Output("ag-grid-dates", "rowData"),
     Output("ag-grid-brands", "rowData"),
+    Output("ag-grid-obs", "rowData"),
     Input("refresh-files", "n_clicks"),
     State('refresh-files', 'disabled'),
-    State("files-hash", "data"),
     State("files-data", "data"),
     prevent_initial_call=True
 )

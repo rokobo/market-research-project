@@ -173,6 +173,12 @@ def aggregate_reports(date, test=False):
     # Concatenate all reports
     coleta_mes = pd.concat(reports)
     coleta_mes.Marca = coleta_mes.Marca.fillna("")
+    # Fill Quantidade if empty
+    coleta_mes["Quantidade"] = coleta_mes["Quantidade"].fillna(
+        coleta_mes["Produto"].map(lambda x: CFG.quantities.get(x, [np.nan])[0])
+    )
+
+
     # Split banana into two products (Nanica and Prata)
     mask = coleta_mes['Produto'] == 'banana'
     coleta_mes.loc[

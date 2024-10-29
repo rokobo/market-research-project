@@ -19,3 +19,5 @@ id_ed25519*
 /ICB
 *.xlsm
 /ICB_EC2
+*.graphml
+*.pdf
