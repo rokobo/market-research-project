@@ -2,9 +2,10 @@ from os.path import dirname, join, getmtime, exists
 from os import listdir, makedirs
 from types import SimpleNamespace
 import pandas as pd
+import time
 
 
-update_time = f"{int(getmtime(__file__)):,}".replace(",", ".")
+update_time = f"{int(time.time()):,}".replace(",", ".")
 
 CFG = SimpleNamespace(**dict(
     home=dirname(dirname(__file__)),
