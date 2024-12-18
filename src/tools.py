@@ -1,6 +1,7 @@
 """Tools for the pages."""
 
 from functools import cache
+import math
 from os.path import join, exists
 from os import makedirs, listdir
 from send2trash import send2trash
@@ -178,7 +179,6 @@ def aggregate_reports(date, test=False):
         coleta_mes["Produto"].map(lambda x: CFG.quantities.get(x, [np.nan])[0])
     )
 
-
     # Split banana into two products (Nanica and Prata)
     mask = coleta_mes['Produto'] == 'banana'
     coleta_mes.loc[
@@ -346,15 +346,16 @@ def check_reports():
     return df
 
 
-def path_map(width: int = 1000, height: int = 1000):
+def path_map(show=True):
     fig = go.Figure()
     names = {}
     estabs = {}
     dates = {}
-    path = join(CFG.home, "ICB_EC2/data_obs")
+    path = CFG.data_obs
     ests = pd.read_csv(join(CFG.home, "config/estabelecimentos.csv"))
     ests["Estabelecimento"] = ests["Estabelecimento"].str.split(" ").str[0]
-    for i in listdir(path):
+    files = listdir(path)[::-1]
+    for i in files:
         date = i.split("|")[0]
         if not date[0].isdigit():
             continue
@@ -438,7 +439,7 @@ def path_map(width: int = 1000, height: int = 1000):
                 east=df.Longitude.max() + border,
                 south=df.Latitude.min() - border,
                 north=df.Latitude.max() + border - 0.01)),
-        width=width, height=height)
+    )
 
     fig.update_layout(updatemenus=[
         dict(
@@ -452,11 +453,56 @@ def path_map(width: int = 1000, height: int = 1000):
                 ],
                 label=date, method="update")
                 for i, date in enumerate(dates.keys())]),
-            showactive=True, y=1, x=0, yanchor='top', xanchor='left'
+            showactive=True, y=1, x=0, yanchor='top', xanchor='left',
         )
     ])
     fig.update_traces(visible=False)
+    fig.data[0].visible = True
+    for trace in fig.data[1:]:
+        if "Estab" in trace.name:
+            break
+        trace.visible = True
 
     config = {'toImageButtonOptions': {
         'format': 'png', 'filename': f'Mov {date}, {names}', 'scale': 2}}
-    fig.show(config=config)
+    if show:
+        fig.show(config=config)
+    else:
+        return fig
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    """
+    Calculate the distance between two points on the Earth's surface.
+
+    Parameters:
+    lat1, lon1: Latitude and Longitude of point 1 (in decimal degrees)
+    lat2, lon2: Latitude and Longitude of point 2 (in decimal degrees)
+
+    Returns:
+    Distance in meters
+    """
+    lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
+    # Radius of the Earth in meters
+    R = 6371000
+
+    # Convert latitude and longitude from degrees to radians
+    lat1_rad = math.radians(lat1)
+    lon1_rad = math.radians(lon1)
+    lat2_rad = math.radians(lat2)
+    lon2_rad = math.radians(lon2)
+
+    # Differences in coordinates
+    delta_lat = lat2_rad - lat1_rad
+    delta_lon = lon2_rad - lon1_rad
+
+    # Haversine formula
+    a = (
+        math.sin(delta_lat / 2) ** 2 +
+        math.cos(lat1_rad) * math.cos(lat2_rad) *
+        math.sin(delta_lon / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    # Distance in meters
+    distance = R * c
+    return distance

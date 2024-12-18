@@ -7,6 +7,7 @@ import dash_ag_grid as dag
 from dash import html, Input, Output, dcc, callback, State
 import dash_bootstrap_components as dbc
 from dotenv import load_dotenv
+import pandas as pd
 from CONFIG import CFG, BOLD
 from tools import aggregate_reports
 from components import adm_nav
@@ -51,36 +52,10 @@ layout = html.Div([
             options=CFG.excel_products, id="products-result", inline=True,
             persistence=True, persistence_type="local"),
         className="m-2"),
-    dbc.Row(
-        dag.AgGrid(
-            id="ag-grid-result",
-            rowData=[{}],
-            columnDefs=[
-                {'field': 'Produto'},
-                {'field': 'Preço'},
-                {'field': 'Quantidade'},
-            ],
-            columnSize="responsiveSizeToFit",
-            defaultColDef={
-                "editable": False,
-                "sortable": True,
-                "resizable": True,
-                "wrapText": True,
-                "cellStyle": {
-                    "padding": 0,
-                    "wordBreak": "normal",
-                    "lineHeight": "unset"
-                },
-            },
-            dashGridOptions={
-                "animateRows": True,
-                "domLayout": "autoHeight",
-                'headerHeight': 30,
-            },
-            style={"height": None},
-            className="p-0 ag-theme-material"
-        ), className="m-2"
-    )
+    html.Br(className="m-2"),
+    dbc.Row(html.Pre(
+        id="result-table", style={"font-size": "1.2em", "text-align": "center"}
+    ), className="m-2")
 
 ])
 
@@ -101,7 +76,7 @@ def unlock_content(password):
 
 
 @callback(
-    Output("ag-grid-result", "rowData"),
+    Output("result-table", "children"),
     Input("refresh-result", "n_clicks"),
     State("month-result", "value"),
     State("products-result", "value"),
@@ -111,9 +86,11 @@ def update_result(_, month, products):
     if (month is None) or (products in [None, []]):
         return dash.no_update
     df = aggregate_reports(month.split("-"), True)
+    if df is None:
+        return "Sem dados"
     df = df[['Produto', 'Preço', 'Quantidade']]
     df = df.groupby('Produto').agg(
         {'Preço': 'mean', 'Quantidade': 'mean'}).reset_index()
     df['Preço'] = df['Preço'].round(3)
     df['Quantidade'] = df['Quantidade'].round(3)
-    return df[df['Produto'].isin(products)].to_dict(orient='records')
+    return df[df['Produto'].isin(products)].to_string(index=False)

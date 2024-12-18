@@ -86,6 +86,7 @@ def product_grid(product):
                 "domLayout": "autoHeight",
                 "singleClickEdit": True,
                 "stopEditingWhenCellsLoseFocus": True,
+                'stopEditingWhenGridLosesFocus': True,
                 "noRowsOverlayComponent": "NoRowsOverlay",
                 'headerHeight': 20,
                 'reactiveCustomComponents': True
@@ -118,7 +119,8 @@ def wait_modal(id, source, index):
 
 def adm_nav(source):
     pages = {
-        "report": "Relatórios", "result": "Resultados", "excel": "Excel"
+        "report": "Relatórios", "result": "Resultados", "excel": "Excel",
+        "paths": "Caminhos"
     }
     return dbc.Row(dbc.Nav([dbc.NavItem(dbc.NavLink(
         name, href=f"/{page}", active=page == source.split(".")[1]
