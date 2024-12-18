@@ -37,8 +37,12 @@ def update_reports_list():
     for idx, file in enumerate(files):
         parts = file.split("|")
         parts[-1] = parts[-1].replace(".csv", "")
-        target = COORDINATES[parts[3]]
-        distance = haversine(parts[4], parts[5], target["Latitude"], target["Longitude"])
+        distance = "Desconhecido"
+        if parts[3] in COORDINATES:
+            target = COORDINATES[parts[3]]
+            distance = haversine(
+                parts[4], parts[5], target["Latitude"], target["Longitude"])
+            distance = f"{int(distance)} metros"
         items.append(dbc.Button(
             dbc.Collapse(id={"type": "file-collapse", "index": idx},
                 children=dbc.Row([
@@ -51,9 +55,7 @@ def update_reports_list():
                     ]),
                     dbc.Col([
                         html.P(parts[2], style={"font-size": "0.8em"}),
-                        html.P(
-                            f"{int(distance)} metros",
-                            style={"font-size": "0.8em"})
+                        html.P(distance, style={"font-size": "0.8em"})
                     ]),
                     dbc.Col(html.P(parts[3], style={"font-size": "0.8em"})),
                     dbc.Modal(
