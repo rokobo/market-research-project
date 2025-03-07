@@ -15,30 +15,72 @@ CFG = SimpleNamespace(**dict(
     data_agg_csv=join(dirname(dirname(__file__)), "data_agg_csv"),
     images=join(dirname(dirname(__file__)), "images"),
     products=[
-        "acucar", "arroz", "cafe", "farinha", "feijao", "leite", "manteiga",
-        "soja", "banana", "batata", "tomate", "carne", "pao"],
+        "acucar", "arroz", "farinha", "feijao", "macarrao",
+
+        "cafe", "leite", "manteiga", "soja",
+
+        "carne_bovina", "frango", "carne_suina",
+
+        "banana", "batata", "ovo", "tomate", "pao"
+    ],
     excel_products=[
-        "Açúcar", "Arroz", "Café", "Farinha", "Feijão", "Leite", "Manteiga",
-        "Óleo", "Banana Prata", "Banana Nanica", "Batata", "Tomate",
-        "Carne", "Pão"],
+        "Açúcar", "Arroz", "Farinha", "Feijão", "Macarrão",
+        "Café", "Leite", "Manteiga", "Óleo",
+        "Carne Bovina", "Frango", "Carne Suína",
+        "Banana Prata", "Banana Nanica", "Batata", "Ovo", "Tomate", "Pão"
+    ],
     quantities={
-        "acucar": [1, "kg"], "arroz": [5, "kg"], "cafe": [0.5, "kg"],
-        "farinha": [1, "kg"], "feijao": [1, "kg"], "leite": [1, "L"],
-        "manteiga": [0.2, "kg"], "soja": [0.9, "L"], "banana": [1, "kg"],
-        "batata": [1, "kg"], "tomate": [1, "kg"], "carne": [1, "kg"],
-        "pao": [1, "kg"]},
+        "acucar": [1, "kg"],
+        "arroz": [5, "kg"],
+        "farinha": [1, "kg"],
+        "feijao": [1, "kg"],
+        "macarrao": [0.5, "kg"],
+
+        "cafe": [0.5, "kg"],
+        "leite": [1, "L"],
+        "manteiga": [0.2, "kg"],
+        "soja": [0.9, "L"],
+
+        "carne_bovina": [1, "kg"],
+        "frango": [1, "kg"],
+        "carne_suina": [1, "kg"],
+
+        "banana": [1, "kg"],
+        "batata": [1, "kg"],
+        "ovo": [12, "un"],
+        "tomate": [1, "kg"],
+        "pao": [1, "kg"]
+    },
     product_rows={
-        "acucar": 2, "arroz": 4, "cafe": 4, "farinha": 3, "feijao": 4,
-        "leite": 4, "manteiga": 4, "soja": 2, "banana": 2, "batata": 1,
-        "tomate": 1, "carne": 1, "pao": 1},
+        "acucar": 2, "arroz": 4, "farinha": 3, "feijao": 4, "macarrao": 2,
+        "cafe": 4, "leite": 4, "manteiga": 4, "soja": 2,
+        "carne_bovina": 2, "frango": 2, "carne_suina": 1,
+        "banana": 2, "batata": 1, "ovo": 1, "tomate": 1, "pao": 1
+    },
     fields=["brand", "price", "quantity"],
     field_names=["Marca", "Preço", "Quantidade"],
     product_fields={
-        "acucar": [1, 1, 1], "arroz": [1, 1, 1], "cafe": [1, 1, 1],
-        "farinha": [1, 1, 1], "feijao": [1, 1, 1], "leite": [1, 1, 1],
-        "manteiga": [1, 1, 1], "soja": [1, 1, 1], "banana": [1, 1, 1],
-        "batata": [0, 1, 1], "tomate": [0, 1, 1], "carne": [0, 1, 1],
-        "pao": [0, 1, 1]},
+        "acucar": [1, 1, 1],
+        "arroz": [1, 1, 1],
+        "farinha": [1, 1, 1],
+        "feijao": [1, 1, 1],
+        "macarrao": [1, 1, 1],
+
+        "cafe": [1, 1, 1],
+        "leite": [1, 1, 1],
+        "manteiga": [1, 1, 1],
+        "soja": [1, 1, 1],
+
+        "carne_bovina": [1, 1, 1],
+        "frango": [1, 1, 1],
+        "carne_suina": [1, 1, 1],
+
+        "banana": [1, 1, 1],
+        "batata": [0, 1, 1],
+        "ovo": [0, 1, 1],
+        "tomate": [0, 1, 1],
+        "pao": [0, 1, 1]
+    },
     geo_length=100,
     expected_storage=[
         "geo-history", "geo-history-timestamp",
@@ -53,13 +95,25 @@ CFG = SimpleNamespace(**dict(
 ))
 
 titles = {
-    "acucar": ["Açúcar", ""], "arroz": ["Arroz", ""], "cafe": ["Café", ""],
-    "farinha": ["Farinha", ""], "feijao": ["Feijão", ""],
-    "leite": ["Leite", ""], "manteiga": ["Manteiga", ""],
-    "soja": ["Óleo", " (de soja)"], "banana": ["Banana", " (Nanica e Prata)"],
+    "acucar": ["Açúcar", ""],
+    "arroz": ["Arroz", ""],
+    "farinha": ["Farinha", ""],
+    "feijao": ["Feijão", ""],
+    "macarrao": ["Macarrão", " (Espaguete)"],
+
+    "cafe": ["Café", ""],
+    "leite": ["Leite", ""],
+    "manteiga": ["Manteiga", ""],
+    "soja": ["Óleo", " (de soja)"],
+
+    "carne_bovina": ["Carne", " (Bovina)"],
+    "frango": ["Frango", ""],
+    "carne_suina": ["Carne", " (Suína)"],
+
+    "banana": ["Banana", " (Nanica e Prata)"],
     "batata": ["Batata", " (mais barata)"],
+    "ovo": ["Ovo", " (Branco)"],
     "tomate": ["Tomate", " (mais barato)"],
-    "carne": ["Carne", " (Coxão Mole)"],
     "pao": ["Pão", " (Francês)"]}
 
 CFG.product_titles = {
