@@ -3,9 +3,31 @@ from os import listdir, makedirs
 from types import SimpleNamespace
 import pandas as pd
 import time
+import sqlite3 as sql
 
 
 update_time = f"{int(time.time()):,}".replace(",", ".")
+config_folder = join(dirname(dirname(__file__)), "config")
+with sql.connect(join(config_folder, "products.db")) as db:
+    config = pd.read_sql("SELECT * FROM products", db)
+config["split"] = config["split"].astype(bool)
+
+
+def get_splits(split, product):
+    file_path = join(config_folder, f"marcas-{product}.txt")
+    if split:
+        assert exists(file_path), f"Missing required file: {file_path}"
+        with open(file_path, "r", encoding="utf-8") as file:
+            return [line.strip() for line in file.readlines() if line.strip()]
+    return None
+
+
+config["splits"] = config.apply(
+    lambda row: get_splits(row["split"], row["product"]), axis=1)
+
+config["expanded"] = config.apply(
+    lambda row: [f"{row['excel_product']} {sub}" for sub in row["splits"]]
+    if row["split"] and row["splits"] else [row["excel_product"]], axis=1)
 
 CFG = SimpleNamespace(**dict(
     home=dirname(dirname(__file__)),
@@ -14,73 +36,17 @@ CFG = SimpleNamespace(**dict(
     data_agg=join(dirname(dirname(__file__)), "data_agg"),
     data_agg_csv=join(dirname(dirname(__file__)), "data_agg_csv"),
     images=join(dirname(dirname(__file__)), "images"),
-    products=[
-        "acucar", "arroz", "farinha", "feijao", "macarrao",
-
-        "cafe", "leite", "manteiga", "soja",
-
-        "carne_bovina", "frango", "carne_suina",
-
-        "banana", "batata", "ovo", "tomate", "pao"
-    ],
-    excel_products=[
-        "Açúcar", "Arroz", "Farinha", "Feijão", "Macarrão",
-        "Café", "Leite", "Manteiga", "Óleo",
-        "Carne Bovina", "Frango", "Carne Suína",
-        "Banana Prata", "Banana Nanica", "Batata", "Ovo", "Tomate", "Pão"
-    ],
-    quantities={
-        "acucar": [1, "kg"],
-        "arroz": [5, "kg"],
-        "farinha": [1, "kg"],
-        "feijao": [1, "kg"],
-        "macarrao": [0.5, "kg"],
-
-        "cafe": [0.5, "kg"],
-        "leite": [1, "L"],
-        "manteiga": [0.2, "kg"],
-        "soja": [0.9, "L"],
-
-        "carne_bovina": [1, "kg"],
-        "frango": [1, "kg"],
-        "carne_suina": [1, "kg"],
-
-        "banana": [1, "kg"],
-        "batata": [1, "kg"],
-        "ovo": [12, "un"],
-        "tomate": [1, "kg"],
-        "pao": [1, "kg"]
-    },
-    product_rows={
-        "acucar": 2, "arroz": 4, "farinha": 3, "feijao": 4, "macarrao": 2,
-        "cafe": 4, "leite": 4, "manteiga": 4, "soja": 2,
-        "carne_bovina": 2, "frango": 2, "carne_suina": 1,
-        "banana": 2, "batata": 1, "ovo": 1, "tomate": 1, "pao": 1
-    },
+    products=config["product"].values,
+    excel_products=config["expanded"].explode().tolist(),
+    quantities=config.set_index('product')[
+        ['quantity', 'quantity_unit']].apply(list, axis=1).to_dict(),
+    product_rows=config.set_index('product')['product_rows'].to_dict(),
+    product_splits=config.loc[config["split"], "product"].tolist(),
     fields=["brand", "price", "quantity"],
     field_names=["Marca", "Preço", "Quantidade"],
-    product_fields={
-        "acucar": [1, 1, 1],
-        "arroz": [1, 1, 1],
-        "farinha": [1, 1, 1],
-        "feijao": [1, 1, 1],
-        "macarrao": [1, 1, 1],
-
-        "cafe": [1, 1, 1],
-        "leite": [1, 1, 1],
-        "manteiga": [1, 1, 1],
-        "soja": [1, 1, 1],
-
-        "carne_bovina": [1, 1, 1],
-        "frango": [1, 1, 1],
-        "carne_suina": [1, 1, 1],
-
-        "banana": [1, 1, 1],
-        "batata": [0, 1, 1],
-        "ovo": [0, 1, 1],
-        "tomate": [0, 1, 1],
-        "pao": [0, 1, 1]
-    },
+    product_fields=config.set_index('product')[
+        ['brand_row', 'price_row', 'quantity_row']
+    ].apply(list, axis=1).to_dict(),
     geo_length=100,
     expected_storage=[
         "geo-history", "geo-history-timestamp",
@@ -94,27 +60,9 @@ CFG = SimpleNamespace(**dict(
     report_timeout_months=3
 ))
 
-titles = {
-    "acucar": ["Açúcar", ""],
-    "arroz": ["Arroz", ""],
-    "farinha": ["Farinha", ""],
-    "feijao": ["Feijão", ""],
-    "macarrao": ["Macarrão", " (Espaguete)"],
+titles = config.set_index('product')[
+    ['title', 'subtitle']].apply(list, axis=1).to_dict()
 
-    "cafe": ["Café", ""],
-    "leite": ["Leite", ""],
-    "manteiga": ["Manteiga", ""],
-    "soja": ["Óleo", " (de soja)"],
-
-    "carne_bovina": ["Carne", " (Bovina)"],
-    "frango": ["Frango", ""],
-    "carne_suina": ["Carne", " (Suína)"],
-
-    "banana": ["Banana", " (Nanica e Prata)"],
-    "batata": ["Batata", " (mais barata)"],
-    "ovo": ["Ovo", " (Branco)"],
-    "tomate": ["Tomate", " (mais barato)"],
-    "pao": ["Pão", " (Francês)"]}
 
 CFG.product_titles = {
     prd: f"{lbl[0]} - {quant[0]}{quant[1]}{lbl[1]}"

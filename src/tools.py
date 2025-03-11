@@ -142,6 +142,7 @@ def delete_old_reports():
 
 def aggregate_reports(date, test=False):
     # Collect all reports into a single dataframe
+    delete_old_reports()
     reports = []
     check_folder(CFG.data_agg)
     check_folder(CFG.data_agg_csv)
@@ -179,17 +180,16 @@ def aggregate_reports(date, test=False):
         coleta_mes["Produto"].map(lambda x: CFG.quantities.get(x, [np.nan])[0])
     )
 
-    # Split banana into two products (Nanica and Prata)
-    mask = coleta_mes['Produto'] == 'banana'
-    coleta_mes.loc[
-        mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca']
+    # Split some products into different products based on the brand
+    mask = coleta_mes["Produto"].isin(CFG.product_splits)
+    coleta_mes.loc[mask, 'Produto'] += ' ' + coleta_mes.loc[mask, 'Marca']
     coleta_mes.loc[mask, "Marca"] = ""
 
     # Replace by the correct product names (e.g. "acucar" -> "Açúcar")
-    coleta_mes["Produto"] = coleta_mes["Produto"].map(
-        lambda x: x.replace(
-            x.split()[0], CFG.product_titles[x.split()[0]].split(" - ")[0]
-        ))
+    coleta_mes["Produto"] = coleta_mes["Produto"].map(lambda x: x.replace(
+        x.split()[0],
+        CFG.product_titles.get(x.split()[0], x.split()[0]).split(" - ")[0]
+    ))
 
     coleta_mes.to_csv(join(
         CFG.home, f"data_agg_csv/{date[0]}_{date[1]}_Coleta.csv"), index=False)
@@ -200,6 +200,7 @@ def aggregate_reports(date, test=False):
         return coleta_mes
 
     prd_count = coleta_mes["Produto"].nunique()
+    prd_unique = coleta_mes["Produto"].unique()
     est_count = coleta_mes["Estabelecimento"].nunique()
 
     # Create basic statistics for the reports
@@ -210,7 +211,7 @@ def aggregate_reports(date, test=False):
     date_col = f"{date[0]}/{date[1]}"
     balanco = pd.DataFrame([{
         "Data": date_col,
-        "Produto": CFG.excel_products[i-2],
+        "Produto": prd_unique[i-2],
         "Média Preço": f"=ROUND(AVERAGEIFS({prc}, {prd}, B{i}), 3)",
         "Média Estab PPK": (
             f"=ROUND(AVERAGE(AVERAGEIFS({ppk}, {est},"
