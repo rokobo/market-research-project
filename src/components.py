@@ -201,6 +201,9 @@ def adm_nav(source):
 
 def create_page(group: str):
     """Create a page for the given group."""
+    assert type(group) is str
+    assert group in CFG.groups
+
     group_prds = [
         prd for prd, grp in zip(CFG.products, CFG.groups) if grp == group]
     layout = html.Div([
