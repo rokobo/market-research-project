@@ -16,6 +16,7 @@ from math import radians, sin, cos, sqrt, atan2
 from itertools import zip_longest
 import pandas as pd
 
+
 def INFO(comp_id):
     return html.I(className="bi bi-info-circle mx-1 pulse-icon", id=comp_id)
 
@@ -251,10 +252,10 @@ def create_page(group: str):
         ], class_name="m-2", direction="horizontal"),
         dbc.Stack([
             html.H2(
-                "COLETA DE PREÇOS", className="m-0",
+                f"Produtos - {group.capitalize()}", className="m-0",
                 style=BOLD | CENTER | UNDERLINE),
-            dbc.FormText
-            (group.capitalize(), style=CENTER | BOLD, className="m-0"),
+            dbc.FormText(
+                "COLETA DE PREÇOS", style=CENTER, className="m-0"),
         ], direction="vertical"),
         html.Div([
             dbc.Label("Nome do coletor", style=BOLD),
