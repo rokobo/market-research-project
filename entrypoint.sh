@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ls -al
+
 cd /app
 
 pip install --no-cache-dir -r requirements.txt

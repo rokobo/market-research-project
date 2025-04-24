@@ -3,7 +3,6 @@ services:
     image: python:3.12
     container_name: ICB
     working_dir: /app
-    user: "1000:1000"
     volumes:
       - ./app:/app
       - ./entrypoint.sh:/entrypoint.sh:ro
