@@ -33,6 +33,7 @@ CFG = SimpleNamespace(**dict(
     home=dirname(dirname(__file__)),
     data_obs=join(dirname(dirname(__file__)), "data_obs"),
     data=join(dirname(dirname(__file__)), "data"),
+    pages=join(dirname(dirname(__file__)), "src/pages"),
     data_agg=join(dirname(dirname(__file__)), "data_agg"),
     data_agg_csv=join(dirname(dirname(__file__)), "data_agg_csv"),
     images=join(dirname(dirname(__file__)), "images"),

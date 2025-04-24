@@ -8,7 +8,7 @@ import dash_mantine_components as dmc
 import dash_auth
 import sys
 from os.path import join, dirname, exists
-from os import getenv, listdir
+from os import getenv, listdir, remove
 from dotenv import load_dotenv
 from flask import Response, jsonify, request, send_from_directory
 import pandas as pd
@@ -20,6 +20,33 @@ _dash_renderer._set_react_version("18.2.0")
 
 from CONFIG import CFG, COORDINATES
 load_dotenv()
+
+
+def create_group_pages():
+    for page in listdir(CFG.pages):
+        if page.startswith("dynamic-") and page.endswith(".py"):
+            remove(join(CFG.pages, page))
+            print(f"removed {page}")
+
+    for group in set(CFG.groups):
+        if group is None:
+            continue
+        file_path = join(CFG.pages, f"dynamic-{group}.py")
+        with open(file_path, "w") as f:
+            f.write(
+f"""
+import dash
+from components import create_page
+
+dash.register_page(__name__, path_template="/{group}")
+
+layout = create_page("{group}")
+""")
+    return
+
+
+create_group_pages()
+
 
 app = Dash(
     title="ICB", update_title="ICB...",
@@ -176,6 +203,9 @@ def get_file_names() -> Response:
         }, include_groups=False).to_dict()
         info[name]['obs'] = obs.strip()
     return jsonify({"info": info})
+
+
+
 
 
 if __name__ == "__main__":
