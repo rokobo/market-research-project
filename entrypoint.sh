@@ -1,10 +1,6 @@
 #!/bin/sh
 
-cd /
-echo "/"
-ls -al
-
-cd /app
+cd /ICB
 echo "App"
 ls -al
 pip install --no-cache-dir -r requirements.txt

@@ -2,9 +2,9 @@ services:
   app:
     image: python:3.12
     container_name: ICB
-    working_dir: /app
+
     volumes:
-      - ./app:/app
+      - ./app:/ICB
       - ./entrypoint.sh:/entrypoint.sh:ro
     entrypoint: ["sh", "/entrypoint.sh"]
     ports:
