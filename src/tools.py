@@ -116,6 +116,48 @@ def save_products(
     return
 
 
+def save_products2(
+    data, info, obs: Optional[str],
+    position: Optional[dict[str, Any]], geo_hist: Optional[list], test=False
+):
+    check_folder(CFG.data)
+    check_folder(CFG.data_obs)
+
+    df = pd.DataFrame(data)
+    df = df.dropna(subset=["Preço"]).reset_index(drop=True)
+
+    df["Nome"] = info[0]
+    df["Data"] = info[1]
+    df["Estabelecimento"] = info[2].split(" ")[0]
+    df = df[[
+        "Nome", "Data", "Estabelecimento", "Produto",
+        "Marca", "Preço", "Quantidade"]]
+    if test:
+        return df
+    file_name = f"{info[1]}|{int(time.time())}|{info[0]}|{info[2]}"
+
+    if isinstance(position, list) and len(position) == 3:
+        file_name += f"|{position[0]}|{position[1]}"
+    df.to_csv(
+        f"data/{file_name}.csv",
+        index=False)
+
+    obs_data = []
+    if (obs is not None) and (obs != ""):
+        obs_data.append(f"{obs}\n")
+    else:
+        obs_data.append("Sem observações\n")
+    if geo_hist is not None:
+        obs_data.append("\nHistórico de geolocalização\n")
+        for geo_data in geo_hist:
+            obs_data.append(f"{geo_data[2]}: {geo_data[0]}, {geo_data[1]}\n")
+    if obs_data != []:
+        with open(f"data_obs/{file_name}.txt", "w") as f:
+            f.writelines(obs_data)
+    return
+
+
+
 def delete_old_reports():
     now = datetime.now()
     current_date = datetime(now.year, now.month, 1)

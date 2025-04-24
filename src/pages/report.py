@@ -89,10 +89,6 @@ layout = html.Div([
         dbc.Button("Atualizar", id="update-files-button")
     ], direction="horizontal", className="m-2"),
     dbc.Row([
-        dbc.Input(
-            id="password-report", type="text", debounce=True,
-            placeholder="Senha de administrador", persistence=True,
-            persistence_type="local"),
         dbc.InputGroup([dbc.Select(
             id='filter-report-date', value="Todos",
             options=[{"label": "Todos", "value": "Todos"}] + [{
@@ -146,16 +142,11 @@ def filter_files(_1, _2, date, estab):
     Output({'type': 'file-modal', 'index': MATCH}, 'children'),
     Input({'type': 'file-button', 'index': MATCH}, 'n_clicks'),
     State({'type': 'file-modal', 'index': MATCH}, 'is_open'),
-    State('password-report', 'value'),
     prevent_initial_call=True
 )
-def toggle_modal(n_clicks, is_open, password):
+def toggle_modal(n_clicks, is_open):
     if is_open:
         return False, dash.no_update
-    # Retrieve password
-    ADM_PASSWORD = getenv("ADM_PASSWORD")
-    if password != ADM_PASSWORD or ADM_PASSWORD is None:
-        return dash.no_update, dash.no_update
 
     # Load the specific file corresponding to the triggered index
     files = listdir(CFG.data)

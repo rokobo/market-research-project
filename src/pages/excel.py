@@ -39,33 +39,25 @@ layout = html.Div([
                 persistence=True, persistence_type="local"
             ),
             dcc.Loading(
-                dbc.Button("Baixar", id="refresh-excel", disabled=True))
+                dbc.Button("Baixar", id="refresh-excel"))
         ], direction="horizontal")
     ], direction="horizontal", className="m-2"),
     dcc.Download(id="download-excel"),
-    dbc.Row(
-        dbc.Input(
-            id="password-excel", type="text", debounce=True,
-            placeholder="Senha de administrador", persistence=True,
-            persistence_type="local"
-    ), className="m-2"),
     dbc.Row(html.H6(id="excel-info"), className="m-2")
 ], className="mb-20")
 
 
 @callback(
-    Output('refresh-excel', 'disabled'),
     Output("month-excel", "options"),
-    Input('password-excel', 'value'),
+    Input('refresh-excel', 'n_clicks'),
 )
-def unlock_content(password):
-    ADM_PASSWORD = getenv("ADM_PASSWORD")
+def unlock_content(_):
     now = datetime.now()
     current_date = datetime(now.year, now.month, 1)
     dts = [
         (current_date - relativedelta(months=i)).strftime("%Y-%m")
         for i in range(0, CFG.report_timeout_months + 1)]
-    return not ((password == ADM_PASSWORD) and (ADM_PASSWORD is not None)), dts
+    return dts
 
 
 @callback(

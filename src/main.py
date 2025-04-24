@@ -37,7 +37,7 @@ auth = dash_auth.BasicAuth(
     {getenv("APP_USERNAME"): getenv("APP_PASSWORD")}
 )
 
-app.layout = dmc.MantineProvider(html.Div([
+app.layout = html.Div([
     dcc.Store(
         id="grid-data", storage_type="local",
         data=[[{}] * CFG.product_rows[prd] for prd in CFG.products]),
@@ -45,6 +45,7 @@ app.layout = dmc.MantineProvider(html.Div([
     dcc.Store(id="config", storage_type="local", data=vars(CFG)),
     dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     dcc.Store(id="geo-history", storage_type="local", data=[]),
+    dcc.Store(id="product-data", storage_type="local", data=[]),
     dcc.Store(id="files-hash", storage_type="local", data=[0, 0]),
     dcc.Store(id="files-data", storage_type="local", data=[]),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
@@ -73,7 +74,7 @@ app.layout = dmc.MantineProvider(html.Div([
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
     dash.page_container
-]), id="mantine")
+])
 
 
 @callback(
@@ -184,7 +185,7 @@ if __name__ == "__main__":
                 port="8060", dev_tools_hot_reload=True, use_reloader=True)
         case "debug":
             app.run_server(
-                port="8060", debug=True,
+                port="8060", debug=True, host="0.0.0.0",
                 dev_tools_hot_reload=True, use_reloader=True)
         case _:
             app.run_server(host="0.0.0.0", port="8060")

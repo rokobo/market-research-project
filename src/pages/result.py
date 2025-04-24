@@ -38,15 +38,9 @@ layout = html.Div([
                 id="month-result",
                 persistence=True, persistence_type="local"
             ),
-            dbc.Button("Atualizar", id="refresh-result", disabled=True)
+            dbc.Button("Atualizar", id="refresh-result")
         ], direction="horizontal")
     ], direction="horizontal", className="m-2"),
-    dbc.Row(
-        dbc.Input(
-            id="password-result", type="text", debounce=True,
-            placeholder="Senha de administrador", persistence=True,
-            persistence_type="local"),
-        className="m-2"),
     dbc.Row(
         dbc.Checklist(
             options=CFG.excel_products, id="products-result", inline=True,
@@ -61,18 +55,16 @@ layout = html.Div([
 
 
 @callback(
-    Output('refresh-result', 'disabled'),
     Output("month-result", "options"),
-    Input('password-result', 'value'),
+    Input("refresh-result", "n_clicks"),
 )
 def unlock_content(password):
-    ADM_PASSWORD = getenv("ADM_PASSWORD")
     now = datetime.now()
     current_date = datetime(now.year, now.month, 1)
     dts = [
         (current_date - relativedelta(months=i)).strftime("%Y-%m")
         for i in range(0, CFG.report_timeout_months + 1)]
-    return not ((password == ADM_PASSWORD) and (ADM_PASSWORD is not None)), dts
+    return dts
 
 
 @callback(

@@ -37,6 +37,7 @@ CFG = SimpleNamespace(**dict(
     data_agg_csv=join(dirname(dirname(__file__)), "data_agg_csv"),
     images=join(dirname(dirname(__file__)), "images"),
     products=config["product"].values,
+    groups=config["group"].values,
     excel_products=config["expanded"].explode().tolist(),
     quantities=config.set_index('product')[
         ['quantity', 'quantity_unit']].apply(list, axis=1).to_dict(),

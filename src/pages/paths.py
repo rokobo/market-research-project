@@ -29,14 +29,8 @@ layout = html.Div([
     dbc.Stack([
         html.H1("Caminhos"), html.Div(className="mx-auto"),
         dcc.Loading(dbc.Button(
-            "Atualizar dados", id="refresh-paths", disabled=True))
+            "Atualizar dados", id="refresh-paths"))
     ], direction="horizontal", className="m-2"),
-    dbc.Row(
-        dbc.Input(
-            id="password-paths", type="text", debounce=True,
-            placeholder="Senha de administrador", persistence=True,
-            persistence_type="local"
-    ), className="m-2"),
     dbc.Row(dcc.Graph(
         id="paths-map", style={"height": "70vh", "width": "100%"}
     ), className="m-2")
@@ -44,17 +38,9 @@ layout = html.Div([
 
 
 @callback(
-    Output("refresh-paths", "disabled"),
-    Input("password-paths", "value")
-)
-def enable_refresh(password):
-    ADM_PASSWORD = getenv("ADM_PASSWORD")
-    return not ((password == ADM_PASSWORD) and (ADM_PASSWORD is not None))
-
-@callback(
     Output("paths-map", "figure"),
     Input("refresh-paths", "n_clicks"),
-    prevent_initial_call=True
+    prevent_initial_call=False
 )
 def update_paths(n_clicks):
     return path_map(show=False)
