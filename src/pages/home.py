@@ -14,7 +14,7 @@ layout = html.Div([
     html.H3("Selecione a categoria de produtos", style=CENTER, className="m-2"),
     dbc.Nav([
         dbc.NavItem(dbc.NavLink(
-            grp.capitalize(), href=f"/categoria/{grp}",
+            grp.capitalize(), href=f"/{grp}",
             active=True, class_name="m-2 p-3",
         )) for grp in set(CFG.groups) if grp is not None
     ], class_name="m-2", pills=True),

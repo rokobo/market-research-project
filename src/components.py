@@ -250,7 +250,7 @@ def create_page(group: str):
             ], direction="vertical"),
             dbc.DropdownMenu([
                 dbc.DropdownMenuItem(
-                    grp.capitalize(), href=f"/categoria/{grp}",
+                    grp.capitalize(), href=f"/{grp}",
                     active=group == grp,
                 ) for grp in set(CFG.groups) if grp is not None
             ], label="Categoria", color="secondary", class_name="m-0"),
