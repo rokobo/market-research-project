@@ -85,7 +85,9 @@ app.layout = html.Div([
     ], id="server-status-modal", size="lg", is_open=False, scrollable=True),
     html.Div(
         dbc.Stack([
+            dbc.Badge("", color="primary", id="size-badge"),
             dbc.Badge("", color="secondary", id="geolocation-badge"),
+            dbc.Badge("", color="success", id="online-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
     dash.page_container
@@ -122,38 +124,22 @@ def server_status(n_clicks, is_open):
     return header, body, True
 
 
-@callback(
-    [Output('geolocation-badge', 'children'),
+clientside_callback(
+    ClientsideFunction(
+        namespace='input',
+        function_name='update_badges'
+    ),
+    Output('online-badge', 'children'),
+    Output('online-badge', 'color'),
+    Output('geolocation-badge', 'children'),
     Output('geolocation-badge', 'color'),
     Output("geo-loading-modal", "is_open"),
     Output("geo-loading-modal", "children"),
-    Output('geo-history', 'data')],
+    Output('geo-history', 'data'),
+    Output("size-badge", "children"),
     Input("10-seconds", "n_intervals"),
     State('geo-history', 'data'),
-    State('geolocation', 'position'),
-    State('geolocation', 'timestamp'),
-
 )
-def update_badges(n_intervals, geo_history, pos, timestamp):
-    rtn = []
-    if type(geo_history) != list:
-        geo_history = []
-    if pos is not None:
-        new_pos = [pos['lat'], pos['lon'], timestamp]
-        if new_pos[0] != geo_history[-1][0] and new_pos[1] != geo_history[-1][1]:
-            geo_history.append(new_pos)
-        rtn.extend([
-            f"{pos['lat']:.5f}, {pos['lon']:.5f}", "secondary",
-            False, ""
-        ])
-    else:
-        rtn.extend([
-            "LOCALIZAÇÃO NEGADA", "danger", True,
-            "AGUARDANDO GEOLOCALIZAÇÃO...",
-        ])
-    rtn.append(geo_history)
-    return rtn
-
 
 @server.route('/data_agg_csv/<path:filename>')
 def download_file(filename):
