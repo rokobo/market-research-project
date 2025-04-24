@@ -26,7 +26,6 @@ def create_group_pages():
     for page in listdir(CFG.pages):
         if page.startswith("dynamic-") and page.endswith(".py"):
             remove(join(CFG.pages, page))
-            print(f"removed {page}")
 
     for group in set(CFG.groups):
         if group is None:
