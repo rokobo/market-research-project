@@ -2,7 +2,8 @@ services:
   app:
     image: python:3.12
     container_name: ICB
-
+    environment:
+      - TZ=America/Sao_Paulo
     volumes:
       - ./:/ICB
       - ./entrypoint.sh:/entrypoint.sh:ro

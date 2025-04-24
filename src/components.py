@@ -49,11 +49,11 @@ def product_grid2(product):
     ), width="auto"))
 
     if fields[0]:
-        headers.append(dbc.Col(dbc.FormText("Marca"), style=CENTER))
+        headers.append(dbc.Col(dbc.FormText("Marca"), style=CENTER, width=5))
     if fields[1]:
         headers.append(dbc.Col(dbc.FormText("Preço"), style=CENTER))
     if fields[2]:
-        headers.append(dbc.Col(dbc.FormText("Quantidade"), style=CENTER))
+        headers.append(dbc.Col(dbc.FormText("Qtd"), style=CENTER))
 
     # Rows
     rows = []
@@ -69,7 +69,7 @@ def product_grid2(product):
         if fields[0]:
             row.append(dbc.Col(dbc.Select(
                 options=load_brands(product),
-                id={'type': f"brand-{product}", 'index': unique_id})))
+                id={'type': f"brand-{product}", 'index': unique_id}), width=5))
         if fields[1]:
             row.append(dbc.Col(dbc.Input(
                 type="number",
@@ -241,13 +241,7 @@ def create_page(group: str):
                 html.I(className="bi bi-house-door-fill", style=BOLD),
                 " Home"
             ], color="secondary", href="/", className="m-0"),
-            dbc.Stack([
-                html.H2(
-                    "COLETA DE PREÇOS", className="m-0",
-                    style=BOLD | CENTER | UNDERLINE),
-                dbc.FormText
-                (group.capitalize(), style=CENTER, className="m-0"),
-            ], direction="vertical"),
+            html.Div(className="mx-auto"),
             dbc.DropdownMenu([
                 dbc.DropdownMenuItem(
                     grp.capitalize(), href=f"/{grp}",
@@ -255,6 +249,13 @@ def create_page(group: str):
                 ) for grp in set(CFG.groups) if grp is not None
             ], label="Categoria", color="secondary", class_name="m-0"),
         ], class_name="m-2", direction="horizontal"),
+        dbc.Stack([
+            html.H2(
+                "COLETA DE PREÇOS", className="m-0",
+                style=BOLD | CENTER | UNDERLINE),
+            dbc.FormText
+            (group.capitalize(), style=CENTER | BOLD, className="m-0"),
+        ], direction="vertical"),
         html.Div([
             dbc.Label("Nome do coletor", style=BOLD),
             dbc.Input(
@@ -293,8 +294,7 @@ def create_page(group: str):
                 target="estab-info"),
             dbc.InputGroup([
                 dbc.Select(
-                    id=f"establishment-{group}", options=load_establishments(),
-                    persistence=False),
+                    id=f"establishment-{group}", options=load_establishments()),
                 dbc.Button(
                     [html.I(className="bi bi-geo-alt"), " Localizar"],
                     id=f"fill-establishment-{group}", color="primary")
@@ -308,7 +308,7 @@ def create_page(group: str):
                 id=f"establishment-subformtext-{group}", color="secondary")
         ], className="m-2 unwrap"),
         html.Div([
-            product_grid2(prd) for prd in group_prds]),
+            product_grid2(prd) for prd in group_prds], id=f"grids-{group}"),
         dbc.Tooltip([
             "O campo 'Quant.' só precisa ser preenchido quando a quantidade "
             "do produto que você está anotando é diferente da quantidade "
@@ -344,7 +344,7 @@ def create_page(group: str):
                 target="obs-info"),
             dbc.Textarea(
                 id=f"general_observations-{group}", className="form-control",
-                style={'width': '100%', 'height': '150px'},
+                style={'width': '100%', 'height': '150px'}, persistence=True,
                 placeholder="Algo que tenha ocorrido ou marcas não listadas"),
             dbc.FormText("Opcional: relatar algo relevante", color="secondary")
         ], className="m-2"),
@@ -356,6 +356,7 @@ def create_page(group: str):
             ), className="d-grid m-5"),
             id=f"confirm-send-{group}"
         ), id=f"save-container-{group}"),
+        html.Br(), html.Br(), html.Br(),
         dbc.Tooltip(
             "O botão 'Enviar' só poderá ser clicado quando todas as seções "
             "estiverem válidas (ícone e status não podem estar vermelhos). "
@@ -456,7 +457,7 @@ def create_row_callbacks(prd):
         if fields[0]:
             row.append(dbc.Col(dbc.Select(
                 options=load_brands(prd),
-                id={'type': f"brand-{prd}", 'index': unique_id})))
+                id={'type': f"brand-{prd}", 'index': unique_id}), width=5))
         if fields[1]:
             row.append(dbc.Col(dbc.Input(
                 type="number",
@@ -529,21 +530,33 @@ def create_validation_callbacks(prd):
 
 def create_save_callback(group, group_prds):
     @callback(
+        [Output(f"confirm-send-{group}", "message"),
         Output(f"save-products-{group}", "disabled"),
-        Output(f"save-products-{group}", "color"),
+        Output(f"save-products-{group}", "color")],
         Input(f"collector_name-{group}", "value"),
         Input(f"collection_date-{group}", "value"),
         Input(f"establishment-{group}", "value"),
         [Input(f"status-{prd}", "color") for prd in group_prds],
+        [Input(f"status-{prd}", "children") for prd in group_prds],
         prevent_initial_call=False
     )
-    def enable_save(nm, dt, es, *colors):
+    def enable_save(nm, dt, es, *args):
+        colors = args[0:len(group_prds)]
+        values = args[len(group_prds):]
+
         disabled = any(color == 'danger' for color in colors)
         if nm is None or dt is None or es is None:
             disabled = True
-        return disabled, "success" if not disabled else "danger"
+        message = f"""
+Produtos perfeitos: {values.count("Completo")}
+Produtos com faltas: {values.count("Faltando")}
+Produtos sem dados: {values.count("Sem dados")}
+"""
+        rtn = [message, disabled, "success" if not disabled else "danger"]
+        return rtn
 
     @callback(
+        Output(f"grids-{group}", "children"),
         Input(f"confirm-send-{group}", "submit_n_clicks"),
         State(f"collector_name-{group}", "value"),
         State(f"collection_date-{group}", "value"),
@@ -555,6 +568,7 @@ def create_save_callback(group, group_prds):
         [State({'type': f"brand-{prd}", 'index': ALL}, "value") for prd in group_prds],
         [State({'type': f"price-{prd}", 'index': ALL}, "value") for prd in group_prds],
         [State({'type': f"quantity-{prd}", 'index': ALL}, "value") for prd in group_prds],
+        prevent_initial_call=True
     )
     def save_group_products(
         _clicks, name, date, estab, obs, pos, tm, geo_hist, *args
@@ -574,6 +588,9 @@ def create_save_callback(group, group_prds):
                     'Preço': prc, 'Quantidade': qty
                 })
 
-        pos_out = [pos["lat"], pos["lon"], tm / 1000]
+        if pos is None:
+            pos_out = None
+        else:
+            pos_out = [pos["lat"], pos["lon"], tm / 1000]
         save_products2(data, (name, date, estab), obs, pos_out, geo_hist)
-        return
+        return [product_grid2(prd) for prd in group_prds]

@@ -127,6 +127,8 @@ def save_products2(
     check_folder(CFG.data_obs)
 
     df = pd.DataFrame(data)
+    if df.empty:
+        return
     df = df.dropna(subset=["Preço"]).reset_index(drop=True)
 
     df["Nome"] = info[0]
