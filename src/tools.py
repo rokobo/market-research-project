@@ -71,6 +71,10 @@ def check_folder(path):
         makedirs(path, exist_ok=True)
 
 
+check_folder(CFG.data)
+check_folder(CFG.data_obs)
+
+
 def save_products(
     data, info, obs: Optional[str],
     position: Optional[dict[str, Any]], geo_hist: Optional[list], test=False
