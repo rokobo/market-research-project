@@ -4,7 +4,7 @@ services:
     container_name: ICB
 
     volumes:
-      - ./app:/ICB
+      - ./:/ICB
       - ./entrypoint.sh:/entrypoint.sh:ro
     entrypoint: ["sh", "/entrypoint.sh"]
     ports:
