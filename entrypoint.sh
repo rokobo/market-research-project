@@ -1,8 +1,12 @@
 #!/bin/sh
 
+cd /
+echo "/"
+ls -al
 
 cd /app
-
-pip install --no-cache-dir -r requirements.txt
+echo "App"
 ls -al
+pip install --no-cache-dir -r requirements.txt
+
 python src/main.py
