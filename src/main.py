@@ -64,16 +64,7 @@ auth = dash_auth.BasicAuth(
 )
 
 app.layout = html.Div([
-    dcc.Store(
-        id="grid-data", storage_type="local",
-        data=[[{}] * CFG.product_rows[prd] for prd in CFG.products]),
-    dcc.Store(id="info-data", storage_type="local", data=[None]*3),
-    dcc.Store(id="config", storage_type="local", data=vars(CFG)),
-    dcc.Store(id="coordinates", storage_type="local", data=COORDINATES),
     dcc.Store(id="geo-history", storage_type="local", data=[]),
-    dcc.Store(id="product-data", storage_type="local", data=[]),
-    dcc.Store(id="files-hash", storage_type="local", data=[0, 0]),
-    dcc.Store(id="files-data", storage_type="local", data=[]),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dbc.Alert(
         id="geo-loading-modal", className="m-2",
@@ -94,9 +85,7 @@ app.layout = html.Div([
     ], id="server-status-modal", size="lg", is_open=False, scrollable=True),
     html.Div(
         dbc.Stack([
-            dbc.Badge("", color="primary", id="size-badge"),
             dbc.Badge("", color="secondary", id="geolocation-badge"),
-            dbc.Badge("", color="success", id="online-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
     dash.page_container
@@ -133,47 +122,37 @@ def server_status(n_clicks, is_open):
     return header, body, True
 
 
-clientside_callback(
-    ClientsideFunction(
-        namespace='input',
-        function_name='update_badges'
-    ),
-    Output('online-badge', 'children'),
-    Output('online-badge', 'color'),
-    Output('geolocation-badge', 'children'),
+@callback(
+    [Output('geolocation-badge', 'children'),
     Output('geolocation-badge', 'color'),
     Output("geo-loading-modal", "is_open"),
     Output("geo-loading-modal", "children"),
-    Output('geo-history', 'data'),
-    Output("size-badge", "children"),
+    Output('geo-history', 'data')],
     Input("10-seconds", "n_intervals"),
     State('geo-history', 'data'),
+    State('geolocation', 'position'),
+    State('geolocation', 'timestamp'),
+
 )
-
-
-@callback(
-    Output('config', 'data'),
-    Output('grid-data', 'data'),
-    Output('info-data', 'data'),
-    Input('config', 'data'),
-)
-def check_version(config):
-    if config is None or CFG.version != config.get('version'):
-        out = [vars(CFG)]
-        out.append([[{}] * CFG.product_rows[prd] for prd in CFG.products])
-        out.append([None]*3)
-        return out
-    return dash.no_update
-
-
-@callback(
-    Output('coordinates', 'data'),
-    Input('coordinates', 'data')
-)
-def check_version2(coords):
-    if coords is None or COORDINATES["version"] != coords.get('version'):
-        return COORDINATES
-    return dash.no_update
+def update_badges(n_intervals, geo_history, pos, timestamp):
+    rtn = []
+    if type(geo_history) != list:
+        geo_history = []
+    if pos is not None:
+        new_pos = [pos['lat'], pos['lon'], timestamp]
+        if new_pos[0] != geo_history[-1][0] and new_pos[1] != geo_history[-1][1]:
+            geo_history.append(new_pos)
+        rtn.extend([
+            f"{pos['lat']:.5f}, {pos['lon']:.5f}", "secondary",
+            False, ""
+        ])
+    else:
+        rtn.extend([
+            "LOCALIZAÇÃO NEGADA", "danger", True,
+            "AGUARDANDO GEOLOCALIZAÇÃO...",
+        ])
+    rtn.append(geo_history)
+    return rtn
 
 
 @server.route('/data_agg_csv/<path:filename>')

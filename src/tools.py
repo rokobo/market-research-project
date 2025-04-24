@@ -12,17 +12,16 @@ import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import Any, Optional
-from CONFIG import CFG
+from CONFIG import CFG, COORDINATES
 
 
 def load_establishments() -> list[dict[str, str]]:
     establishments = []
-    with open(join(CFG.home, "config/estabelecimentos.txt"), 'r') as file:
-        for line in file:
-            est = line.strip()
-            establishments.append({
-                "label": est, "value": est
-            })
+    for data in COORDINATES:
+        establishments.append({
+            "label": data["display"],
+            "value": data["display"],
+        })
     return establishments
 
 
@@ -399,8 +398,7 @@ def path_map(show=True):
     estabs = {}
     dates = {}
     path = CFG.data_obs
-    ests = pd.read_csv(join(CFG.home, "config/estabelecimentos.csv"))
-    ests["Estabelecimento"] = ests["Estabelecimento"].str.split(" ").str[0]
+    ests = pd.DataFrame(COORDINATES)
     files = listdir(path)[::-1]
     for i in files:
         date = i.split("|")[0]
@@ -424,7 +422,7 @@ def path_map(show=True):
                 lat, lon = coords.split(",")
                 processedRow.append((int(time), float(lat), float(lon)))
             locDf = pd.DataFrame(
-                processedRow, columns=["time", "Latitude", "Longitude"])
+                processedRow, columns=["time", "latitude", "longitude"])
             locDf['time'] = pd.to_datetime(
                 locDf['time'], unit='ms').dt.strftime('%H:%M')
             dates[date].append(locDf)
@@ -446,30 +444,30 @@ def path_map(show=True):
         df = ests.copy()
 
         # Split the data based on which establishments appear in the files
-        condition = df['Estabelecimento'].apply(
+        condition = df['code'].apply(
             lambda x: any(est == x for est in estab))
         important = df[condition]
         rest = df[~condition]
 
         fig.add_trace(go.Scattermapbox(
-            lat=rest.Latitude, lon=rest.Longitude,
+            lat=rest.latitude, lon=rest.longitude,
             textposition="bottom center", mode='markers+text',
             textfont=dict(size=10, color="black"),
             marker=go.scattermapbox.Marker(size=10),
-            text=rest.Estabelecimento, name='Estabs.'))
+            text=rest.code, name='Estabs.'))
         fig.add_trace(go.Scattermapbox(
-            lat=important.Latitude, lon=important.Longitude,
+            lat=important.latitude, lon=important.longitude,
             textposition="bottom center", mode='markers+text',
             textfont=dict(size=10, color="black"),
             marker=go.scattermapbox.Marker(size=20),
-            text=important.Estabelecimento, name='Objetivos'))
+            text=important.code, name='Objetivos'))
         traces.extend([k, k])
 
         # Add the data from the files (the movement of the collectors)
         for (i, d), name in zip(enumerate(data), name):
             traces.append(k)
             fig.add_trace(go.Scattermapbox(
-                lat=d.Latitude, lon=d.Longitude,
+                lat=d.latitude, lon=d.longitude,
                 text=d.time, mode='lines+markers+text', textfont=dict(size=15),
                 marker=dict(size=10), line=dict(width=3),
                 name=f'{i+1}: {name.split("|")[3].split(" ")[0].strip()}'))
@@ -480,12 +478,12 @@ def path_map(show=True):
         margin={"r": 0, "t": 35, "l": 0, "b": 0},
         mapbox=dict(
             style="carto-positron",
-            center=dict(lat=df.Latitude.mean(), lon=df.Longitude.mean()),
+            center=dict(lat=df.latitude.mean(), lon=df.longitude.mean()),
             bounds=dict(
-                west=df.Longitude.min() - border,
-                east=df.Longitude.max() + border,
-                south=df.Latitude.min() - border,
-                north=df.Latitude.max() + border - 0.01)),
+                west=df.longitude.min() - border,
+                east=df.longitude.max() + border,
+                south=df.latitude.min() - border,
+                north=df.latitude.max() + border - 0.01)),
     )
 
     fig.update_layout(updatemenus=[
@@ -523,8 +521,8 @@ def haversine(lat1, lon1, lat2, lon2):
     Calculate the distance between two points on the Earth's surface.
 
     Parameters:
-    lat1, lon1: Latitude and Longitude of point 1 (in decimal degrees)
-    lat2, lon2: Latitude and Longitude of point 2 (in decimal degrees)
+    lat1, lon1: latitude and longitude of point 1 (in decimal degrees)
+    lat2, lon2: latitude and longitude of point 2 (in decimal degrees)
 
     Returns:
     Distance in meters

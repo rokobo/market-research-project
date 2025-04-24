@@ -90,10 +90,10 @@ assert set(CFG.product_fields.keys()) == set(CFG.products)
 assert set(CFG.quantities.keys()) == set(CFG.products)
 assert set(CFG.product_titles.keys()) == set(CFG.products)
 
-COORDINATES = pd.read_csv(
-    join(CFG.home, "config/estabelecimentos.csv")
-).set_index("Estabelecimento").transpose().to_dict()
-COORDINATES["version"] = update_time
+with sql.connect(join(config_folder, "estabelecimentos.db")) as db:
+    COORDINATES = pd.read_sql("SELECT * FROM estabelecimentos", db)
+    COORDINATES = COORDINATES.to_dict(orient="records")
+    COORDINATES = sorted(COORDINATES, key=lambda x: x["code"])
 
 ICONS = {}
 for file in listdir(CFG.images):

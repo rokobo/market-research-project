@@ -38,10 +38,10 @@ def update_reports_list():
         parts = file.split("|")
         parts[-1] = parts[-1].replace(".csv", "")
         distance = "Desconhecido"
-        if parts[3] in COORDINATES:
-            target = COORDINATES[parts[3]]
+        if any(parts[3] == c["display"] for c in COORDINATES):
+            target = next((row for row in COORDINATES if row["display"] == parts[3]), None)
             distance = haversine(
-                parts[4], parts[5], target["Latitude"], target["Longitude"])
+                parts[4], parts[5], target["latitude"], target["longitude"])
             distance = f"{int(distance)} metros"
         items.append(dbc.Button(
             dbc.Collapse(id={"type": "file-collapse", "index": idx},
@@ -101,8 +101,8 @@ layout = html.Div([
                 {"label": "Todos", "value": "Todos"},
                 {"label": "Sem estabelecimento", "value": "Sem"}
             ] + [{
-                "label": est.split(" ")[0], "value": est.split(" ")[0]
-            } for est in COORDINATES.keys()],
+                "label": data["code"], "value": data["code"]
+            } for data in COORDINATES],
         ), dbc.InputGroupText("Estab")], className="p-0")
     ], className="m-2"),
     dbc.Row(id="files-list", className="m-2 p-0")

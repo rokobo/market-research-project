@@ -1,7 +1,7 @@
 """Components for the pages."""
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc
+from dash import html, dcc, no_update
 import dash_ag_grid as dag
 from tools import load_brands
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
@@ -389,11 +389,19 @@ def create_page(group: str):
         Output(f"establishment-formtext-{group}", "children"),
         Output(f"establishment-subformtext-{group}", "children"),
         Input(f"fill-establishment-{group}", "n_clicks"),
+        Input(f"establishment-{group}", "value"),
         State("geolocation", "position"),
         State("geolocation", "timestamp"),
         prevent_initial_call=False
     )
-    def fill_establishment(n_clicks, position, timestamp):
+    def fill_establishment(n_clicks, estab, position, timestamp):
+        context = ctx.triggered_id
+        if context is not None and context.startswith("establishment-"):
+            data = next((
+                row for row in COORDINATES if row["display"] == estab), None)
+            return estab, data["address"], ""
+        if position is None:
+            return no_update, "Geolocalização não disponível", no_update
         lat = position["lat"]
         lon = position["lon"]
         accuracy = position["accuracy"]
@@ -401,20 +409,18 @@ def create_page(group: str):
         smallest_data = None
         smallest_estab = None
 
-        for estab, data in COORDINATES.items():
-            if type(data) is not dict:
-                continue
-            dist = haversine(lat, lon, data["Latitude"], data["Longitude"])
+        for data in COORDINATES:
+            dist = haversine(lat, lon, data["latitude"], data["longitude"])
             if dist < smallest_distance:
                 smallest_distance = dist
                 smallest_data = data
-                smallest_estab = estab
+                smallest_estab = data["display"]
 
         dt = datetime.fromtimestamp(timestamp / 1000)
         formatted = dt.strftime("%Y-%m-%d, %H:%M:%S")
         subtext = f"Distância: {smallest_distance:.2f}km ± {accuracy}m, "
         subtext += f"{formatted}"
-        return smallest_estab, smallest_data["Endereço"], subtext
+        return smallest_estab, smallest_data["address"], subtext
     return layout
 
 
@@ -569,5 +575,5 @@ def create_save_callback(group, group_prds):
                 })
 
         pos_out = [pos["lat"], pos["lon"], tm / 1000]
-        save_products2(data, (name, date, estab), obs, pos_out, None)
+        save_products2(data, (name, date, estab), obs, pos_out, geo_hist)
         return
