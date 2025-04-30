@@ -10,7 +10,7 @@ from os import getenv, listdir
 from os.path import join
 import dash_ag_grid as dag
 from dotenv import load_dotenv
-from components import adm_nav
+from components import info_nav
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from time import localtime, strftime
@@ -69,7 +69,7 @@ def update_reports_list():
 
 
 layout = html.Div([
-    adm_nav(__name__),
+    info_nav(__name__),
     dbc.Alert([
         html.H5([
             html.I(className="bi bi-info-circle-fill"),

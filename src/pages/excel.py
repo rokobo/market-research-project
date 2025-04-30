@@ -9,7 +9,7 @@ from os import getenv
 from os.path import join, exists
 import dash_ag_grid as dag
 from dotenv import load_dotenv
-from components import adm_nav
+from components import info_nav
 from tools import aggregate_reports
 
 
@@ -18,7 +18,7 @@ load_dotenv()
 
 
 layout = html.Div([
-    adm_nav(__name__),
+    info_nav(__name__),
     dbc.Alert([
         html.H5([
             html.I(className="bi bi-info-circle-fill"),

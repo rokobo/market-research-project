@@ -2,8 +2,8 @@
 
 from functools import cache
 import math
-from os.path import join, exists
-from os import makedirs, listdir
+from os.path import join, exists, dirname
+from os import makedirs, listdir, remove
 from send2trash import send2trash
 import pandas as pd
 import numpy as np
@@ -13,6 +13,30 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import Any, Optional
 from CONFIG import CFG, COORDINATES
+
+
+def create_group_pages():
+    for page in listdir(CFG.pages):
+        if page.startswith("dynamic-") and page.endswith(".py"):
+            remove(join(CFG.pages, page))
+    for group in set(CFG.groups):
+        if group is None:
+            continue
+        file_path = join(CFG.pages, f"dynamic-{group}.py")
+        with open(file_path, "w") as f:
+            f.write(
+f"""
+import dash
+from components import create_page
+
+dash.register_page(__name__, path_template="/{group}")
+
+layout = create_page("{group}")
+""")
+    return
+
+
+create_group_pages()
 
 
 def load_establishments() -> list[dict[str, str]]:
@@ -27,7 +51,9 @@ def load_establishments() -> list[dict[str, str]]:
 
 def load_brands(product: str) -> list[dict[str, str]]:
     brands = []
-    with open(join(CFG.home, f"config/marcas-{product}.txt"), 'r') as file:
+    path = join(CFG.home, f"config/marcas-{product}.txt")
+    check_txt_file(path)
+    with open(path, 'r') as file:
         for line in file:
             brand = line.strip()
             if brand == "-p":
@@ -68,6 +94,15 @@ def load_raw_brands(product: str) -> Optional[list[dict[str, str]]]:
 def check_folder(path):
     if not exists(path):
         makedirs(path, exist_ok=True)
+
+
+def check_txt_file(file_path):
+    folder = dirname(file_path)
+    check_folder(folder)
+
+    if not exists(file_path):
+        with open(file_path, 'w') as f:
+            pass
 
 
 check_folder(CFG.data)

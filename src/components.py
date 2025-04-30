@@ -15,6 +15,7 @@ from datetime import datetime
 from math import radians, sin, cos, sqrt, atan2
 from itertools import zip_longest
 import pandas as pd
+import sqlite3 as sql
 
 
 def INFO(comp_id):
@@ -190,7 +191,7 @@ def wait_modal(id, source, index):
     ], id=id, is_open=True, centered=True, keyboard=False, backdrop="static")
 
 
-def adm_nav(source):
+def info_nav(source):
     pages = {
         "": "Home", "report": "Relatórios", "result": "Resultados",
         "excel": "Excel", "paths": "Caminhos"
@@ -534,6 +535,7 @@ def create_save_callback(group, group_prds):
         [Output(f"confirm-send-{group}", "message"),
         Output(f"save-products-{group}", "disabled"),
         Output(f"save-products-{group}", "color")],
+        Output(f"save-container-{group}", "className"),
         Input(f"collector_name-{group}", "value"),
         Input(f"collection_date-{group}", "value"),
         Input(f"establishment-{group}", "value"),
@@ -554,6 +556,7 @@ Produtos com faltas: {values.count("Faltando")}
 Produtos sem dados: {values.count("Sem dados")}
 """
         rtn = [message, disabled, "success" if not disabled else "danger"]
+        rtn.append("unclickable" if disabled else "")
         return rtn
 
     @callback(
@@ -595,3 +598,55 @@ Produtos sem dados: {values.count("Sem dados")}
             pos_out = [pos["lat"], pos["lon"], tm / 1000]
         save_products2(data, (name, date, estab), obs, pos_out, geo_hist)
         return [product_grid2(prd) for prd in group_prds]
+
+import time
+def create_database_mod(db):
+
+    @callback(
+        Output(f"database-mod-{db}", "children"),
+        Input(f"update-db-{db}", "n_clicks"),
+    )
+    def update_database(n):
+        with sql.connect(CFG.config_folder + f"/{db}.db") as database:
+            data = pd.read_sql("SELECT * FROM products", database)
+        data = data.to_records()
+        rows = []
+        for row in data:
+            rows.append(dbc.Row([
+                dbc.Row([
+                    html.H6(row[11]), html.H6(int(time.time()))
+                ]),
+                dbc.InputGroup([
+                    dbc.InputGroupText(dbc.Checkbox(label="Marca", value=row[5])),
+                    dbc.InputGroupText(dbc.Checkbox(label="Preço", value=row[6])),
+                    dbc.InputGroupText(dbc.Checkbox(label="Quantidade", value=row[7])),
+                    dbc.Button("Atualizar", color="secondary")
+                ]),
+                dbc.InputGroup([
+                    dbc.InputGroupText("Identificador interno"),
+                    dbc.Input(type="text", persistence=True),
+                    dbc.InputGroupText(row[1]),
+                    dbc.Button("Atualizar", color="secondary")
+                ]),
+                dbc.InputGroup([
+                    dbc.InputGroupText("Unidade"),
+                    dbc.Input(type="text", value=row[3]),
+                    dbc.Button("Atualizar", color="secondary")
+                ]),
+                dbc.InputGroup([
+                    dbc.InputGroupText("Titulo"),
+                    dbc.Input(type="text", value=row[8]),
+                    dbc.Button("Atualizar", color="secondary")
+                ]),
+                dbc.InputGroup([
+                    dbc.InputGroupText("Subtitulo"),
+                    dbc.Input(type="text", value=row[9]),
+                    dbc.Button("Atualizar", color="secondary")
+                ]),
+                html.Hr()
+            ], className="m-2"))
+        return html.Div(rows, className="m-2")
+    return html.Div([
+        dcc.Interval(id=f"updaste-{db}", interval=1000, disabled=False),
+        html.Div(id=f"database-mod-{db}")
+    ])

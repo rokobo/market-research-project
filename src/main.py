@@ -22,31 +22,6 @@ from CONFIG import CFG, COORDINATES
 load_dotenv()
 
 
-def create_group_pages():
-    for page in listdir(CFG.pages):
-        if page.startswith("dynamic-") and page.endswith(".py"):
-            remove(join(CFG.pages, page))
-
-    for group in set(CFG.groups):
-        if group is None:
-            continue
-        file_path = join(CFG.pages, f"dynamic-{group}.py")
-        with open(file_path, "w") as f:
-            f.write(
-f"""
-import dash
-from components import create_page
-
-dash.register_page(__name__, path_template="/{group}")
-
-layout = create_page("{group}")
-""")
-    return
-
-
-create_group_pages()
-
-
 app = Dash(
     title="ICB", update_title="ICB...",
     external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],

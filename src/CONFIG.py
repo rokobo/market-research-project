@@ -30,6 +30,7 @@ config["expanded"] = config.apply(
     if row["split"] and row["splits"] else [row["excel_product"]], axis=1)
 
 CFG = SimpleNamespace(**dict(
+    config_folder=config_folder,
     home=dirname(dirname(__file__)),
     data_obs=join(dirname(dirname(__file__)), "data_obs"),
     data=join(dirname(dirname(__file__)), "data"),
@@ -105,7 +106,9 @@ for file in listdir(CFG.images):
     with open(join(CFG.images, file), "r") as file:
         svg_data = file.read()
     ICONS[name] = svg_data
-
+for product in CFG.products:
+    if product not in ICONS:
+        ICONS[product] = ICONS["acucar"]
 assert len(CFG.products) == len(ICONS)
 assert set(ICONS.keys()) == set(CFG.products)
 

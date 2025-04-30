@@ -10,14 +10,14 @@ from dotenv import load_dotenv
 import pandas as pd
 from CONFIG import CFG, BOLD
 from tools import aggregate_reports
-from components import adm_nav
+from components import info_nav
 
 dash.register_page(__name__)
 load_dotenv()
 
 
 layout = html.Div([
-    adm_nav(__name__),
+    info_nav(__name__),
     dbc.Alert([
         html.H5([
             html.I(className="bi bi-info-circle-fill"),

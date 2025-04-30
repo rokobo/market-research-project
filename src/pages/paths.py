@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 from os import getenv
 import dash_ag_grid as dag
 from dotenv import load_dotenv
-from components import adm_nav
+from components import info_nav
 from tools import path_map
 
 
@@ -16,7 +16,7 @@ load_dotenv()
 
 
 layout = html.Div([
-    adm_nav(__name__),
+    info_nav(__name__),
     dbc.Alert([
         html.H5([
             html.I(className="bi bi-info-circle-fill"),
