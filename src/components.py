@@ -201,6 +201,15 @@ def info_nav(source):
     )) for page, name in pages.items()], pills=True), className="m-2")
 
 
+def adm_nav(source):
+    pages = {
+        "": "Home", "products": "Produtos",
+    }
+    return dbc.Row(dbc.Nav([dbc.NavItem(dbc.NavLink(
+        name, href=f"/{page}", active=page == source.split(".")[1]
+    )) for page, name in pages.items()], pills=True), className="m-2")
+
+
 def create_page(group: str):
     """Create a page for the given group."""
     assert type(group) is str
@@ -605,48 +614,26 @@ def create_database_mod(db):
     @callback(
         Output(f"database-mod-{db}", "children"),
         Input(f"update-db-{db}", "n_clicks"),
+        Input(f"select-attribute-{db}", "value"),
     )
-    def update_database(n):
+    def update_database(n, attr):
         with sql.connect(CFG.config_folder + f"/{db}.db") as database:
             data = pd.read_sql("SELECT * FROM products", database)
-        data = data.to_records()
+        columns = data.columns.to_list()
+        attr = attr if attr is not None else "group"
+        data = data.to_records(index=False)
+        idx = columns.index(attr)
         rows = []
         for row in data:
             rows.append(dbc.Row([
-                dbc.Row([
-                    html.H6(row[11]), html.H6(int(time.time()))
-                ]),
                 dbc.InputGroup([
-                    dbc.InputGroupText(dbc.Checkbox(label="Marca", value=row[5])),
-                    dbc.InputGroupText(dbc.Checkbox(label="Preço", value=row[6])),
-                    dbc.InputGroupText(dbc.Checkbox(label="Quantidade", value=row[7])),
+                    dbc.InputGroupText(row[columns.index("product")]),
+                    dbc.Input(type="text", value=row[idx]),
                     dbc.Button("Atualizar", color="secondary")
-                ]),
-                dbc.InputGroup([
-                    dbc.InputGroupText("Identificador interno"),
-                    dbc.Input(type="text", persistence=True),
-                    dbc.InputGroupText(row[1]),
-                    dbc.Button("Atualizar", color="secondary")
-                ]),
-                dbc.InputGroup([
-                    dbc.InputGroupText("Unidade"),
-                    dbc.Input(type="text", value=row[3]),
-                    dbc.Button("Atualizar", color="secondary")
-                ]),
-                dbc.InputGroup([
-                    dbc.InputGroupText("Titulo"),
-                    dbc.Input(type="text", value=row[8]),
-                    dbc.Button("Atualizar", color="secondary")
-                ]),
-                dbc.InputGroup([
-                    dbc.InputGroupText("Subtitulo"),
-                    dbc.Input(type="text", value=row[9]),
-                    dbc.Button("Atualizar", color="secondary")
-                ]),
-                html.Hr()
-            ], className="m-2"))
-        return html.Div(rows, className="m-2")
-    return html.Div([
-        dcc.Interval(id=f"updaste-{db}", interval=1000, disabled=False),
-        html.Div(id=f"database-mod-{db}")
-    ])
+                ], className="p-0"),
+                dbc.FormText(f"Valor atual: {row[idx]}"),
+                html.Br(), html.Br()
+            ]))
+        return html.Div(rows)
+
+    return dbc.Row(id=f"database-mod-{db}", className="m-2")
