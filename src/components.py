@@ -91,7 +91,6 @@ def product_grid2(product):
         prevent_initial_call=False
     )
     def update_brand_options(class_names):
-        print(f"Updating brand options for {product}")
         return [load_brands(product)] * len(class_names)
 
     return html.Div([

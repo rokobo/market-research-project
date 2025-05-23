@@ -5,13 +5,29 @@ import dash_bootstrap_components as dbc
 from dash import html, Input, Output, callback, State, ctx
 import pandas as pd
 import sqlite3 as sql
-from CONFIG import CFG
+from CONFIG import CFG, BOLD
 from components import adm_nav
 
 dash.register_page(__name__)
 
 layout = html.Div([
     adm_nav(__name__),
+    dbc.Alert([
+        html.H4([
+            html.I(className="bi bi-info-circle-fill"),
+            " Instruções de uso", html.Hr(className="m-1")
+        ], className="alert-heading", style=BOLD),
+        html.P([
+            "Clique em atualizar para baixar as tabelas de marcas. ",
+            "O nome das marcas será automaticamente capitalizado (todas as palavras). "
+            "A prioridade indica a ordem de exibição das marcas na tabela de produtos. ",
+            "Quanto maior o número, mais baixa a prioridade. ",
+        ], className="mb-0", style={'whiteSpace': 'pre-line'}),
+    ], dismissable=False, color="warning"),
+    dbc.Row(dbc.InputGroup([
+        dbc.Input(id="brands-password", type="text", persistence=True),
+        dbc.InputGroupText("Senha"),
+    ], class_name="p-0"), className="m-2"),
     dbc.Stack([
         html.H1("Marcas"),
         html.Div(className="mx-auto"),
@@ -70,9 +86,15 @@ with sql.connect(join(CFG.config_folder, "marcas.db")) as db:
     Input("save-brands", "n_clicks"),
     State('brands-edit-table', 'data'),
     State('brands-edit-table', 'columns'),
+    State("brands-password", "value"),
     prevent_initial_call=True
 )
-def handle_brands(update_clicks, table, add_clk, save_clk, rows, columns):
+def handle_brands(update_clicks, table, add_clk, save_clk, rows, columns, password):
+    # Check password
+    ADM_PASSWORD = getenv("ADM_PASSWORD")
+    if password != ADM_PASSWORD:
+        return dash.no_update
+
     context = ctx.triggered_id
     alert = ""
     with sql.connect(join(CFG.config_folder, "marcas.db")) as db:
