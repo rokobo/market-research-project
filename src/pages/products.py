@@ -19,6 +19,7 @@ load_dotenv()
 
 with sql.connect(join(CFG.config_folder, "products.db")) as db:
     config = pd.read_sql("SELECT * FROM products", db)
+config.drop(columns=["product"], inplace=True)
 layout = html.Div([
     adm_nav(__name__),
     dbc.Stack([
@@ -29,6 +30,6 @@ layout = html.Div([
         dbc.Select(options=config.columns, id="select-attribute-products", value="group"),
         dbc.InputGroupText("Atributo"),
     ], className="p-0")], className="m-2"),
-    create_database_mod("products"),
+    # create_database_mod("products"),
     html.Br(),html.Br(),html.Br(),html.Br(),html.Br(),
 ])

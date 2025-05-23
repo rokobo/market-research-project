@@ -14,20 +14,20 @@ config["split"] = config["split"].astype(bool)
 
 
 def get_splits(split, product):
-    file_path = join(config_folder, f"marcas-{product}.txt")
     if split:
-        assert exists(file_path), f"Missing required file: {file_path}"
-        with open(file_path, "r", encoding="utf-8") as file:
-            return [line.strip() for line in file.readlines() if line.strip()]
+        with sql.connect(join(config_folder, "marcas.db")) as db:
+            return pd.read_sql(f"SELECT brand FROM {product}", db).values.flatten().tolist()
     return None
 
 
 config["splits"] = config.apply(
     lambda row: get_splits(row["split"], row["product"]), axis=1)
 
+
 config["expanded"] = config.apply(
     lambda row: [f"{row['excel_product']} {sub}" for sub in row["splits"]]
     if row["split"] and row["splits"] else [row["excel_product"]], axis=1)
+
 
 CFG = SimpleNamespace(**dict(
     config_folder=config_folder,
@@ -68,7 +68,7 @@ titles = config.set_index('product')[
 
 
 CFG.product_titles = {
-    prd: f"{lbl[0]} - {quant[0]}{quant[1]}{lbl[1]}"
+    prd: f"{lbl[0]} - {quant[0]}{quant[1]} {f"({lbl[1]})" if lbl[1] else ""}"
     for (prd, lbl), (_, quant) in zip(titles.items(), CFG.quantities.items())
 }
 CFG.product_index = {prd: i for i, prd in enumerate(CFG.products)}

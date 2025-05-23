@@ -70,8 +70,8 @@ def product_grid2(product):
 
         if fields[0]:
             row.append(dbc.Col(dbc.Select(
-                options=load_brands(product),
                 id={'type': f"brand-{product}", 'index': unique_id}), width=5))
+
         if fields[1]:
             row.append(dbc.Col(dbc.Input(
                 type="number",
@@ -83,6 +83,16 @@ def product_grid2(product):
         rows.append(dbc.Row(
             row, className="g-0",
             id={'type': f"row-{product}", 'index': unique_id}))
+
+    # Add a callback to update the options of every brand select on page load
+    @callback(
+        Output({'type': f"brand-{product}", 'index': ALL}, "options"),
+        Input({'type': f"brand-{product}", 'index': ALL}, "className"),
+        prevent_initial_call=False
+    )
+    def update_brand_options(class_names):
+        print(f"Updating brand options for {product}")
+        return [load_brands(product)] * len(class_names)
 
     return html.Div([
         dbc.Col([
@@ -97,77 +107,6 @@ def product_grid2(product):
         dbc.Row(rows, id=f"{product}-rows", className="g-0"),
 
 
-        html.Div(dbc.Button(
-            html.I(className="bi bi-file-earmark-arrow-down"),
-            id=f"add-{product}", outline=True, color="secondary"
-        ), className="d-grid gap-2")
-    ], className="mx-2 mt-4", id=f"{product}-heading", role="product-div")
-
-
-def product_grid(product):
-    fields = CFG.product_fields[product]
-    columnDefs = [{
-        "cellRenderer": "DeleteRenderer", "editable": False, "maxWidth": 40,
-        "cellClass": "delete-cell", 'field': "delete", "headerName": "",
-    }]
-
-    if fields[0]:
-        columnDefs.append({
-            "field": "Marca", 'cellDataType': 'text', "flex": 2,
-            "cellRenderer": "SelectRenderer", "editable": False,
-            "cellRendererParams": {"options": load_brands(product)},
-            "cellStyle": {"paddingLeft": 0, "margin": 0},
-            'cellClassRules': CELL_CLASS
-        })
-    if fields[1]:
-        columnDefs.append({
-            "field": "Preço", 'cellClass': "form-control", "flex": 1,
-            'cellDataType': 'number', 'cellEditor': 'agNumberCellEditor',
-            'cellEditorParams': {'min': 0.001, 'precision': 3},
-            'cellClassRules': CELL_CLASS
-        })
-    if fields[2]:
-        columnDefs.append({
-            "field": "Quantidade",
-            'cellDataType': 'number', 'cellEditor': 'agNumberCellEditor',
-            'cellEditorParams': {'min': 0.001, 'precision': 3},
-            'cellClass': "correct form-control", "flex": 1
-        })
-
-    return html.Div([
-        dbc.Col([
-            html.Div(DangerouslySetInnerHTML(
-                ICONS[product]), style={"display": "inline-block"}),
-            dbc.Label(
-                CFG.product_titles[product], style=BOLD, className="mx-2"),
-            dbc.Badge("", pill=True, id=f"status-{product}"),
-            (INFO(f"section-{product}-info") if product == "acucar" else None)
-        ], className="p-1 mb-0"),
-        dag.AgGrid(
-            id=f"ag-grid-{product}",
-            columnDefs=columnDefs,
-            defaultColDef={
-                "editable": True,
-                "sortable": False,
-                "resizable": False,
-                "suppressMovable": True,
-                "cellStyle": {"padding": 0, "paddingLeft": 5},
-            },
-            rowData=[{}] * CFG.product_rows[product],
-            columnSize="autoSize", columnSizeOptions={"keys": ["delete"]},
-            dashGridOptions={
-                "animateRows": False,
-                "domLayout": "autoHeight",
-                "singleClickEdit": True,
-                "stopEditingWhenCellsLoseFocus": True,
-                'stopEditingWhenGridLosesFocus': True,
-                "noRowsOverlayComponent": "NoRowsOverlay",
-                'headerHeight': 20,
-                'reactiveCustomComponents': True
-            },
-            style={"height": None},
-            className="p-0 ag-theme-material",
-        ),
         html.Div(dbc.Button(
             html.I(className="bi bi-file-earmark-arrow-down"),
             id=f"add-{product}", outline=True, color="secondary"
@@ -203,7 +142,9 @@ def info_nav(source):
 
 def adm_nav(source):
     pages = {
-        "": "Home", "products": "Produtos",
+        "": "Home",
+        # "products": "Produtos",
+        "brands": "Marcas",
     }
     return dbc.Row(dbc.Nav([dbc.NavItem(dbc.NavLink(
         name, href=f"/{page}", active=page == source.split(".")[1]
@@ -608,7 +549,7 @@ Produtos sem dados: {values.count("Sem dados")}
         save_products2(data, (name, date, estab), obs, pos_out, geo_hist)
         return [product_grid2(prd) for prd in group_prds]
 
-import time
+
 def create_database_mod(db):
 
     @callback(
@@ -625,15 +566,78 @@ def create_database_mod(db):
         idx = columns.index(attr)
         rows = []
         for row in data:
+            formtext = f"Valor atual: {row[idx]}, "
+            formtext += f"atualizado em {datetime.now().strftime('%H:%M:%S')}"
             rows.append(dbc.Row([
                 dbc.InputGroup([
                     dbc.InputGroupText(row[columns.index("product")]),
-                    dbc.Input(type="text", value=row[idx]),
-                    dbc.Button("Atualizar", color="secondary")
+                    dbc.Input(type="text", value=row[idx], id={
+                        "type": f"input-attribute-{db}",
+                        "index": f"{row[0]}-{attr}"
+                    }),
+                    dbc.Button("Atualizar", color="secondary", id={
+                        "type": f"update-attribute-{db}",
+                        "index": f"{row[0]}-{attr}"
+                    })
                 ], className="p-0"),
-                dbc.FormText(f"Valor atual: {row[idx]}"),
+                dbc.FormText(formtext, id={
+                    "type": f"current-attribute-{db}",
+                    "index": f"{row[0]}-{attr}"
+                }, color="secondary"),
                 html.Br(), html.Br()
             ]))
         return html.Div(rows)
+
+
+    @callback(
+        Output({"type": f"current-attribute-{db}", "index": MATCH}, "children"),
+        Input({"type": f"update-attribute-{db}", "index": MATCH}, "n_clicks"),
+        State({"type": f"input-attribute-{db}", "index": MATCH}, "value"),
+        prevent_initial_call=True
+    )
+    def update_attribute(n, value):
+        dtypes = {
+            "product": str,
+            "quantity": float,
+            "quantity_unit": str,
+            "product_rows": int,
+            "brand_row": int,
+            "price_row": int,
+            "quantity_row": int,
+            "title": str,
+            "subtitle": str,
+            "split": int,
+            "excel_product": str,
+            "group": str
+        }
+        product, attr = ctx.triggered_id["index"].split("-")
+        print(value, product, attr)
+        with sql.connect(CFG.config_folder + f"/{db}.db") as database:
+            data = pd.read_sql("SELECT * FROM products", database)
+            database.execute("DROP TABLE IF EXISTS products")
+            database.execute("""
+                CREATE TABLE products (
+                    product TEXT PRIMARY KEY NOT NULL,
+                    quantity REAL NOT NULL,
+                    quantity_unit TEXT NOT NULL,
+                    product_rows INTEGER NOT NULL,
+                    brand_row INTEGER NOT NULL,
+                    price_row INTEGER NOT NULL,
+                    quantity_row INTEGER NOT NULL,
+                    title TEXT NOT NULL,
+                    subtitle TEXT NOT NULL,
+                    split INTEGER NOT NULL,
+                    excel_product TEXT NOT NULL,
+                    "group" TEXT NOT NULL
+                )
+            """)
+            data.loc[data["product"] == product, attr] = value
+            data = data.astype(dtypes)
+            data.to_sql("products", database, if_exists="replace", index=False)
+        with sql.connect(CFG.config_folder + f"/{db}.db") as database:
+            data = pd.read_sql("SELECT * FROM products", database)
+        current_val = data.loc[
+            data["product"] == product, attr].values[0]
+        return f"Valor atual: {current_val}"
 
     return dbc.Row(id=f"database-mod-{db}", className="m-2")

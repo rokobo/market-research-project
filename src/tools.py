@@ -13,6 +13,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import Any, Optional
 from CONFIG import CFG, COORDINATES
+import sqlite3
 
 
 def create_group_pages():
@@ -51,22 +52,14 @@ def load_establishments() -> list[dict[str, str]]:
 
 def load_brands(product: str) -> list[dict[str, str]]:
     brands = []
-    path = join(CFG.home, f"config/marcas-{product}.txt")
-    check_txt_file(path)
-    with open(path, 'r') as file:
-        for line in file:
-            brand = line.strip()
-            if brand == "-p":
-                brands.append({
-                    "label": "Preferenciais",
-                    "value": brand, "disabled": True
-                })
-            elif brand == "-np":
-                brands.append({
-                    "label": "Não Preferenciais",
-                    "value": brand, "disabled": True
-                })
-            else:
+    db_path = join(CFG.home, "config/marcas.db")
+    if exists(db_path):
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                f"SELECT * FROM {product} ORDER BY priority ASC")
+            for row in cursor.fetchall():
+                brand = row[0]
                 brands.append({
                     "label": brand, "value": brand
                 })
@@ -414,10 +407,10 @@ def check_reports():
             if not any(row["Produto"] == v for v in CFG.products):
                 pr[file][3] += 1
 
-            brands = load_raw_brands(row["Produto"])
-            if brands is not None:
-                if not any(row["Marca"] == v for v in brands):
-                    pr[file][4] += 1
+            # brands = load_raw_brands(row["Produto"])
+            # if brands is not None:
+            #     if not any(row["Marca"] == v for v in brands):
+            #         pr[file][4] += 1
 
     headers = [
         "Nome", "Data", "Estabelecimento",

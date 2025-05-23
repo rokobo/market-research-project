@@ -1,7 +1,7 @@
 import dash
 from dash import html, callback, Input, Output, State, ALL, dcc, \
     clientside_callback, ClientsideFunction
-from components import product_grid, wait_modal, INFO, CLEAR
+from components import wait_modal, INFO, CLEAR
 from tools import load_establishments, save_products
 from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE
 import dash_bootstrap_components as dbc
