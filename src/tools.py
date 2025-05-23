@@ -3,7 +3,7 @@
 from functools import cache
 import math
 from os.path import join, exists, dirname
-from os import makedirs, listdir, remove, chown
+from os import makedirs, listdir, remove, chown, chmod
 from send2trash import send2trash
 import pandas as pd
 import numpy as np
@@ -35,6 +35,7 @@ dash.register_page(__name__, path_template="/{group}")
 layout = create_page("{group}")
 """)
         chown(file_path, 1000, 1000)
+        chmod(file_path, 0o755)
     return
 
 
