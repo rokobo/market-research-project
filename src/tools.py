@@ -19,11 +19,19 @@ import sqlite3
 def create_group_pages():
     for page in listdir(CFG.pages):
         if page.startswith("dynamic-") and page.endswith(".py"):
+            name = page[len("dynamic-"):-3]
+            if name in CFG.groups:
+                print(f"Page {page} already exists")
+                continue
             remove(join(CFG.pages, page))
+            print(f"Removed page: {page}")
     for group in set(CFG.groups):
         if group is None:
             continue
+        if exists(join(CFG.pages, f"dynamic-{group}.py")):
+            continue
         file_path = join(CFG.pages, f"dynamic-{group}.py")
+        print(f"Creating page: dynamic-{group}.py")
         with open(file_path, "w") as f:
             f.write(
 f"""
@@ -35,7 +43,7 @@ dash.register_page(__name__, path_template="/{group}")
 layout = create_page("{group}")
 """)
         chown(file_path, 1000, 1000)
-        chmod(file_path, 0o755)
+        chmod(file_path, 0o777)
     return
 
 
