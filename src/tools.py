@@ -39,9 +39,6 @@ layout = create_page("{group}")
     return
 
 
-create_group_pages()
-
-
 def load_establishments() -> list[dict[str, str]]:
     establishments = []
     for data in COORDINATES:
