@@ -65,6 +65,7 @@ app.layout = html.Div([
             dbc.Badge("", color="primary", id="size-badge"),
             dbc.Badge("", color="secondary", id="geolocation-badge"),
             dbc.Badge("", color="success", id="online-badge"),
+            dbc.Badge("Connecting...", color="success", id="online2-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
     dash.page_container,

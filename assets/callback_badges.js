@@ -26,6 +26,57 @@ const PRDOUT=new Array(13).fill(NOUPDATE);
 function INFO(...m){ctx=dash_clientside.callback_context&&dash_clientside.callback_context.triggered_id?dash_clientside.callback_context.triggered_id:"?";console.log(`%c${INFO.caller.name.toUpperCase()} %c(${ctx}):`,"background:#00252E;color:#25F5FC","background:#382C00;color:#FFC800",...m)}
 function ERROR(...m){console.log(`%cERROR ${ERROR.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#700000;color:#FFADAD","background:#382C00;color:#FFC800",...m)}
 function nearest(lat,lon){smallestDist=[Infinity,""];for(est in COORDS){vals=COORDS[est];dist=haversine([lat,lon],[vals.Latitude,vals.Longitude]);if(dist<smallestDist[0]){smallestDist=[dist,est]}}return smallestDist}
+
+let ws;
+let pingStart;
+let interval;
+function updateBadge(status, latency = null) {
+    const badge = document.getElementById("online2-badge");
+    if (status === "connected") {
+        badge.textContent = `✅ Connected (${latency} ms)`;
+        badge.style.color = "green";
+    } else if (status === "disconnected") {
+        badge.textContent = `❌ Disconnected`;
+        badge.style.color = "red";
+    } else {
+        badge.textContent = `🔄 Connecting...`;
+        badge.style.color = "gray";
+    }
+}
+function connectWS() {
+    const protocol = location.protocol === "https:" ? "wss://" : "ws://";
+    const host = location.host; // includes hostname and port
+    const wsUrl = protocol + host + "/ws"; // adjust path if needed
+
+    ws = new WebSocket(wsUrl); // Change this to your server
+
+    ws.onopen = () => {
+        updateBadge("connected", "--");
+        interval = setInterval(() => {
+            pingStart = Date.now();
+            ws.send("ping");
+        }, 5000); // every 5 seconds
+    };
+
+    ws.onmessage = (event) => {
+        if (event.data === "pong") {
+            const latency = Date.now() - pingStart;
+            updateBadge("connected", latency);
+        }
+    };
+
+    ws.onclose = () => {
+        updateBadge("disconnected");
+        clearInterval(interval);
+        setTimeout(connectWS, 3000); // retry
+    };
+
+    ws.onerror = () => {
+        updateBadge("disconnected");
+        ws.close();
+    };
+}
+connectWS();
 window.dash_clientside.input={
 update_badges:async function(_,geo){
     let bdgOut=[],geoNow=null;
