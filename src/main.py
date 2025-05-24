@@ -19,9 +19,10 @@ sys.path.append(dirname(__file__))
 _dash_renderer._set_react_version("18.2.0")
 
 from CONFIG import CFG, COORDINATES
-from tools import create_group_pages
+from tools import create_group_pages, create_icon_variations
 load_dotenv()
 create_group_pages()
+create_icon_variations()
 
 
 app = Dash(
@@ -154,11 +155,11 @@ def get_file_names() -> Response:
 if __name__ == "__main__":
     match getenv("TEST"):
         case "reloader":
-            app.run_server(
+            app.run(
                 port="8060", dev_tools_hot_reload=True, use_reloader=True)
         case "debug":
-            app.run_server(
+            app.run(
                 port="8060", debug=True, host="0.0.0.0",
                 dev_tools_hot_reload=True, use_reloader=True)
         case _:
-            app.run_server(host="0.0.0.0", port="8060")
+            app.run(host="0.0.0.0", port="8060")

@@ -4,10 +4,9 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, no_update
 import dash_ag_grid as dag
 from tools import load_brands
-from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 import dash_mantine_components as dmc
 from tools import load_establishments, save_products2
-from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE, COORDINATES
+from CONFIG import CFG, BOLD, CENTER, UNDERLINE, COORDINATES
 import uuid
 from dash import html, callback, Input, Output, State, ALL, dcc, \
     clientside_callback, ClientsideFunction, Patch, MATCH, ctx
@@ -95,8 +94,9 @@ def product_grid2(product):
 
     return html.Div([
         dbc.Col([
-            html.Div(DangerouslySetInnerHTML(
-                ICONS[product]), style={"display": "inline-block"}),
+            html.Div(
+                html.Img(src=f"assets/icons/{product}-black.svg"),
+                style={"display": "inline-block"}),
             dbc.Label(
                 CFG.product_titles[product], style=BOLD, className="mx-2"),
             dbc.Badge("", pill=True, id=f"status-{product}"),
@@ -161,9 +161,8 @@ def create_page(group: str):
         dbc.Navbar([
             dbc.Row([
                 html.A(
-                    DangerouslySetInnerHTML(ICONS[prd]),
-                    id=f"icon-{prd}",
-                    style={"color": "red"}, href=f"#{prd}-heading"
+                    html.Img(src=f"assets/icons/{prd}-black.svg", id=f"icon-{prd}"),
+                    href=f"#{prd}-heading",
                 ) for prd in group_prds
             ], className="g-0 m-0 navigation")
         ], className="navbar bg-body", sticky="top", expand=True),
@@ -442,16 +441,18 @@ def create_validation_callbacks(prd):
         Output({'type': f'quantity-{prd}', 'index': ALL}, "invalid"),
         Output(f"status-{prd}", "children"),
         Output(f"status-{prd}", "color"),
-        Output(f"icon-{prd}", "style"),
+        Output(f"icon-{prd}", "src"),
         Input(f"{prd}-rows", "children"),
         Input({'type': f"brand-{prd}", 'index': ALL}, "value"),
         Input({'type': f"price-{prd}", 'index': ALL}, "value"),
         Input({'type': f"quantity-{prd}", 'index': ALL}, "value"),
+        State(f"icon-{prd}", "src"),
         prevent_initial_call=False
     )
-    def validate_rows(rows, brd, prc, qty):
+    def validate_rows(rows, brd, prc, qty, src):
         length = len(rows)
         output = []
+        icon = src.split("-")[0]
 
         # First check the inputs
         output.append([True if brand is None else False for brand in brd])
@@ -462,19 +463,19 @@ def create_validation_callbacks(prd):
         if any(True in field for field in output):
             output.append("Valores")
             output.append("danger")
-            output.append({"color": "red"})
+            output.append(f"{icon}-red.svg")
         elif length == 0:
             output.append("Sem dados")
             output.append("warning")
-            output.append({"color": "orange"})
+            output.append(f"{icon}-orange.svg")
         elif length < CFG.product_rows[prd]:
             output.append("Faltando")
             output.append("warning")
-            output.append({"color": "orange"})
+            output.append(f"{icon}-orange.svg")
         else:
             output.append("Completo")
             output.append("success")
-            output.append({"color": "green"})
+            output.append(f"{icon}-green.svg")
         return output
 
 

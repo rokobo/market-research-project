@@ -3,9 +3,8 @@ from dash import html, callback, Input, Output, State, ALL, dcc, \
     clientside_callback, ClientsideFunction
 from components import wait_modal, INFO, navitem_with_icon
 from tools import load_establishments, save_products
-from CONFIG import CFG, ICONS, BOLD, CENTER, UNDERLINE
+from CONFIG import CFG, BOLD, CENTER, UNDERLINE
 import dash_bootstrap_components as dbc
-from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 import dash_mantine_components as dmc
 
 dash.register_page(__name__, path="/")

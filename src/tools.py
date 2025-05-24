@@ -47,6 +47,26 @@ layout = create_page("{group}")
     return
 
 
+def create_icon_variations():
+    for icon in listdir("assets"):
+        if not icon.endswith("-black.svg"):
+            continue
+        base_name = icon.split("-black")[0]
+        for color in ["red", "orange", "green"]:
+            new_icon = f"{base_name}-{color}.svg"
+            new_icon_path = join("assets", new_icon)
+            if exists(new_icon_path):
+                continue
+            with open(join("assets", icon), "r") as f:
+                content = f.read()
+            content = content.replace("black", color)
+            with open(new_icon_path, "w") as f:
+                f.write(content)
+            chown(new_icon_path, 1000, 1000)
+            chmod(new_icon_path, 0o777)
+    return
+
+
 def load_establishments() -> list[dict[str, str]]:
     establishments = []
     for data in COORDINATES:

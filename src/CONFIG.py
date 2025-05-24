@@ -96,22 +96,6 @@ with sql.connect(join(config_folder, "estabelecimentos.db")) as db:
     COORDINATES = COORDINATES.to_dict(orient="records")
     COORDINATES = sorted(COORDINATES, key=lambda x: x["code"])
 
-ICONS = {}
-for file in listdir(CFG.images):
-    if not file.endswith(".svg"):
-        continue
-    name = file.split(".")[0].strip()
-    if name not in CFG.products:
-        continue
-    with open(join(CFG.images, file), "r") as file:
-        svg_data = file.read()
-    ICONS[name] = svg_data
-for product in CFG.products:
-    if product not in ICONS:
-        ICONS[product] = ICONS["acucar"]
-assert len(CFG.products) == len(ICONS)
-assert set(ICONS.keys()) == set(CFG.products)
-
 
 BOLD = {'fontWeight': 'bold'}
 CENTER = {'textAlign': 'center'}
