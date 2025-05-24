@@ -40,9 +40,12 @@ def update_reports_list():
         distance = "Desconhecido"
         if any(parts[3] == c["display"] for c in COORDINATES):
             target = next((row for row in COORDINATES if row["display"] == parts[3]), None)
-            distance = haversine(
-                parts[4], parts[5], target["latitude"], target["longitude"])
-            distance = f"{int(distance)} metros"
+            if parts[4] == parts[5] == "0":
+                distance = "Sem localização"
+            else:
+                distance = haversine(
+                    parts[4], parts[5], target["latitude"], target["longitude"])
+                distance = f"{int(distance)} metros"
         items.append(dbc.Button(
             dbc.Collapse(id={"type": "file-collapse", "index": idx},
                 children=dbc.Row([

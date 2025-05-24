@@ -31,5 +31,4 @@ layout = html.Div([
         dbc.InputGroupText("Atributo"),
     ], className="p-0")], className="m-2"),
     # create_database_mod("products"),
-    html.Br(),html.Br(),html.Br(),html.Br(),html.Br(),
 ])

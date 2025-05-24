@@ -307,7 +307,6 @@ def create_page(group: str):
             ), className="d-grid m-5"),
             id=f"confirm-send-{group}"
         ), id=f"save-container-{group}"),
-        html.Br(), html.Br(), html.Br(),
         dbc.Tooltip(
             "O botão 'Enviar' só poderá ser clicado quando todas as seções "
             "estiverem válidas (ícone e status não podem estar vermelhos). "
@@ -542,7 +541,7 @@ Produtos sem dados: {values.count("Sem dados")}
                 })
 
         if pos is None:
-            pos_out = None
+            pos_out = [0, 0, 0]
         else:
             pos_out = [pos["lat"], pos["lon"], tm / 1000]
         save_products2(data, (name, date, estab), obs, pos_out, geo_hist)
@@ -583,7 +582,6 @@ def create_database_mod(db):
                     "type": f"current-attribute-{db}",
                     "index": f"{row[0]}-{attr}"
                 }, color="secondary"),
-                html.Br(), html.Br()
             ]))
         return html.Div(rows)
 
@@ -640,3 +638,13 @@ def create_database_mod(db):
         return f"Valor atual: {current_val}"
 
     return dbc.Row(id=f"database-mod-{db}", className="m-2")
+
+
+def navitem_with_icon(name, ref, icon):
+    return dbc.NavItem(
+        dbc.NavLink([
+            html.I(className=f"bi bi-{icon}"),
+            " ",
+            name
+        ], href=f"\\{ref}", active=True, class_name="m-2")
+    )

@@ -67,7 +67,8 @@ app.layout = html.Div([
             dbc.Badge("", color="success", id="online-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
-    dash.page_container
+    dash.page_container,
+    html.Br(), html.Br(), html.Br(), html.Br(), html.Br(), html.Br(),
 ])
 
 

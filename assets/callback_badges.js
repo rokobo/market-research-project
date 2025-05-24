@@ -6,7 +6,7 @@ const GEOOPTS={enableHighAccuracy:true,timeout:5000,maximumAge:10000};
 let LOC=null;
 const getPos=(options)=>{return new Promise((resolve,reject)=>{navigator.geolocation.getCurrentPosition(resolve,reject,options)})};
 const ERRS={
-1:"Permita o uso de localização no navegador!",
+1:"Permita o uso de localização no navegador! Ação manual necessária!",
 2:"Posição indisponível, dispositivo não conseguir determinar posição!",
 3:"Dispositivo não respondeu com a localização a tempo!",
 4:"Localização não é suportada nesse browser!",

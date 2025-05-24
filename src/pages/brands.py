@@ -55,7 +55,6 @@ layout = html.Div([
         html.Div(className="mx-auto"),
         dbc.Button("Salvar Alterações", id="save-brands", color="success"),
     ], className="m-2", direction="horizontal"),
-    html.Br(), html.Br(), html.Br(), html.Br(), html.Br(),
 ])
 
 with sql.connect(join(CFG.config_folder, "marcas.db")) as db:
