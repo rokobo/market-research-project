@@ -29,3 +29,4 @@ src/coortest.ipynb
 src/cleaning.ipynb
 src/analysis.py
 test/test_dash.py
+/config/.sync

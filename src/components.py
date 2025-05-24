@@ -646,5 +646,5 @@ def navitem_with_icon(name, ref, icon):
             html.I(className=f"bi bi-{icon}"),
             " ",
             name
-        ], href=f"\\{ref}", active=True, class_name="m-2")
+        ], href=f"\\{ref}", active=True, class_name="m-2 bg-dark")
     )

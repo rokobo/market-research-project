@@ -101,7 +101,11 @@ def handle_brands(update_clicks, table, add_clk, save_clk, rows, columns, passwo
 
     if not table:
         table = tables[0][0]
-    options = [{"label": t[0], "value": t[0]} for t in tables]
+
+    options = [  # Dont show split products
+        {"label": t[0], "value": t[0]}
+        for t in tables
+        if t[0] not in CFG.product_splits]
 
     # Save brands
     if context == "save-brands":
