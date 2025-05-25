@@ -149,9 +149,6 @@ def get_file_names() -> Response:
     return jsonify({"info": info})
 
 
-
-
-
 if __name__ == "__main__":
     match getenv("TEST"):
         case "reloader":

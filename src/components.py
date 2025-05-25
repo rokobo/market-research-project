@@ -368,7 +368,7 @@ def create_page(group: str):
 
         dt = datetime.fromtimestamp(timestamp / 1000)
         formatted = dt.strftime("%Y-%m-%d, %H:%M:%S")
-        subtext = f"Distância: {smallest_distance:.2f}km ± {accuracy}m, "
+        subtext = f"Distância: {smallest_distance:.2f}km ± {int(accuracy)}m, "
         subtext += f"{formatted}"
         return smallest_estab, smallest_data["address"], subtext
     return layout
