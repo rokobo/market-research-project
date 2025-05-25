@@ -44,16 +44,7 @@ auth = dash_auth.BasicAuth(
 app.layout = html.Div([
     dcc.Store(id="geo-history", storage_type="local", data=[]),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
-    dbc.Alert(
-        id="geo-loading-modal", className="m-2",
-        dismissable=False, color="danger",
-        style={
-            "position": "fixed", "bottom": 25, "left": 0, "zIndex": 5,
-            "width": "100%"
-        },
-    ),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
-    dcc.Interval(id="10-seconds", interval=5*1000),
     dbc.Button(
         "Status", color="info", size="sm", id="status-button",
         style={"position": "fixed", "bottom": 0, "left": 0, "zIndex": 5}),
@@ -63,10 +54,9 @@ app.layout = html.Div([
     ], id="server-status-modal", size="lg", is_open=False, scrollable=True),
     html.Div(
         dbc.Stack([
-            dbc.Badge("", color="primary", id="size-badge"),
-            dbc.Badge("", color="secondary", id="geolocation-badge"),
-            dbc.Badge("", color="success", id="online-badge"),
-            dbc.Badge("Connecting...", color="success", id="online2-badge"),
+            dbc.Badge("Calc...", color="primary", id="size-badge"),
+            dbc.Badge("Calc...", color="danger", id="geolocation-badge"),
+            dbc.Badge("Calc...", color="secondary", id="online-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
     dash.page_container,
@@ -104,23 +94,6 @@ def server_status(n_clicks, is_open):
     return header, body, True
 
 
-clientside_callback(
-    ClientsideFunction(
-        namespace='input',
-        function_name='update_badges'
-    ),
-    Output('online-badge', 'children'),
-    Output('online-badge', 'color'),
-    Output('geolocation-badge', 'children'),
-    Output('geolocation-badge', 'color'),
-    Output("geo-loading-modal", "is_open"),
-    Output("geo-loading-modal", "children"),
-    Output('geo-history', 'data'),
-    Output("size-badge", "children"),
-    Input("10-seconds", "n_intervals"),
-    State('geo-history', 'data'),
-)
-
 @server.route('/data_agg_csv/<path:filename>')
 def download_file(filename):
     return send_from_directory(CFG.data_agg_csv, f"{filename}_Coleta.csv")
@@ -157,6 +130,7 @@ if __name__ == "__main__":
         case "debug":
             app.run(
                 port="8060", debug=True, host="0.0.0.0",
-                dev_tools_hot_reload=True, use_reloader=True)
+                dev_tools_hot_reload=True, use_reloader=True,
+                ssl_context=("cert.pem", "key.pem"))
         case _:
             app.run(host="0.0.0.0", port="8060")
