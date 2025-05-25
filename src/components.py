@@ -131,8 +131,11 @@ def wait_modal(id, source, index):
 
 def info_nav(source):
     pages = {
-        "": "Home", "report": "Relatórios", "result": "Resultados",
-        "excel": "Excel", "paths": "Caminhos"
+        "": "Home",
+        "report": "Relatórios",
+        "result": "Resultados",
+        "excel": "Excel",
+        "paths": "Caminhos"
     }
     return dbc.Row(dbc.Nav([dbc.NavItem(dbc.NavLink(
         name, href=f"/{page}", active=page == source.split(".")[1]
@@ -142,8 +145,18 @@ def info_nav(source):
 def adm_nav(source):
     pages = {
         "": "Home",
-        # "products": "Produtos",
         "brands": "Marcas",
+    }
+    return dbc.Row(dbc.Nav([dbc.NavItem(dbc.NavLink(
+        name, href=f"/{page}", active=page == source.split(".")[1]
+    )) for page, name in pages.items()], pills=True), className="m-2")
+
+
+def diagnostics_nav(source):
+    pages = {
+        "": "Home",
+        "local-storage": "Local Storage",
+        "icons": "Ícones",
     }
     return dbc.Row(dbc.Nav([dbc.NavItem(dbc.NavLink(
         name, href=f"/{page}", active=page == source.split(".")[1]

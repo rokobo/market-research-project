@@ -63,20 +63,6 @@ function updateGeoBadge(position, error) {
     }
 };
 
-function updateSizeBadge() {
-    const badge = document.getElementById("size-badge");
-    const size = (Object.keys(localStorage).reduce((t, k) => {
-        return t + (localStorage[k].length + k.length) * 2;
-    }, 0) / 1024).toFixed(2);
-    badge.textContent = `${size} KB`;
-}
-
-
-function updateBadges(position, error) {
-    updateGeoBadge(position, error);
-    updateSizeBadge();
-}
-
 function handleDeniedPermission() {
     updateBadges(null, { code: 1, message: "Permission denied" });
 }
@@ -102,8 +88,8 @@ waitForBadge("geolocation-badge", () => {
         if (result.state === 'denied') {handleDeniedPermission()}
         else {
             navigator.geolocation.watchPosition(
-                position => updateBadges(position, null),
-                error => {updateBadges(null, error)},
+                position => updateGeoBadge(position, null),
+                error => {updateGeoBadge(null, error)},
                 GEOOPTS
             );
         }
@@ -113,27 +99,23 @@ waitForBadge("geolocation-badge", () => {
     });
 });
 
-function startHeartbeat(interval) {
-    setInterval(async () => {
-        let response;
-        try {
-            const url = window.location.origin;
-            response = await fetch(url, { method: 'GET', cache: 'no-store' });
-        } catch (error) {
-            response = null;
-        }
-        console.log(response);
-        const badge = document.getElementById("online-badge");
-        if (response && response.ok) {
-            badge.textContent = "ONLINE";
-            badge.className = "badge bg-success";
-        } else {
-            badge.textContent = response.status || "OFFLINE";
-            badge.className = "badge bg-danger";
-        }
-    }, interval);
+window.dash_clientside.functions={
+refresh_local_storages: function(_){
+    const history = localStorage.getItem("geo-history");
+    const persistence = Object.keys(localStorage).filter(key => key.startsWith("_dash_persistence"));
+    let formattedHistory = "";
+    try {
+        const parsed = JSON.parse(history || "[]");
+        formattedHistory = parsed.map(item => JSON.stringify(item)).join('\n');
+    } catch {
+        formattedHistory = history || "";
+    }
+    let markdown = `### Geo-history\n\`\`\`json\n${formattedHistory}\n\`\`\`\n\n`;
+    markdown += `### _dash_persistence values\n\`\`\`json\n${JSON.stringify(persistence, null, 2)}\n\`\`\``;
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    return [markdown, `${hh}:${mm}:${ss}`];
 }
-startHeartbeat(5000);
-window.dash_clientside.input={
-
 }

@@ -54,9 +54,7 @@ app.layout = html.Div([
     ], id="server-status-modal", size="lg", is_open=False, scrollable=True),
     html.Div(
         dbc.Stack([
-            dbc.Badge("Calc...", color="primary", id="size-badge"),
             dbc.Badge("Calc...", color="danger", id="geolocation-badge"),
-            dbc.Badge("Calc...", color="secondary", id="online-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
     dash.page_container,

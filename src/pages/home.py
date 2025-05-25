@@ -32,4 +32,10 @@ layout = html.Div([
     dbc.Nav([
         navitem_with_icon("Marcas", "brands", "bag-dash-fill"),
     ], pills=True),
+    html.Hr(),
+    html.H3("Páginas de Diagnóstico", className="m-2"),
+    dbc.Nav([
+        navitem_with_icon("Local Storage", "local-storage", "database-fill-lock"),
+        navitem_with_icon("Ícones", "icons", "star-fill"),
+    ], pills=True),
 ])
