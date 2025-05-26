@@ -24,16 +24,16 @@ layout = html.Div([
             "Quanto maior o número, mais baixa a prioridade. ",
         ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=False, color="warning"),
-    dbc.Row(dbc.InputGroup([
-        dbc.Input(id="brands-password", type="text", persistence=True),
-        dbc.InputGroupText("Senha"),
-    ], class_name="p-0"), className="m-2"),
     dbc.Stack([
         html.H1("Marcas"),
         html.Div(className="mx-auto"),
         dbc.Button("Atualizar", id="update-db-brands")
     ], direction="horizontal", className="m-2"),
     dbc.Row([
+        dbc.InputGroup([
+            dbc.Input(id="brands-password", type="text", persistence=True),
+            dbc.InputGroupText("Senha"),
+        ], class_name="p-0"),
         dbc.InputGroup([
             dbc.Select(id="select-brand-table", options=[], value="", placeholder="Selecione uma tabela"),
             dbc.InputGroupText("Tabela"),

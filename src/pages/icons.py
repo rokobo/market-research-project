@@ -23,7 +23,7 @@ layout = html.Div([
         html.Img(src=f"assets/icons/{pr}-red.svg", className="px-2"),
         html.Img(src=f"assets/icons/{pr}-orange.svg", className="px-2"),
         html.Img(src=f"assets/icons/{pr}-green.svg", className="px-2"),
-    ], direction="horizontal") for pr in CFG.products], className="m-2")
+    ], direction="horizontal") for pr in sorted(CFG.products)], className="m-2")
 ])
 
 

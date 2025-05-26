@@ -85,7 +85,7 @@ def load_brands(product: str) -> list[dict[str, str]]:
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                f"SELECT * FROM {product} ORDER BY priority ASC")
+                f"SELECT * FROM {product} ORDER BY priority ASC, brand ASC")
             for row in cursor.fetchall():
                 brand = row[0]
                 brands.append({
