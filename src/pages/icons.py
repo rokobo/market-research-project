@@ -11,7 +11,11 @@ dash.register_page(__name__)
 
 layout = html.Div([
     diagnostics_nav(__name__),
-    html.H1("Ícones", className="m-2"),
+    dbc.Stack([
+        html.H1("Ícones"), html.Div(className="mx-auto"),
+        dcc.Loading(dbc.Button(
+            "Atualizar", id="refresh-icons"))
+    ], direction="horizontal", className="m-2"),
     html.Br(),
     dbc.Row([dbc.Stack([
         html.H6(pr.capitalize()),
@@ -21,3 +25,13 @@ layout = html.Div([
         html.Img(src=f"assets/icons/{pr}-green.svg", className="px-2"),
     ], direction="horizontal") for pr in CFG.products], className="m-2")
 ])
+
+
+
+
+
+@callback(
+    Input("refresh-icons", "n_clicks")
+)
+def refresh_icons(n_clicks):
+    create_icon_variations()
