@@ -31,6 +31,10 @@ layout = html.Div([
         dcc.Loading(dbc.Button(
             "Atualizar dados", id="refresh-paths"))
     ], direction="horizontal", className="m-2"),
+    dbc.Row(dbc.InputGroup([
+        dbc.Input(id="paths-password", type="text", persistence=True),
+        dbc.InputGroupText("Senha"),
+    ], class_name="p-0"), className="m-2"),
     dbc.Row(dcc.Graph(
         id="paths-map", style={"height": "70vh", "width": "100%"}
     ), className="m-2")
@@ -40,7 +44,11 @@ layout = html.Div([
 @callback(
     Output("paths-map", "figure"),
     Input("refresh-paths", "n_clicks"),
+    State("paths-password", "value"),
     prevent_initial_call=False
 )
-def update_paths(n_clicks):
+def update_paths(n_clicks, password):
+    ADM_PASSWORD = getenv("ADM_PASSWORD")
+    if password != ADM_PASSWORD:
+        return dash.no_update
     return path_map(show=False)

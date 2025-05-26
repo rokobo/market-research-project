@@ -41,6 +41,10 @@ layout = html.Div([
             dbc.Button("Atualizar", id="refresh-result")
         ], direction="horizontal")
     ], direction="horizontal", className="m-2"),
+    dbc.Row(dbc.InputGroup([
+        dbc.Input(id="result-password", type="text", persistence=True),
+        dbc.InputGroupText("Senha"),
+    ], class_name="p-0"), className="m-2"),
     dbc.Row(
         dbc.Checklist(
             options=CFG.excel_products, id="products-result", inline=True,
@@ -72,10 +76,14 @@ def unlock_content(password):
     Input("refresh-result", "n_clicks"),
     State("month-result", "value"),
     State("products-result", "value"),
+    State("result-password", "value"),
     prevent_initial_call=True
 )
-def update_result(_, month, products):
+def update_result(_, month, products, password):
     if (month is None) or (products in [None, []]):
+        return dash.no_update
+    ADM_PASSWORD = getenv("ADM_PASSWORD")
+    if password != ADM_PASSWORD:
         return dash.no_update
     df = aggregate_reports(month.split("-"), True)
     if df is None:

@@ -42,6 +42,10 @@ layout = html.Div([
                 dbc.Button("Baixar", id="refresh-excel"))
         ], direction="horizontal")
     ], direction="horizontal", className="m-2"),
+    dbc.Row(dbc.InputGroup([
+        dbc.Input(id="excel-password", type="text", persistence=True),
+        dbc.InputGroupText("Senha"),
+    ], class_name="p-0"), className="m-2"),
     dcc.Download(id="download-excel"),
     dbc.Row(html.H6(id="excel-info"), className="m-2")
 ], className="mb-20")
@@ -65,11 +69,15 @@ def unlock_content(_):
     Output("excel-info", "children"),
     Input("refresh-excel", "n_clicks"),
     State("month-excel", "value"),
+    State("excel-password", "value"),
     prevent_initial_call=True
 )
-def download_excel(_, month):
+def download_excel(_, month, password):
     if month is None:
         return dash.no_update, "Selecione um mês."
+    ADM_PASSWORD = getenv("ADM_PASSWORD")
+    if password != ADM_PASSWORD:
+        return dash.no_update, "Senha incorreta"
     aggregate_reports(month.split("-"))
     path = join(CFG.data_agg, f"{month.replace('-', '_')}_Coleta.xlsx")
     if exists(path):

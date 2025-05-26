@@ -92,6 +92,10 @@ layout = html.Div([
         dbc.Button("Atualizar", id="update-files-button")
     ], direction="horizontal", className="m-2"),
     dbc.Row([
+        dbc.InputGroup([
+            dbc.Input(id="reports-password", type="text", persistence=True),
+            dbc.InputGroupText("Senha"),
+        ], class_name="p-0"),
         dbc.InputGroup([dbc.Select(
             id='filter-report-date', value="Todos",
             options=[{"label": "Todos", "value": "Todos"}] + [{
@@ -113,10 +117,27 @@ layout = html.Div([
 
 
 @callback(
-    Output("files-list", "children"),
+    Output("filter-report-date", "options"),
     Input("update-files-button", "n_clicks"),
 )
-def tt(_s):
+def update_filter_dates(_):
+    now = datetime.now()
+    current_date = datetime(now.year, now.month, 1)
+    dts = [
+        (current_date - relativedelta(months=i)).strftime("%Y-%m")
+        for i in range(0, CFG.report_timeout_months + 1)]
+    return dts
+
+
+@callback(
+    Output("files-list", "children"),
+    Input("update-files-button", "n_clicks"),
+    State("reports-password", "value"),
+)
+def tt(_s, password):
+    ADM_PASSWORD = getenv("ADM_PASSWORD")
+    if password != ADM_PASSWORD:
+        return "Senha incorreta"
     return update_reports_list()
 
 @callback(
