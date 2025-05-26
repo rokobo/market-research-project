@@ -48,22 +48,23 @@ layout = create_page("{group}")
 
 
 def create_icon_variations():
-    for icon in listdir("assets"):
+    for icon in listdir("assets/icons"):
         if not icon.endswith("-black.svg"):
             continue
         base_name = icon.split("-black")[0]
         for color in ["red", "orange", "green"]:
             new_icon = f"{base_name}-{color}.svg"
-            new_icon_path = join("assets", new_icon)
+            new_icon_path = join("assets/icons", new_icon)
             if exists(new_icon_path):
                 continue
-            with open(join("assets", icon), "r") as f:
+            with open(join("assets/icons", icon), "r") as f:
                 content = f.read()
             content = content.replace("black", color)
             with open(new_icon_path, "w") as f:
                 f.write(content)
             chown(new_icon_path, 1000, 1000)
             chmod(new_icon_path, 0o777)
+            print(f"Created icon: {new_icon}")
     return
 
 
