@@ -1,14 +1,12 @@
-# flake8: noqa: E501
 import dash
 from dash import html, callback, Input, Output, State, dcc, \
-    clientside_callback, ClientsideFunction, MATCH, ctx, ALL
+    MATCH, ctx, ALL
 import pandas as pd
 from CONFIG import BOLD, CFG, COORDINATES
 from tools import delete_old_reports, haversine
 import dash_bootstrap_components as dbc
 from os import getenv, listdir
 from os.path import join
-import dash_ag_grid as dag
 from dotenv import load_dotenv
 from components import info_nav
 from datetime import datetime
@@ -23,9 +21,9 @@ load_dotenv()
 def get_report_months():
     now = datetime.now()
     current_date = datetime(now.year, now.month, 1)
-    dates = [
-        (current_date - relativedelta(months=i)
-        ).strftime("%Y-%m") for i in range(CFG.report_timeout_months, -1, -1)]
+    dates = [(
+        current_date - relativedelta(months=i)
+    ).strftime("%Y-%m") for i in range(CFG.report_timeout_months, -1, -1)]
     return dates[::-1]
 
 
@@ -39,15 +37,19 @@ def update_reports_list():
         parts[-1] = parts[-1].replace(".csv", "")
         distance = "Desconhecido"
         if any(parts[3] == c["display"] for c in COORDINATES):
-            target = next((row for row in COORDINATES if row["display"] == parts[3]), None)
+            target = next((
+                row for row in COORDINATES if row["display"] == parts[3]
+            ), None)
             if parts[4] == parts[5] == "0":
                 distance = "Sem localização"
             else:
                 distance = haversine(
-                    parts[4], parts[5], target["latitude"], target["longitude"])
+                    parts[4], parts[5],
+                    target["latitude"], target["longitude"])
                 distance = f"{int(distance)} metros"
         items.append(dbc.Button(
-            dbc.Collapse(id={"type": "file-collapse", "index": idx},
+            dbc.Collapse(
+                id={"type": "file-collapse", "index": idx},
                 children=dbc.Row([
                     dbc.Col([
                         html.P(parts[0], style={"font-size": "0.8em"}),
@@ -79,13 +81,18 @@ layout = html.Div([
             " Instruções e definições", html.Hr(className="m-1")
         ], className="alert-heading", style=BOLD),
         dcc.Markdown(
-            '''
-            Só é possível ver os relatórios quando a senha correta está no campo abaixo. Somente use quando necessário! Clique para abrir o relatório.
+            style={'whiteSpace': 'pre-line'}, className="mb-0",
+            children='''
+            Só é possível ver os relatórios quando a senha correta está no \
+            campo abaixo. Somente use quando necessário! Clique para abrir \
+            o relatório.
 
-            **Data**: Data anotada, Data na hora do envio, Horário na hora do envio.
-            **Loc/Nome**: Distância do estabelecimento na hora do envio e nome do coletor.
+            **Data**: Data anotada, Data na hora do envio, Horário na hora do \
+                envio.
+            **Loc/Nome**: Distância do estabelecimento na hora do envio e \
+                nome do coletor.
             **Estab**: Estabelecimento selecionado.''',
-        style={'whiteSpace': 'pre-line'}, className="mb-0")
+        )
     ], dismissable=False, color="warning"),
     dbc.Stack([
         html.H1("Relatórios"), html.Div(className="mx-auto"),
@@ -139,6 +146,7 @@ def tt(_s, password):
     if password != ADM_PASSWORD:
         return "Senha incorreta"
     return update_reports_list()
+
 
 @callback(
     Output({"type": "file-collapse", "index": ALL}, "is_open"),

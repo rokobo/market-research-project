@@ -1,4 +1,3 @@
-# flake8: noqa: E501
 from datetime import datetime
 import dash
 from dash import html, callback, Input, Output, State, dcc
@@ -7,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 import dash_bootstrap_components as dbc
 from os import getenv
 from os.path import join, exists
-import dash_ag_grid as dag
 from dotenv import load_dotenv
 from components import info_nav
 from tools import aggregate_reports
@@ -24,12 +22,12 @@ layout = html.Div([
             html.I(className="bi bi-info-circle-fill"),
             " Instruções e definições", html.Hr(className="m-1")
         ], className="alert-heading", style=BOLD),
-        dcc.Markdown(
-            '''
-            Só é possível atualizar quando a senha correta está no campo abaixo. Somente use quando necessário!
-
-            Selecione o mês da planilha. Clique em "Baixar" para gerar o arquivo Excel.''',
-        style={'whiteSpace': 'pre-line'}, className="mb-0")
+        dcc.Markdown([
+            "Só é possível atualizar quando a senha correta está no campo "
+            "abaixo. Somente use quando necessário!\n"
+            "Selecione o mês da planilha. "
+            "Clique em 'Baixar' para gerar o arquivo Excel.",
+        ], style={'whiteSpace': 'pre-line'}, className="mb-0")
     ], dismissable=False, color="warning"),
     dbc.Stack([
         html.H1("Excel"), html.Div(className="mx-auto"),

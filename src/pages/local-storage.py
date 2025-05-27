@@ -9,7 +9,8 @@ dash.register_page(__name__)
 layout = html.Div([
     diagnostics_nav(__name__),
     dbc.Stack([
-        html.H1("Local Storage"), html.H6(id="local_storage-time", className="mx-auto"),
+        html.H1("Local Storage"),
+        html.H6(id="local_storage-time", className="mx-auto"),
         dcc.Loading(dbc.Button(
             "Atualizar", id="refresh-local_storage"))
     ], direction="horizontal", className="m-2"),

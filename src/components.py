@@ -1,15 +1,12 @@
 """Components for the pages."""
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc, no_update
-import dash_ag_grid as dag
 from tools import load_brands
-import dash_mantine_components as dmc
 from tools import load_establishments, save_products2
 from CONFIG import CFG, BOLD, CENTER, UNDERLINE, COORDINATES
 import uuid
 from dash import html, callback, Input, Output, State, ALL, dcc, \
-    clientside_callback, ClientsideFunction, Patch, MATCH, ctx
+    Patch, MATCH, ctx, no_update
 from datetime import datetime
 from math import radians, sin, cos, sqrt, atan2
 from itertools import zip_longest
@@ -176,7 +173,8 @@ def create_page(group: str):
         dbc.Navbar([
             dbc.Row([
                 html.A(
-                    html.Img(src=f"assets/icons/{prd}-black.svg", id=f"icon-{prd}"),
+                    html.Img(
+                        src=f"assets/icons/{prd}-black.svg", id=f"icon-{prd}"),
                     href=f"#{prd}-heading",
                 ) for prd in group_prds
             ], className="g-0 m-0 navigation")
@@ -251,15 +249,16 @@ def create_page(group: str):
                 "Aperte o botão 'Localizar' para preencher o estabelecimento "
                 "mais perto da sua localização. ",
                 html.Hr(),
-                "Abaixo do campo, serão "
-                "exibidos as seguintes informações: O endereço do estabelecimento "
+                "Abaixo do campo, serão exibidos"
+                " as seguintes informações: O endereço do estabelecimento "
                 "e os parâmetros da geolocalização (distância até o "
                 "estabelecimento, margem de erro da geolocalização e última "
                 "atualização da localização)"],
                 target="estab-info"),
             dbc.InputGroup([
                 dbc.Select(
-                    id=f"establishment-{group}", options=load_establishments()),
+                    id=f"establishment-{group}",
+                    options=load_establishments()),
                 dbc.Button(
                     [html.I(className="bi bi-geo-alt"), " Localizar"],
                     id=f"fill-establishment-{group}", color="primary")
@@ -298,9 +297,10 @@ def create_page(group: str):
             "Clicar no ícone de uma seção te leva até ela."
         ], target="section-acucar-info"),
         html.Div([
-            dbc.Label(
-                [html.I(className="bi bi-chat-right-text"), " Observações gerais"],
-                style=BOLD),
+            dbc.Label([
+                html.I(className="bi bi-chat-right-text"),
+                " Observações gerais"
+            ], style=BOLD),
             INFO("obs-info"),
             dbc.Tooltip(
                 "Somente anote: Marcas colocadas como Outro/Outra, "
@@ -330,9 +330,9 @@ def create_page(group: str):
             dbc.ModalHeader(
                 dbc.ModalTitle("RELATÓRIO ENVIADO"), close_button=False),
             dbc.ModalBody("Obrigado por enviar seu relatório!"),
-            dbc.ModalFooter(
-                dbc.Button(
-                    "Fechar", id=f"close-send-confirmation-{group}", className="ms-auto")),
+            dbc.ModalFooter(dbc.Button(
+                "Fechar", id=f"close-send-confirmation-{group}",
+                className="ms-auto")),
         ], id=f"send-confirmed-modal-{group}", centered=True, is_open=False),
     ])
 
@@ -496,9 +496,11 @@ def create_validation_callbacks(prd):
 
 def create_save_callback(group, group_prds):
     @callback(
-        [Output(f"confirm-send-{group}", "message"),
-        Output(f"save-products-{group}", "disabled"),
-        Output(f"save-products-{group}", "color")],
+        [
+            Output(f"confirm-send-{group}", "message"),
+            Output(f"save-products-{group}", "disabled"),
+            Output(f"save-products-{group}", "color")
+        ],
         Output(f"save-container-{group}", "className"),
         Input(f"collector_name-{group}", "value"),
         Input(f"collection_date-{group}", "value"),
@@ -533,9 +535,15 @@ Produtos sem dados: {values.count("Sem dados")}
         State("geolocation", "position"),
         State("geolocation", "timestamp"),
         State("geo-history", "data"),
-        [State({'type': f"brand-{prd}", 'index': ALL}, "value") for prd in group_prds],
-        [State({'type': f"price-{prd}", 'index': ALL}, "value") for prd in group_prds],
-        [State({'type': f"quantity-{prd}", 'index': ALL}, "value") for prd in group_prds],
+        [
+            State({'type': f"brand-{prd}", 'index': ALL}, "value")
+            for prd in group_prds],
+        [
+            State({'type': f"price-{prd}", 'index': ALL}, "value")
+            for prd in group_prds],
+        [
+            State({'type': f"quantity-{prd}", 'index': ALL}, "value")
+            for prd in group_prds],
         prevent_initial_call=True
     )
     def save_group_products(
@@ -601,9 +609,9 @@ def create_database_mod(db):
             ]))
         return html.Div(rows)
 
-
     @callback(
-        Output({"type": f"current-attribute-{db}", "index": MATCH}, "children"),
+        Output(
+            {"type": f"current-attribute-{db}", "index": MATCH}, "children"),
         Input({"type": f"update-attribute-{db}", "index": MATCH}, "n_clicks"),
         State({"type": f"input-attribute-{db}", "index": MATCH}, "value"),
         prevent_initial_call=True

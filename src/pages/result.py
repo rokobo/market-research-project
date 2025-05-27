@@ -1,13 +1,10 @@
-# flake8: noqa: E501
 from os import getenv
 import dash
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
-import dash_ag_grid as dag
 from dash import html, Input, Output, dcc, callback, State
 import dash_bootstrap_components as dbc
 from dotenv import load_dotenv
-import pandas as pd
 from CONFIG import CFG, BOLD
 from tools import aggregate_reports
 from components import info_nav
@@ -25,9 +22,11 @@ layout = html.Div([
         ], className="alert-heading", style=BOLD),
         dcc.Markdown(
             '''
-            Só é possível atualizar quando a senha correta está no campo abaixo. Somente use quando necessário!
+            Só é possível atualizar quando a senha correta está no campo \
+            abaixo. Somente use quando necessário!
 
-            Selecione o mês e os produtos que deseja visualizar. Clique em "Atualizar" para gerar o relatório.''',
+            Selecione o mês e os produtos que deseja visualizar. Clique em \
+            "Atualizar" para gerar o relatório.''',
             style={'whiteSpace': 'pre-line'}, className="mb-0")
     ], dismissable=False, color="warning"),
     dbc.Stack([

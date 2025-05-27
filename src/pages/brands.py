@@ -18,10 +18,11 @@ layout = html.Div([
             " Instruções de uso", html.Hr(className="m-1")
         ], className="alert-heading", style=BOLD),
         html.P([
-            "Clique em atualizar para baixar as tabelas de marcas. ",
-            "O nome das marcas será automaticamente capitalizado (todas as palavras). "
-            "A prioridade indica a ordem de exibição das marcas na tabela de produtos. ",
-            "Quanto maior o número, mais baixa a prioridade. ",
+            "Clique em atualizar para baixar as tabelas de marcas. "
+            "O nome das marcas será automaticamente capitalizado"
+            "(todas as palavras). A prioridade"
+            " indica a ordem de exibição das marcas na tabela de produtos. "
+            "Quanto maior o número, mais baixa a prioridade. "
         ], className="mb-0", style={'whiteSpace': 'pre-line'}),
     ], dismissable=False, color="warning"),
     dbc.Stack([
@@ -35,7 +36,9 @@ layout = html.Div([
             dbc.InputGroupText("Senha"),
         ], class_name="p-0"),
         dbc.InputGroup([
-            dbc.Select(id="select-brand-table", options=[], value="", placeholder="Selecione uma tabela"),
+            dbc.Select(
+                id="select-brand-table", options=[], value="",
+                placeholder="Selecione uma tabela"),
             dbc.InputGroupText("Tabela"),
         ], className="p-0")
     ], className="m-2"),
@@ -88,7 +91,7 @@ with sql.connect(join(CFG.config_folder, "marcas.db")) as db:
     State("brands-password", "value"),
     prevent_initial_call=True
 )
-def handle_brands(update_clicks, table, add_clk, save_clk, rows, columns, password):
+def handle_brands(_clicks, table, add_clk, save_clk, rows, columns, password):
     # Check password
     ADM_PASSWORD = getenv("ADM_PASSWORD")
     if password != ADM_PASSWORD:
@@ -97,7 +100,8 @@ def handle_brands(update_clicks, table, add_clk, save_clk, rows, columns, passwo
     context = ctx.triggered_id
     alert = ""
     with sql.connect(join(CFG.config_folder, "marcas.db")) as db:
-        tables = pd.read_sql("SELECT name FROM sqlite_master WHERE type='table';", db).values
+        tables = pd.read_sql(
+            "SELECT name FROM sqlite_master WHERE type='table';", db).values
 
     if not table:
         table = tables[0][0]
@@ -121,18 +125,20 @@ def handle_brands(update_clicks, table, add_clk, save_clk, rows, columns, passwo
                     brand_val = row.get("brand", None)
                     if brand_val not in (None, '', []):
                         # Capitalize each word, strip whitespace
-                        normalized = " ".join(word.capitalize() for word in str(brand_val).strip().split())
+                        normalized = " ".join(
+                            word.capitalize()
+                            for word in str(brand_val).strip().split())
                         rows[idx]["brand"] = normalized
 
                 # Always validate NOT NULL columns before saving
                 for idx, row in enumerate(rows):
                     for col in not_null_cols:
                         if row.get(col, None) in (None, '', []):
+                            alert_msg = f"Erro: O campo obrigatório '{col}'"
+                            alert_msg += f" está vazio na linha {idx+1}."
                             alert = dbc.Alert(
-                                f"Erro: O campo obrigatório '{col}' está vazio na linha {idx+1}.",
-                                color="danger", dismissable=True
-                            )
-                            # Return without reloading from DB to preserve user edits
+                                alert_msg, color="danger", dismissable=True)
+                            # Return without reloading from DB
                             return options, table, columns, rows, alert
 
                 # Check that "priority" column has only INTEGER values
@@ -144,33 +150,37 @@ def handle_brands(update_clicks, table, add_clk, save_clk, rows, columns, passwo
                             if str(int_value) != str(value).strip():
                                 raise ValueError
                         except Exception:
+                            alert_msg = "Erro: O campo 'priority' deve conter"
+                            alert_msg += " apenas valores numéricos"
+                            alert_msg += f" (linha {idx+1})."
                             alert = dbc.Alert(
-                                f"Erro: O campo 'priority' deve conter apenas valores numéricos (linha {idx+1}).",
-                                color="danger", dismissable=True
-                            )
+                                alert_msg, color="danger", dismissable=True)
                             return options, table, columns, rows, alert
 
-                # Check for UNIQUE constraint violations (primary key or unique columns)
+                # Check for UNIQUE constraint violations
                 values = [row.get("brand", None) for row in rows]
                 for idx, val in enumerate(values):
                     if val not in (None, '', []) and values.count(val) > 1:
+                        alert_msg = "Erro: O campo único 'brand' está "
+                        alert_msg += f"duplicado na linha {idx+1}."
                         alert = dbc.Alert(
-                            f"Erro: O campo único '{col}' está duplicado na linha {idx+1}.",
-                            color="danger", dismissable=True
-                        )
+                            alert_msg, color="danger", dismissable=True)
                         return options, table, columns, rows, alert
-
 
                 db.execute(f"DELETE FROM {table}")
                 placeholders = ", ".join(["?"] * len(col_names))
-                insert_sql = f"INSERT INTO {table} ({', '.join(col_names)}) VALUES ({placeholders})"
+                insert_sql = f"INSERT INTO {table} ({', '.join(col_names)}) "
+                insert_sql += f"VALUES ({placeholders})"
                 for row in rows:
                     values = [row.get(col, None) for col in col_names]
                     db.execute(insert_sql, values)
                 db.commit()
-            alert = dbc.Alert("Alterações salvas com sucesso!", color="success", dismissable=True)
+            alert = dbc.Alert(
+                "Alterações salvas com sucesso!",
+                color="success", dismissable=True)
         except Exception as e:
-            alert = dbc.Alert(f"Erro ao salvar: {str(e)}", color="danger", dismissable=True)
+            alert = dbc.Alert(
+                f"Erro ao salvar: {str(e)}", color="danger", dismissable=True)
 
     # Add brand
     if context == "add-brand":
@@ -182,7 +192,8 @@ def handle_brands(update_clicks, table, add_clk, save_clk, rows, columns, passwo
     if context != "add-brand":
         with sql.connect(join(CFG.config_folder, "marcas.db")) as db:
             data = pd.read_sql(f"SELECT * FROM {table}", db)
-        columns = [{"name": i, "id": i, "editable": True} for i in data.columns]
+        columns = [
+            {"name": i, "id": i, "editable": True} for i in data.columns]
         rows = data.to_dict("records")
 
     return options, table, columns, rows, alert

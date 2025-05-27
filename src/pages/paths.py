@@ -1,11 +1,8 @@
-# flake8: noqa: E501
 import dash
-from dash import html, callback, Input, Output, State, dcc, \
-    clientside_callback, ClientsideFunction
-from CONFIG import BOLD, CFG, COORDINATES
+from dash import html, callback, Input, Output, State, dcc
+from CONFIG import BOLD
 import dash_bootstrap_components as dbc
 from os import getenv
-import dash_ag_grid as dag
 from dotenv import load_dotenv
 from components import info_nav
 from tools import path_map
@@ -22,9 +19,10 @@ layout = html.Div([
             html.I(className="bi bi-info-circle-fill"),
             " Instruções e definições", html.Hr(className="m-1")
         ], className="alert-heading", style=BOLD),
-        dcc.Markdown(
-            '''Só é possível atualizar quando a senha correta está no campo abaixo. Somente use quando necessário!''',
-        style={'whiteSpace': 'pre-line'}, className="mb-0")
+        dcc.Markdown([
+            "Só é possível atualizar quando a senha correta está no campo "
+            "abaixo. Somente use quando necessário!"
+        ], style={'whiteSpace': 'pre-line'}, className="mb-0")
     ], dismissable=False, color="warning"),
     dbc.Stack([
         html.H1("Caminhos"), html.Div(className="mx-auto"),

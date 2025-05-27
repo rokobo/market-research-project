@@ -2,7 +2,7 @@
 
 from functools import cache
 import math
-from os.path import join, exists, dirname
+from os.path import join, exists
 from os import makedirs, listdir, remove, chown, chmod
 from send2trash import send2trash
 import pandas as pd
@@ -33,8 +33,7 @@ def create_group_pages():
         file_path = join(CFG.pages, f"dynamic-{group}.py")
         print(f"Creating page: dynamic-{group}.py")
         with open(file_path, "w") as f:
-            f.write(
-f"""
+            f.write(f"""
 import dash
 from components import create_page
 
@@ -115,15 +114,6 @@ def load_raw_brands(product: str) -> Optional[list[dict[str, str]]]:
 def check_folder(path):
     if not exists(path):
         makedirs(path, exist_ok=True)
-
-
-def check_txt_file(file_path):
-    folder = dirname(file_path)
-    check_folder(folder)
-
-    if not exists(file_path):
-        with open(file_path, 'w') as f:
-            pass
 
 
 check_folder(CFG.data)
@@ -216,7 +206,6 @@ def save_products2(
         with open(f"data_obs/{file_name}.txt", "w") as f:
             f.writelines(obs_data)
     return
-
 
 
 def delete_old_reports():
