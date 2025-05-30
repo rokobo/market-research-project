@@ -79,6 +79,11 @@ def load_establishments() -> list[dict[str, str]]:
 
 def load_brands(product: str) -> list[dict[str, str]]:
     brands = []
+
+    if product not in CFG.products:
+        return brands
+    if not CFG.product_fields[product][0]:
+        return brands
     db_path = join(CFG.home, "config/marcas.db")
     if exists(db_path):
         with sqlite3.connect(db_path) as conn:
