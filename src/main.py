@@ -13,13 +13,14 @@ from dotenv import load_dotenv
 from flask import Response, jsonify, request, send_from_directory
 import pandas as pd
 from time import localtime, strftime
+import json
 
 sys.path.append(join(dirname(__file__), "pages"))
 sys.path.append(dirname(__file__))
 _dash_renderer._set_react_version("18.2.0")
 
 from CONFIG import CFG, COORDINATES
-from tools import create_group_pages, create_icon_variations
+from tools import create_group_pages, create_icon_variations, load_brands
 load_dotenv()
 create_group_pages()
 create_icon_variations()
@@ -44,6 +45,7 @@ auth = dash_auth.BasicAuth(
 app.layout = html.Div([
     dcc.Store(id="geo-history", storage_type="local", data=[]),
     dcc.Store(id="CFG-data", storage_type="local", data=vars(CFG)),
+    dcc.Store(id="brands", storage_type="local"),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
     dbc.Button(
@@ -61,6 +63,17 @@ app.layout = html.Div([
     dash.page_container,
     html.Br(), html.Br(), html.Br(), html.Br(), html.Br(), html.Br(),
 ])
+
+
+@server.route("/get-cfg")
+def get_cfg():
+    return jsonify(vars(CFG))
+
+
+@server.route("/get-brands/<product>")
+def get_brands(product):
+    brands = load_brands(product)
+    return jsonify(brands)
 
 
 @callback(

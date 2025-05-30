@@ -1,7 +1,6 @@
 """Components for the pages."""
 
 import dash_bootstrap_components as dbc
-from tools import load_brands
 from tools import load_establishments, save_products2
 from CONFIG import CFG, BOLD, CENTER, UNDERLINE, COORDINATES
 import uuid
@@ -66,7 +65,6 @@ def product_grid2(product):
 
         if fields[0]:
             row.append(dbc.Col(dbc.Select(
-                options=load_brands(product),
                 id={'type': f"brand-{product}", 'index': unique_id}
             ), width=5))
 
@@ -82,16 +80,6 @@ def product_grid2(product):
             row, className="g-0",
             id={'type': f"row-{product}", 'index': unique_id}))
 
-    # Add a callback to update the options of every brand select on page load
-    if CFG.product_fields[product][0]:
-        @callback(
-            Output({'type': f"brand-{product}", 'index': MATCH}, "options"),
-            Input({'type': f"brand-{product}", 'index': MATCH}, "id"),
-            prevent_initial_call=False
-        )
-        def update_brand_options(_):
-            return load_brands(product)
-
     return html.Div([
         dbc.Col([
             html.Div(
@@ -104,7 +92,6 @@ def product_grid2(product):
 
         dbc.Row(headers),
         dbc.Row(rows, id=f"{product}-rows", className="g-0"),
-
 
         html.Div(dbc.Button(
             html.I(className="bi bi-file-earmark-arrow-down"),
@@ -404,6 +391,16 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 def create_row_callbacks(prd):
+    clientside_callback(
+        ClientsideFunction(
+            namespace='functions',
+            function_name='load_brands'
+        ),
+        Output({'type': f"brand-{prd}", 'index': MATCH}, "options"),
+        Input({'type': f"brand-{prd}", 'index': MATCH}, "value"),
+        prevent_initial_call=False
+    )
+
     @callback(
         Output(f"{prd}-rows", "children", allow_duplicate=True),
         Input(f"add-{prd}", "n_clicks"),
@@ -423,7 +420,6 @@ def create_row_callbacks(prd):
 
         if fields[0]:
             row.append(dbc.Col(dbc.Select(
-                options=load_brands(prd),
                 id={'type': f"brand-{prd}", 'index': unique_id}), width=5))
         if fields[1]:
             row.append(dbc.Col(dbc.Input(

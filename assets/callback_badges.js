@@ -27,9 +27,7 @@ function INFO(...m){ctx=dash_clientside.callback_context&&dash_clientside.callba
 function ERROR(...m){console.log(`%cERROR ${ERROR.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#700000;color:#FFADAD","background:#382C00;color:#FFC800",...m)}
 function nearest(lat,lon){smallestDist=[Infinity,""];for(est in COORDS){vals=COORDS[est];dist=haversine([lat,lon],[vals.Latitude,vals.Longitude]);if(dist<smallestDist[0]){smallestDist=[dist,est]}}return smallestDist}
 function splitArgs(...args) {
-    if (args.length % 2 !== 0) {
-        throw new Error("Expected an even number of arguments.");
-    }
+    if (args.length % 2 !== 0) {throw new Error("Expected an even number of arguments.")}
     const half = args.length / 2;
     const firstHalf = args.slice(0, half);
     const secondHalf = args.slice(half);
@@ -54,72 +52,93 @@ function updateGeoBadge(position, error) {
     let history = [];
     try {
         const raw = localStorage.getItem("geo-history");
-        if (raw) history = JSON.parse(raw);
-    } catch {
-        history = [];
-    }
+        if (raw) {history = JSON.parse(raw)}
+    } catch { history = [] }
 
     // Append if moved more than 100m
     const newEntry = [latitude, longitude, position.timestamp];
-    if (
-        history.length === 0 ||
-        haversine(history.at(-1), newEntry) > 0.1
-    ) {
+    if (history.length === 0 || haversine(history.at(-1), newEntry) > 0.1) {
         history.push(newEntry);
         if (history.length > 50) history.shift(); // keep recent 50 entries
         localStorage.setItem("geo-history", JSON.stringify(history));
     }
 };
 
-function handleDeniedPermission() {
-    updateBadges(null, { code: 1, message: "Permission denied" });
-}
-
 function waitForBadge(elementId, callbackFn) {
-    if (document.getElementById(elementId)) {
-        callbackFn();
-        return;
-    }
-
-    const observer = new MutationObserver(() => {
-        if (document.getElementById(elementId)) {
-            observer.disconnect();
-            callbackFn();
-        }
-    });
-
+    if (document.getElementById(elementId)) {callbackFn();return}
+    const observer = new MutationObserver(() => { if (document.getElementById(elementId)) {observer.disconnect();callbackFn()}});
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
 waitForBadge("geolocation-badge", () => {
     navigator.permissions.query({ name: 'geolocation' }).then(result => {
-        if (result.state === 'denied') {handleDeniedPermission()}
-        else {
-            navigator.geolocation.watchPosition(
-                position => updateGeoBadge(position, null),
-                error => {updateGeoBadge(null, error)},
-                GEOOPTS
-            );
-        }
-        result.onchange = () => {
-            location.reload();
-        };
+        if (result.state === 'denied') {updateGeoBadge(null, { code: 1, message: "Permission denied" })}
+        else {navigator.geolocation.watchPosition(p => updateGeoBadge(p, null), e => {updateGeoBadge(null, e)}, GEOOPTS)}
+        result.onchange = () => {location.reload()};
     });
 });
 
+
+function refresh_CFG() {
+    console.time("refresh_CFG");
+    fetch('/get-cfg')
+        .then(response => {
+            if (!response.ok) {throw new Error('Network response was not ok /refresh_CFG')}
+            return response.json();
+        })
+        .then(data => { localStorage.setItem("CFG-data", JSON.stringify(data)) })
+        .catch(error => { console.error('Error fetching /get-cfg:', error) });
+    console.timeEnd("refresh_CFG");
+}
+
+
+function refresh_brands() {
+    console.time("refresh_brands");
+    products = JSON.parse(localStorage.getItem("CFG-data")).products;
+
+    // Remove brands from localStorage that are not in the current products list
+    const productKeys = products.map(p => `brands-${p}`);
+    Object.keys(localStorage)
+        .filter(key => key.startsWith("brands-") && !productKeys.includes(key))
+        .forEach(key => localStorage.removeItem(key));
+
+    if (!products) return;
+    for (const product of products) {
+        fetch(`/get-brands/${product}`)
+            .then(response => {
+                if (!response.ok) {throw new Error(`Network response was not ok for ${product}`)}
+                return response.json();
+            })
+            .then(data => { localStorage.setItem(`brands-${product}`, JSON.stringify(data)) })
+            .catch(error => { console.error(`Error fetching /get-brand/${product}:`, error) });
+    }
+    console.timeEnd("refresh_brands");
+}
+
+setInterval(refresh_CFG, 1000 * 60);
+setInterval(refresh_brands, 1000 * 60);
+
+refresh_CFG();
+refresh_brands();
+
 window.dash_clientside.functions={
 refresh_local_storages: function(_){
-    const history = localStorage.getItem("geo-history");
-    const persistence = Object.keys(localStorage).filter(key => key.startsWith("_dash_persistence"));
-    let formattedHistory = "";
-    try {
-        const parsed = JSON.parse(history || "[]");
-        formattedHistory = parsed.map(item => JSON.stringify(item)).join('\n');
-    } catch {
-        formattedHistory = history || "";
+    let markdown = "";
+    const keys = Object.keys(localStorage).sort();
+    for (const key of keys) {
+        const value = localStorage.getItem(key);
+        let displayValue = "";
+        try {
+            // Try to pretty-print JSON values
+            const parsed = JSON.parse(value);
+            displayValue = JSON.stringify(parsed, null, 2);
+        } catch {
+            // Fallback to raw value (truncate if very long)
+            displayValue = value && value.length > 500 ? value.slice(0, 500) + "..." : value;
+            displayValue = "``` " + displayValue + " ```";
+        }
+        markdown += `###### ${key}:\n\n${displayValue}\n`;
     }
-    let markdown = `### Geo-history\n\`\`\`json\n${formattedHistory}\n\`\`\`\n\n`;
-    markdown += `### _dash_persistence values\n\`\`\`json\n${JSON.stringify(persistence, null, 2)}\n\`\`\``;
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
@@ -212,6 +231,15 @@ validate_sections: function(name, date, estab, ...args) {
     message += `Produtos Sem dados: ${counts["Sem dados"] || 0}\n`;
     INFO(disabled, disabled ? "danger" : "success", disabled ? "unclickable" : "", "\n", message);
     return [message, disabled, disabled ? "danger" : "success", disabled ? "unclickable" : ""];
-
+},
+load_brands: function(_) {
+    ctx = dash_clientside.callback_context.outputs_list.id.type.split("-")[1];
+    brands = JSON.parse(localStorage.getItem(`brands-${ctx}`));
+    if (brands === null || brands === undefined) {
+        ERROR("No brands found for", ctx);
+        return [];
+    }
+    INFO("load_brands", ctx);
+    return brands
 }
 }
