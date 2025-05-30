@@ -43,6 +43,7 @@ auth = dash_auth.BasicAuth(
 
 app.layout = html.Div([
     dcc.Store(id="geo-history", storage_type="local", data=[]),
+    dcc.Store(id="CFG-data", storage_type="local", data=vars(CFG)),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
     dbc.Button(

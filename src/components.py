@@ -6,7 +6,7 @@ from tools import load_establishments, save_products2
 from CONFIG import CFG, BOLD, CENTER, UNDERLINE, COORDINATES
 import uuid
 from dash import html, callback, Input, Output, State, ALL, dcc, \
-    Patch, MATCH, ctx, no_update
+    Patch, MATCH, ctx, no_update, ClientsideFunction, clientside_callback
 from datetime import datetime
 from math import radians, sin, cos, sqrt, atan2
 from itertools import zip_longest
@@ -43,7 +43,7 @@ def product_grid2(product):
     # Headers
     headers.append(dbc.Col(dbc.Button(
         html.I(className="bi bi-trash3"),
-        id=f"delete-{product}-header", disabled=True, color="light"
+        id=f"delete-{product}-header", disabled=True, color="light",
     ), width="auto"))
 
     if fields[0]:
@@ -61,12 +61,14 @@ def product_grid2(product):
         row.append(dbc.Col(dbc.Button(
             html.I(className="bi bi-trash3"),
             id={'type': f"delete-{product}", 'index': unique_id},
-            outline=True, color="danger"
+            outline=True
         ), width="auto"))
 
         if fields[0]:
             row.append(dbc.Col(dbc.Select(
-                id={'type': f"brand-{product}", 'index': unique_id}), width=5))
+                options=load_brands(product),
+                id={'type': f"brand-{product}", 'index': unique_id}
+            ), width=5))
 
         if fields[1]:
             row.append(dbc.Col(dbc.Input(
@@ -81,13 +83,14 @@ def product_grid2(product):
             id={'type': f"row-{product}", 'index': unique_id}))
 
     # Add a callback to update the options of every brand select on page load
-    @callback(
-        Output({'type': f"brand-{product}", 'index': ALL}, "options"),
-        Input({'type': f"brand-{product}", 'index': ALL}, "className"),
-        prevent_initial_call=False
-    )
-    def update_brand_options(class_names):
-        return [load_brands(product)] * len(class_names)
+    if CFG.product_fields[product][0]:
+        @callback(
+            Output({'type': f"brand-{product}", 'index': MATCH}, "options"),
+            Input({'type': f"brand-{product}", 'index': MATCH}, "id"),
+            prevent_initial_call=False
+        )
+        def update_brand_options(_):
+            return load_brands(product)
 
     return html.Div([
         dbc.Col([
@@ -415,7 +418,7 @@ def create_row_callbacks(prd):
         row.append(dbc.Col(dbc.Button(
             html.I(className="bi bi-trash3"),
             id={'type': f"delete-{prd}", 'index': unique_id},
-            outline=True, color="danger"
+            outline=True
         ), width="auto"))
 
         if fields[0]:
@@ -450,57 +453,60 @@ def create_row_callbacks(prd):
 
 
 def create_validation_callbacks(prd):
-    @callback(
-        Output({'type': f'brand-{prd}', 'index': ALL}, "invalid"),
-        Output({'type': f'price-{prd}', 'index': ALL}, "invalid"),
-        Output({'type': f'quantity-{prd}', 'index': ALL}, "invalid"),
+    clientside_callback(
+        ClientsideFunction(
+            namespace='functions',
+            function_name='validate_rows'
+        ),
         Output(f"status-{prd}", "children"),
         Output(f"status-{prd}", "color"),
         Output(f"icon-{prd}", "src"),
-        Input(f"{prd}-rows", "children"),
-        Input({'type': f"brand-{prd}", 'index': ALL}, "value"),
-        Input({'type': f"price-{prd}", 'index': ALL}, "value"),
-        Input({'type': f"quantity-{prd}", 'index': ALL}, "value"),
+        Input({'type': f"delete-{prd}", 'index': ALL}, "className"),
         State(f"icon-{prd}", "src"),
         prevent_initial_call=False
     )
-    def validate_rows(rows, brd, prc, qty, src):
-        length = len(rows)
-        output = []
-        icon = src.split("-")[0]
 
-        # First check the inputs
-        output.append([True if brand is None else False for brand in brd])
-        output.append([True if price is None else False for price in prc])
-        output.append([False for quantity in qty])
-
-        # Then summarize it
-        if any(True in field for field in output):
-            output.append("Valores")
-            output.append("danger")
-            output.append(f"{icon}-red.svg")
-        elif length == 0:
-            output.append("Sem dados")
-            output.append("warning")
-            output.append(f"{icon}-orange.svg")
-        elif length < CFG.product_rows[prd]:
-            output.append("Faltando")
-            output.append("warning")
-            output.append(f"{icon}-orange.svg")
-        else:
-            output.append("Completo")
-            output.append("success")
-            output.append(f"{icon}-green.svg")
-        return output
+    if CFG.product_fields[prd][0]:
+        clientside_callback(
+            ClientsideFunction(
+                namespace='functions',
+                function_name='validate_row_brand'
+            ),
+            Output({'type': f'brand-{prd}', 'index': MATCH}, "invalid"),
+            Output({'type': f'price-{prd}', 'index': MATCH}, "invalid"),
+            Output({'type': f'quantity-{prd}', 'index': MATCH}, "invalid"),
+            Output({'type': f'delete-{prd}', 'index': MATCH}, "className"),
+            Input({'type': f"brand-{prd}", 'index': MATCH}, "value"),
+            Input({'type': f"price-{prd}", 'index': MATCH}, "value"),
+            Input({'type': f"quantity-{prd}", 'index': MATCH}, "value"),
+            State({'type': f"delete-{prd}", 'index': MATCH}, "className"),
+            prevent_initial_call=False
+        )
+    else:
+        clientside_callback(
+            ClientsideFunction(
+                namespace='functions',
+                function_name='validate_row_brandless'
+            ),
+            Output({'type': f'price-{prd}', 'index': MATCH}, "invalid"),
+            Output({'type': f'quantity-{prd}', 'index': MATCH}, "invalid"),
+            Output({'type': f'delete-{prd}', 'index': MATCH}, "className"),
+            Input({'type': f"price-{prd}", 'index': MATCH}, "value"),
+            Input({'type': f"quantity-{prd}", 'index': MATCH}, "value"),
+            State({'type': f"delete-{prd}", 'index': MATCH}, "className"),
+            prevent_initial_call=False
+        )
 
 
 def create_save_callback(group, group_prds):
-    @callback(
-        [
-            Output(f"confirm-send-{group}", "message"),
-            Output(f"save-products-{group}", "disabled"),
-            Output(f"save-products-{group}", "color")
-        ],
+    clientside_callback(
+        ClientsideFunction(
+            namespace='functions',
+            function_name='validate_sections'
+        ),
+        Output(f"confirm-send-{group}", "message"),
+        Output(f"save-products-{group}", "disabled"),
+        Output(f"save-products-{group}", "color"),
         Output(f"save-container-{group}", "className"),
         Input(f"collector_name-{group}", "value"),
         Input(f"collection_date-{group}", "value"),
@@ -509,21 +515,6 @@ def create_save_callback(group, group_prds):
         [Input(f"status-{prd}", "children") for prd in group_prds],
         prevent_initial_call=False
     )
-    def enable_save(nm, dt, es, *args):
-        colors = args[0:len(group_prds)]
-        values = args[len(group_prds):]
-
-        disabled = any(color == 'danger' for color in colors)
-        if nm is None or dt is None or es is None:
-            disabled = True
-        message = f"""
-Produtos perfeitos: {values.count("Completo")}
-Produtos com faltas: {values.count("Faltando")}
-Produtos sem dados: {values.count("Sem dados")}
-"""
-        rtn = [message, disabled, "success" if not disabled else "danger"]
-        rtn.append("unclickable" if disabled else "")
-        return rtn
 
     @callback(
         Output(f"grids-{group}", "children"),

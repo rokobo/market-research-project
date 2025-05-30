@@ -26,7 +26,15 @@ const PRDOUT=new Array(13).fill(NOUPDATE);
 function INFO(...m){ctx=dash_clientside.callback_context&&dash_clientside.callback_context.triggered_id?dash_clientside.callback_context.triggered_id:"?";console.log(`%c${INFO.caller.name.toUpperCase()} %c(${ctx}):`,"background:#00252E;color:#25F5FC","background:#382C00;color:#FFC800",...m)}
 function ERROR(...m){console.log(`%cERROR ${ERROR.caller.name.toUpperCase()} %c(${dash_clientside.callback_context.triggered_id}):`,"background:#700000;color:#FFADAD","background:#382C00;color:#FFC800",...m)}
 function nearest(lat,lon){smallestDist=[Infinity,""];for(est in COORDS){vals=COORDS[est];dist=haversine([lat,lon],[vals.Latitude,vals.Longitude]);if(dist<smallestDist[0]){smallestDist=[dist,est]}}return smallestDist}
-
+function splitArgs(...args) {
+    if (args.length % 2 !== 0) {
+        throw new Error("Expected an even number of arguments.");
+    }
+    const half = args.length / 2;
+    const firstHalf = args.slice(0, half);
+    const secondHalf = args.slice(half);
+    return [firstHalf, secondHalf];
+}
 function updateGeoBadge(position, error) {
     const badge = document.getElementById("geolocation-badge");
     if (!position) {
@@ -117,5 +125,93 @@ refresh_local_storages: function(_){
     const mm = String(now.getMinutes()).padStart(2, '0');
     const ss = String(now.getSeconds()).padStart(2, '0');
     return [markdown, `${hh}:${mm}:${ss}`];
+},
+validate_row_brand: function(brd, prc, qty, className) {
+    const output = [
+        brd === null || brd === "" || brd === undefined,
+        prc === null || prc === "" || prc === undefined || isNaN(prc) || prc <= 0,
+        false]
+
+    const allValid = output.every(val => !val);
+
+    if (allValid) {
+        const nc = "btn-outline-success";
+        if (className === nc) { output.push(dash_clientside.no_update)
+        } else { output.push(nc) }
+    } else {
+        const nc = "btn-outline-danger";
+        if (className === nc) { output.push(dash_clientside.no_update)
+        } else { output.push(nc) }
+    }
+    INFO(output, brd, prc, qty, className);
+    return output;
+},
+validate_row_brandless: function(prc, qty, className) {
+    const output = [
+        prc === null || prc === "" || prc === undefined || isNaN(prc) || prc <= 0,
+        false]
+
+    const allValid = output.every(val => !val);
+
+    if (allValid) {
+        const nc = "btn-outline-success";
+        if (className === nc) { output.push(dash_clientside.no_update)
+        } else { output.push(nc) }
+    } else {
+        const nc = "btn-outline-danger";
+        if (className === nc) { output.push(dash_clientside.no_update)
+        } else { output.push(nc) }
+    }
+    INFO(output, prc, qty, className);
+    return output;
+},
+validate_rows: function(cls, src) {
+    const icon = src.split("-")[0];
+    const current = src.split("-")[1];
+    const prd = icon.split("/").at(-1);
+    const CFG = JSON.parse(localStorage.getItem("CFG-data"));
+
+    if (cls.length === 0) {
+        rtn = ["Sem dados", "warning", `${icon}-orange.svg`]
+        INFO(rtn, cls, src);
+        return rtn;
+    }
+    const allSuccess = cls.every(cl => cl.includes("success"));
+    if (allSuccess) {
+        if (cls.length < CFG.product_rows[prd]) {
+            rtn =  ["Faltando", "warning", `${icon}-orange.svg`];
+            INFO(rtn, cls, src);
+            return rtn;
+        } else {
+            rtn = ["Completo", "success", `${icon}-green.svg`];
+            INFO(rtn, cls, src);
+            return rtn;
+        }
+    } else {
+        rtn = ["Valores", "danger", `${icon}-red.svg`];
+        INFO(rtn, cls, src);
+        return rtn;
+    }
+},
+validate_sections: function(name, date, estab, ...args) {
+    const [color, children] = splitArgs(...args);
+    let disabled = color.includes("danger")
+    disabled = disabled || name === "" || date === "" || estab === "";
+    disabled = disabled || name === null || date === null || estab === null;
+    disabled = disabled || name === undefined || date === undefined || estab === undefined;
+
+    counts = {};
+
+    children.forEach(item => {
+        counts[item] = (counts[item] || 0) + 1;
+    });
+
+    message = "";
+    message += `Produtos Perfeitos: ${counts["Completo"] || 0}\n`;
+    message += `Produtos com Faltas: ${counts["Faltando"] || 0}\n`;
+    message += `Produtos Sem dados: ${counts["Sem dados"] || 0}\n`;
+    INFO(disabled, disabled ? "danger" : "success", disabled ? "unclickable" : "", "\n", message);
+    return [message, disabled, disabled ? "danger" : "success", disabled ? "unclickable" : ""];
+
 }
 }

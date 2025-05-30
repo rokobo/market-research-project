@@ -16,7 +16,8 @@ config["split"] = config["split"].astype(bool)
 def get_splits(split, product):
     if split:
         with sql.connect(join(config_folder, "marcas.db")) as db:
-            return pd.read_sql(f"SELECT brand FROM {product}", db).values.flatten().tolist()
+            return pd.read_sql(
+                f"SELECT brand FROM {product}", db).values.flatten().tolist()
     return None
 
 
@@ -65,7 +66,6 @@ CFG = SimpleNamespace(**dict(
 
 titles = config.set_index('product')[
     ['title', 'subtitle']].apply(list, axis=1).to_dict()
-
 
 CFG.product_titles = {
     prd: f"{lbl[0]} - {quant[0]}{quant[1]} {f"({lbl[1]})" if lbl[1] else ""}"
