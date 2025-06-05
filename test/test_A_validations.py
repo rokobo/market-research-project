@@ -2,15 +2,12 @@
 import pytest
 from pytest import fixture, mark
 import subprocess
-import time
-import requests
 import os
 import re
 import sys
 from os.path import join, dirname
 from playwright.sync_api import sync_playwright, expect
 from conftest import get_window_position, kill_port
-
 
 sys.path.append(join(dirname(dirname(__file__)), "src"))
 

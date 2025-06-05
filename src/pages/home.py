@@ -1,19 +1,21 @@
 import dash
-from dash import html, callback, Input, Output, State, ALL, dcc, \
-    clientside_callback, ClientsideFunction
-from components import wait_modal, INFO, navitem_with_icon
-from tools import load_establishments, save_products
-from CONFIG import CFG, BOLD, CENTER, UNDERLINE
+from dash import html
+from components import navitem_with_icon
+from CONFIG import CFG, BOLD
 import dash_bootstrap_components as dbc
-import dash_mantine_components as dmc
 
 dash.register_page(__name__, path="/")
 
 layout = html.Div([
-    dbc.Stack([
-        html.Img(src="/assets/favicon.ico", className="m-2"),
-        html.H1("Projeto ICB", className="m-2", style={"font-size": "3em"} | BOLD),
-    ], direction="horizontal", class_name="m-2 bg-secondary text-white rounded-3"),
+    dbc.Stack(
+        [
+            html.Img(src="/assets/favicon.ico", className="m-2"),
+            html.H1(
+                "Projeto ICB", className="m-2",
+                style={"font-size": "3em"} | BOLD),
+        ],
+        direction="horizontal",
+        class_name="m-2 bg-secondary text-white rounded-3"),
     html.H3("Páginas de Coleta", className="m-2"),
     dbc.Nav([
         navitem_with_icon(grp.capitalize(), grp, f"{i+1}-square-fill")
@@ -35,7 +37,8 @@ layout = html.Div([
     html.Hr(),
     html.H3("Páginas de Diagnóstico", className="m-2"),
     dbc.Nav([
-        navitem_with_icon("Local Storage", "local-storage", "database-fill-lock"),
+        navitem_with_icon(
+            "Local Storage", "local-storage", "database-fill-lock"),
         navitem_with_icon("Ícones", "icons", "star-fill"),
     ], pills=True),
 ])

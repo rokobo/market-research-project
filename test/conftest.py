@@ -5,7 +5,8 @@ import subprocess
 import time
 import requests
 
-# store history of failures per test class name and per index in parametrize (if parametrize used)
+# store history of failures per test class name and per index in parametrize
+# (if parametrize used)
 _test_failed_incremental: Dict[str, Dict[Tuple[int, ...], str]] = {}
 
 
@@ -16,7 +17,8 @@ def pytest_runtest_makereport(item, call):
             # the test has failed
             # retrieve the class name of the test
             cls_name = str(item.cls)
-            # retrieve the index of the test (if parametrize is used in combination with incremental)
+            # retrieve the index of the test
+            # (if parametrize is used in combination with incremental)
             parametrize_index = (
                 tuple(item.callspec.indices.values())
                 if hasattr(item, "callspec")
@@ -24,7 +26,7 @@ def pytest_runtest_makereport(item, call):
             )
             # retrieve the name of the test function
             test_name = item.originalname or item.name
-            # store in _test_failed_incremental the original name of the failed test
+            # store in _test_failed_incremental the name of failed test
             _test_failed_incremental.setdefault(cls_name, {}).setdefault(
                 parametrize_index, test_name
             )
@@ -36,21 +38,26 @@ def pytest_runtest_setup(item):
         cls_name = str(item.cls)
         # check if a previous test has failed for this class
         if cls_name in _test_failed_incremental:
-            # retrieve the index of the test (if parametrize is used in combination with incremental)
+            # retrieve the index of the test
+            # (if parametrize is used in combination with incremental)
             parametrize_index = (
                 tuple(item.callspec.indices.values())
                 if hasattr(item, "callspec")
                 else ()
             )
-            # retrieve the name of the first test function to fail for this class name and index
-            test_name = _test_failed_incremental[cls_name].get(parametrize_index, None)
-            # if name found, test has failed for the combination of class name & test name
+            # retrieve the name of the first test function
+            # to fail for this class name and index
+            test_name = _test_failed_incremental[cls_name].get(
+                parametrize_index, None)
+            # if name found:
+            # test has failed for the combination of class name & test name
             if test_name is not None:
                 pytest.skip(f"Previous test failed ({test_name})")
 
 
 def get_window_position(idx, grid=(2, 2)):
-    PRIMARY = next((m for m in get_monitors() if m.is_primary), get_monitors()[0])
+    PRIMARY = next(
+        (m for m in get_monitors() if m.is_primary), get_monitors()[0])
     WIDTH, HEIGHT = PRIMARY.width, PRIMARY.height
     OFFSET_X, OFFSET_Y = PRIMARY.x, PRIMARY.y
 
@@ -76,7 +83,7 @@ def kill_port(port):
             if pid:
                 subprocess.run(["kill", "-9", pid], check=False)
                 print(f"Killed PID {pid} on port {port}")
-    except Exception as _:
+    except Exception:
         print(f"No process found on port {port}")
 
 

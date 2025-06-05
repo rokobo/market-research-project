@@ -1,5 +1,5 @@
 import dash
-from dash import html, Input, dcc, callback
+from dash import html
 import dash_bootstrap_components as dbc
 from components import diagnostics_nav
 from CONFIG import CFG
