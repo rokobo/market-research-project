@@ -2,10 +2,7 @@
 import pytest
 from pytest import fixture, mark
 import subprocess
-import time
-import requests
 import os
-import re
 import sys
 from os.path import join, dirname
 from playwright.sync_api import sync_playwright, expect
