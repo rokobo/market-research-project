@@ -1,7 +1,9 @@
 """Tools for the pages."""
 
+import hashlib
 from functools import cache
 import math
+import json
 from os.path import join, exists
 from os import makedirs, listdir, remove, chown, chmod
 from send2trash import send2trash
@@ -16,21 +18,44 @@ from CONFIG import CFG, COORDINATES
 import sqlite3
 
 
-def delete_group_pages():
-    for page in listdir(CFG.pages):
-        if page.startswith("dynamic-") and page.endswith(".py"):
-            remove(join(CFG.pages, page))
-            print(f"Removed page: {page}")
-    return
+CACHE_FILE = join(CFG.home, "tmp", "groups.hash")
 
 
-def create_group_pages():
-    for page in listdir(CFG.pages):
+def compute_hash(groups):
+    return hashlib.md5(json.dumps(sorted(groups)).encode()).hexdigest()
+
+
+def load_cached_hash():
+    try:
+        with open(CACHE_FILE, "r") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return None
+
+
+def save_cached_hash(hash_value):
+    with open(CACHE_FILE, "w") as f:
+        f.write(hash_value)
+
+
+def create_group_pages(groups):
+    current_hash = compute_hash(groups)
+    cached_hash = load_cached_hash()
+
+    pages = listdir(CFG.pages)
+    for grp in CFG.groups:
+        if f"dynamic-{grp}.py" not in pages:
+            cached_hash = None
+
+    if current_hash == cached_hash:
+        print("No changes in groups, skipping page creation.")
+        return
+    else:
+        print("Changes detected in groups, updating pages.")
+        save_cached_hash(current_hash)
+
+    for page in pages:
         if page.startswith("dynamic-") and page.endswith(".py"):
-            name = page[len("dynamic-"):-3]
-            if name in CFG.groups:
-                print(f"Page {page} already exists")
-                continue
             remove(join(CFG.pages, page))
             print(f"Removed page: {page}")
     for group in set(CFG.groups):

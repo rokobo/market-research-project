@@ -33,3 +33,4 @@ test/test_dash.py
 config/marcas.db
 config/estabelecimentos.db
 config/products.db
+tmp/groups.hash
