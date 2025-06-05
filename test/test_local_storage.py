@@ -57,21 +57,45 @@ def gunicorn_server():
         proc.wait()
 
 
+MONITOR_SIZE = (3840, 2160)
+MONITOR_GRID = (2, 2)
+
+def get_window_position(idx):
+    cols, rows = MONITOR_GRID
+    cell_width = MONITOR_SIZE[0] // cols
+    cell_height = MONITOR_SIZE[1] // rows
+
+    idx -= 1  # make it 0-based
+    col = idx % cols
+    row = idx // cols
+
+    x = col * cell_width
+    y = row * cell_height
+
+    return x, y
+
 @pytest.fixture(scope="class")
 def playwright_driver(gunicorn_server, request):
     subprocess.run(["playwright", "install", "chromium"], check=True)
     app_url = "http://127.0.0.1:8061"
+    index = request.cls.__name__.split('_')[0][4:]
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         context = browser.new_context(
             geolocation={"latitude": -22.9, "longitude": -47.1},
             permissions=["geolocation"],
+            viewport={
+                "width": MONITOR_SIZE[0] / MONITOR_GRID[0],
+                "height": MONITOR_SIZE[1] / MONITOR_GRID[1]},
             http_credentials={
                 "username": os.environ.get("APP_USERNAME"),
                 "password": os.environ.get("APP_PASSWORD")
             }
         )
         page = context.new_page()
+        x, y = get_window_position(int(index))
+        page.evaluate(f"window.moveTo({x}, {y})")
         page.goto(app_url)
         expect(page).to_have_title("ICB")
 
@@ -81,7 +105,7 @@ def playwright_driver(gunicorn_server, request):
 
 
 @mark.incremental
-class Test001_Brands:
+class Test004_Brands:
     @fixture(autouse=True)
     def setup_class(self, playwright_driver):
         self.app = playwright_driver

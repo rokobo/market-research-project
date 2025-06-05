@@ -106,7 +106,7 @@ class Test001_Initial_State:
                 if grp != group:
                     continue
                 icon = self.app.locator(f'#icon-{prd}')
-                expect(icon).to_have_attribute("src", re.compile("-red.svg"))
+                expect(icon).to_have_attribute("class", re.compile("icon-red"))
 
     def test_fields(self):
         groups = list(set(CFG.groups))
@@ -178,7 +178,7 @@ class Test002_No_Data:
                 assert counter == CFG.product_rows[prd], "Wrong number of rows"
 
                 icon = self.app.locator(f'#icon-{prd}')
-                expect(icon).to_have_attribute("src", re.compile("-orange.svg"))
+                expect(icon).to_have_attribute("class", re.compile("icon-orange"))
 
                 badge = self.app.locator(f'#status-{prd}')
                 badge.scroll_into_view_if_needed()
@@ -239,6 +239,7 @@ class Test003_With_Data:
                     number.scroll_into_view_if_needed()
                     number.focus()
                     number.fill("10")
+                    number.press("Enter")
                     expect(number).not_to_have_class(re.compile("is-invalid"))
 
                     if fields[2]:
@@ -247,10 +248,11 @@ class Test003_With_Data:
                         number.scroll_into_view_if_needed()
                         number.focus()
                         number.fill("0.5")
+                        number.press("Enter")
                         expect(number).not_to_have_class(re.compile("is-invalid"))
 
                 icon = self.app.locator(f'#icon-{prd}')
-                expect(icon).to_have_attribute("src", re.compile("-green.svg"))
+                expect(icon).to_have_attribute("class", re.compile("icon-green"))
 
                 badge = self.app.locator(f'#status-{prd}')
                 badge.scroll_into_view_if_needed()

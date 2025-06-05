@@ -183,31 +183,21 @@ validate_row_brandless: function(prc, qty, className) {
 },
 validate_rows: function(cls, src) {
     const icon = src.split("-")[0];
-    const current = src.split("-")[1];
-    const prd = icon.split("/").at(-1);
+    const prd = icon.split("/").at(-1).split(".")[0];
     const CFG = JSON.parse(localStorage.getItem("CFG-data"));
 
     if (cls.length === 0) {
         rtn = ["Sem dados", "warning", "icon-orange"]
-        INFO(rtn, cls, src);
+        INFO(rtn, cls.length, prd, CFG["product_rows"][prd]);
         return rtn;
     }
     const allSuccess = cls.every(cl => cl.includes("success"));
     if (allSuccess) {
-        if (cls.length < CFG.product_rows[prd]) {
-            rtn =  ["Faltando", "warning", "icon-orange"];
-            INFO(rtn, cls, src);
-            return rtn;
-        } else {
-            rtn = ["Completo", "success", "icon-green"];
-            INFO(rtn, cls, src);
-            return rtn;
-        }
-    } else {
-        rtn = ["Valores", "danger", "icon-red"];
-        INFO(rtn, cls, src);
-        return rtn;
-    }
+        if (cls.length < CFG["product_rows"][prd]) { rtn =  ["Faltando", "warning", "icon-orange"] }
+        else { rtn = ["Completo", "success", "icon-green"] }
+    } else { rtn = ["Valores", "danger", "icon-red"] }
+    INFO(rtn, cls.length, prd, CFG["product_rows"][prd]);
+    return rtn;
 },
 validate_sections: function(name, date, estab, ...args) {
     const [color, children] = splitArgs(...args);
