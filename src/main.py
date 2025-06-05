@@ -20,7 +20,8 @@ sys.path.append(dirname(__file__))
 _dash_renderer._set_react_version("18.2.0")
 
 from CONFIG import CFG, COORDINATES
-from tools import create_group_pages, load_brands
+from tools import create_group_pages, load_brands, delete_group_pages
+delete_group_pages()
 load_dotenv()
 create_group_pages()
 

@@ -16,6 +16,14 @@ from CONFIG import CFG, COORDINATES
 import sqlite3
 
 
+def delete_group_pages():
+    for page in listdir(CFG.pages):
+        if page.startswith("dynamic-") and page.endswith(".py"):
+            remove(join(CFG.pages, page))
+            print(f"Removed page: {page}")
+    return
+
+
 def create_group_pages():
     for page in listdir(CFG.pages):
         if page.startswith("dynamic-") and page.endswith(".py"):
