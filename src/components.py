@@ -70,11 +70,11 @@ def product_grid2(product):
 
         if fields[1]:
             row.append(dbc.Col(dbc.Input(
-                type="number",
+                type="number", debounce=True,
                 id={'type': f"price-{product}", 'index': unique_id})))
         if fields[2]:
             row.append(dbc.Col(dbc.Input(
-                type="number",
+                type="number", debounce=True,
                 id={'type': f"quantity-{product}", 'index': unique_id})))
         rows.append(dbc.Row(
             row, className="g-0",
@@ -83,7 +83,7 @@ def product_grid2(product):
     return html.Div([
         dbc.Col([
             html.Div(
-                html.Img(src=f"assets/icons/{product}-black.svg"),
+                html.Img(src=f"assets/icons/{product}.svg"),
                 style={"display": "inline-block"}),
             dbc.Label(
                 CFG.product_titles[product], style=BOLD, className="mx-2"),
@@ -164,7 +164,7 @@ def create_page(group: str):
             dbc.Row([
                 html.A(
                     html.Img(
-                        src=f"assets/icons/{prd}-black.svg", id=f"icon-{prd}"),
+                        src=f"assets/icons/{prd}.svg", id=f"icon-{prd}"),
                     href=f"#{prd}-heading",
                 ) for prd in group_prds
             ], className="g-0 m-0 navigation")
@@ -212,7 +212,8 @@ def create_page(group: str):
         html.Div([
             dbc.Label("Nome do coletor", style=BOLD),
             dbc.Input(
-                type="text", id=f"collector_name-{group}", persistence=True),
+                debounce=True, type="text",
+                id=f"collector_name-{group}", persistence=True),
         ], className="m-2"),
         html.Div([
             dbc.Label("Data de coleta", style=BOLD),
@@ -223,7 +224,7 @@ def create_page(group: str):
                 target="date-info"),
             dbc.InputGroup([
                 dbc.Input(
-                    type="date", id=f"collection_date-{group}"),
+                    debounce=True, type="date", id=f"collection_date-{group}"),
                 dbc.Button(
                     [html.I(className="bi bi-calendar2-check"), " Hoje"],
                     id=f"fill-date-{group}", color="primary")
@@ -456,7 +457,7 @@ def create_validation_callbacks(prd):
         ),
         Output(f"status-{prd}", "children"),
         Output(f"status-{prd}", "color"),
-        Output(f"icon-{prd}", "src"),
+        Output(f"icon-{prd}", "className"),
         Input({'type': f"delete-{prd}", 'index': ALL}, "className"),
         State(f"icon-{prd}", "src"),
         prevent_initial_call=False
@@ -580,10 +581,12 @@ def create_database_mod(db):
             rows.append(dbc.Row([
                 dbc.InputGroup([
                     dbc.InputGroupText(row[columns.index("product")]),
-                    dbc.Input(type="text", value=row[idx], id={
-                        "type": f"input-attribute-{db}",
-                        "index": f"{row[0]}-{attr}"
-                    }),
+                    dbc.Input(
+                        debounce=True, type="text", value=row[idx], id={
+                            "type": f"input-attribute-{db}",
+                            "index": f"{row[0]}-{attr}"
+                        }
+                    ),
                     dbc.Button("Atualizar", color="secondary", id={
                         "type": f"update-attribute-{db}",
                         "index": f"{row[0]}-{attr}"

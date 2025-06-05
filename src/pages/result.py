@@ -41,7 +41,9 @@ layout = html.Div([
         ], direction="horizontal")
     ], direction="horizontal", className="m-2"),
     dbc.Row(dbc.InputGroup([
-        dbc.Input(id="result-password", type="text", persistence=True),
+        dbc.Input(
+            debounce=True, id="result-password",
+            type="text", persistence=True),
         dbc.InputGroupText("Senha"),
     ], class_name="p-0"), className="m-2"),
     dbc.Row(

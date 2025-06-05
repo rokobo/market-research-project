@@ -86,9 +86,8 @@ function refresh_CFG() {
             if (!response.ok) {throw new Error('Network response was not ok /refresh_CFG')}
             return response.json();
         })
-        .then(data => { localStorage.setItem("CFG-data", JSON.stringify(data)) })
-        .catch(error => { console.error('Error fetching /get-cfg:', error) });
-    console.timeEnd("refresh_CFG");
+        .then(data => { localStorage.setItem("CFG-data", JSON.stringify(data));console.timeEnd("refresh_CFG");refresh_brands() })
+        .catch(error => { console.error('Error fetching /get-cfg:', error);console.timeEnd("refresh_CFG") });
 }
 
 
@@ -116,10 +115,8 @@ function refresh_brands() {
 }
 
 setInterval(refresh_CFG, 1000 * 60);
-setInterval(refresh_brands, 1000 * 60);
 
 refresh_CFG();
-refresh_brands();
 
 window.dash_clientside.functions={
 refresh_local_storages: function(_){
@@ -191,23 +188,23 @@ validate_rows: function(cls, src) {
     const CFG = JSON.parse(localStorage.getItem("CFG-data"));
 
     if (cls.length === 0) {
-        rtn = ["Sem dados", "warning", `${icon}-orange.svg`]
+        rtn = ["Sem dados", "warning", "icon-orange"]
         INFO(rtn, cls, src);
         return rtn;
     }
     const allSuccess = cls.every(cl => cl.includes("success"));
     if (allSuccess) {
         if (cls.length < CFG.product_rows[prd]) {
-            rtn =  ["Faltando", "warning", `${icon}-orange.svg`];
+            rtn =  ["Faltando", "warning", "icon-orange"];
             INFO(rtn, cls, src);
             return rtn;
         } else {
-            rtn = ["Completo", "success", `${icon}-green.svg`];
+            rtn = ["Completo", "success", "icon-green"];
             INFO(rtn, cls, src);
             return rtn;
         }
     } else {
-        rtn = ["Valores", "danger", `${icon}-red.svg`];
+        rtn = ["Valores", "danger", "icon-red"];
         INFO(rtn, cls, src);
         return rtn;
     }

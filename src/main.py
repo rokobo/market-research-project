@@ -20,10 +20,9 @@ sys.path.append(dirname(__file__))
 _dash_renderer._set_react_version("18.2.0")
 
 from CONFIG import CFG, COORDINATES
-from tools import create_group_pages, create_icon_variations, load_brands
+from tools import create_group_pages, load_brands
 load_dotenv()
 create_group_pages()
-create_icon_variations()
 
 
 app = Dash(
