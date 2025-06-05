@@ -50,7 +50,8 @@ def product_grid2(product):
     if fields[1]:
         headers.append(dbc.Col(dbc.FormText("Preço"), style=CENTER))
     if fields[2]:
-        headers.append(dbc.Col(dbc.FormText("Qtd"), style=CENTER))
+        headers.append(dbc.Col(dbc.FormText(
+            f"Qtd - ({CFG.quantities[product][1]})"), style=CENTER))
 
     # Rows
     rows = []
