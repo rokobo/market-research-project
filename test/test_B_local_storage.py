@@ -9,36 +9,13 @@ import re
 import sys
 from os.path import join, dirname
 from playwright.sync_api import sync_playwright, expect
+from conftest import get_window_position, kill_port
 
 
 sys.path.append(join(dirname(dirname(__file__)), "src"))
 
 from tools import load_brands
 from CONFIG import CFG
-
-
-def kill_port(port):
-    try:
-        output = subprocess.check_output(
-            f"lsof -t -i:{port}", shell=True).decode().split()
-        for pid in output:
-            if pid:
-                subprocess.run(["kill", "-9", pid], check=False)
-                print(f"Killed PID {pid} on port {port}")
-    except Exception as _:
-        print(f"No process found on port {port}")
-
-
-def wait_for_http_response(url, timeout=10):
-    for _ in range(timeout):
-        try:
-            r = requests.get(url)
-            if r.status_code == 200:
-                return
-        except requests.ConnectionError:
-            pass
-        time.sleep(1)
-    raise RuntimeError(f"Server not responding at {url}")
 
 
 @fixture(scope="session")
@@ -57,45 +34,30 @@ def gunicorn_server():
         proc.wait()
 
 
-MONITOR_SIZE = (3840, 2160)
-MONITOR_GRID = (2, 2)
-
-def get_window_position(idx):
-    cols, rows = MONITOR_GRID
-    cell_width = MONITOR_SIZE[0] // cols
-    cell_height = MONITOR_SIZE[1] // rows
-
-    idx -= 1  # make it 0-based
-    col = idx % cols
-    row = idx // cols
-
-    x = col * cell_width
-    y = row * cell_height
-
-    return x, y
-
 @pytest.fixture(scope="class")
 def playwright_driver(gunicorn_server, request):
     subprocess.run(["playwright", "install", "chromium"], check=True)
     app_url = "http://127.0.0.1:8061"
     index = request.cls.__name__.split('_')[0][4:]
-
+    POS_X, POS_Y, WIDTH, HEIGHT = get_window_position(int(index))
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(
+            headless=False, args=[
+                f"--window-position={POS_X},{POS_Y}",
+            ]
+        )
         context = browser.new_context(
             geolocation={"latitude": -22.9, "longitude": -47.1},
             permissions=["geolocation"],
             viewport={
-                "width": MONITOR_SIZE[0] / MONITOR_GRID[0],
-                "height": MONITOR_SIZE[1] / MONITOR_GRID[1]},
+                "width": WIDTH,
+                "height": HEIGHT},
             http_credentials={
                 "username": os.environ.get("APP_USERNAME"),
                 "password": os.environ.get("APP_PASSWORD")
             }
         )
         page = context.new_page()
-        x, y = get_window_position(int(index))
-        page.evaluate(f"window.moveTo({x}, {y})")
         page.goto(app_url)
         expect(page).to_have_title("ICB")
 

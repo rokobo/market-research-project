@@ -9,36 +9,13 @@ import re
 import sys
 from os.path import join, dirname
 from playwright.sync_api import sync_playwright, expect
+from conftest import get_window_position, kill_port
 
 
 sys.path.append(join(dirname(dirname(__file__)), "src"))
 
 from tools import load_brands
 from CONFIG import CFG
-
-
-def kill_port(port):
-    try:
-        output = subprocess.check_output(
-            f"lsof -t -i:{port}", shell=True).decode().split()
-        for pid in output:
-            if pid:
-                subprocess.run(["kill", "-9", pid], check=False)
-                print(f"Killed PID {pid} on port {port}")
-    except Exception as _:
-        print(f"No process found on port {port}")
-
-
-def wait_for_http_response(url, timeout=10):
-    for _ in range(timeout):
-        try:
-            r = requests.get(url)
-            if r.status_code == 200:
-                return
-        except requests.ConnectionError:
-            pass
-        time.sleep(1)
-    raise RuntimeError(f"Server not responding at {url}")
 
 
 @fixture(scope="session")
@@ -61,11 +38,20 @@ def gunicorn_server():
 def playwright_driver(gunicorn_server, request):
     subprocess.run(["playwright", "install", "chromium"], check=True)
     app_url = "http://127.0.0.1:8061"
+    index = request.cls.__name__.split('_')[0][4:]
+    POS_X, POS_Y, WIDTH, HEIGHT = get_window_position(int(index))
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(
+            headless=False, args=[
+                f"--window-position={POS_X},{POS_Y}",
+            ]
+        )
         context = browser.new_context(
             geolocation={"latitude": -22.9, "longitude": -47.1},
             permissions=["geolocation"],
+            viewport={
+                "width": WIDTH,
+                "height": HEIGHT},
             http_credentials={
                 "username": os.environ.get("APP_USERNAME"),
                 "password": os.environ.get("APP_PASSWORD")
