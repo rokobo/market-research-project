@@ -4,6 +4,7 @@ import pytest
 import subprocess
 import time
 import requests
+import os
 
 # store history of failures per test class name and per index in parametrize
 # (if parametrize used)
@@ -97,3 +98,30 @@ def wait_for_http_response(url, timeout=10):
             pass
         time.sleep(1)
     raise RuntimeError(f"Server not responding at {url}")
+
+
+def get_files(dir: str):
+    dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), dir)
+    assert os.path.exists(dir), f"Directory {dir} does not exist"
+    assert os.path.isdir(dir), f"{dir} is not a directory"
+
+    files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
+    return files
+
+
+def get_files_diff(original: list, new: list) -> list:
+    original_set = set(original)
+    new_set = set(new)
+    diff = new_set - original_set
+    return list(diff)
+
+
+def delete_files(files: list, dir_name: str):
+    dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), dir_name)
+    assert os.path.exists(dir), f"Directory {dir} does not exist"
+    assert os.path.isdir(dir), f"{dir} is not a directory"
+
+    for filename in os.listdir(dir):
+        if filename in files:
+            file_path = os.path.join(dir, filename)
+            os.remove(file_path)

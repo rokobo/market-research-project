@@ -7,7 +7,8 @@ import re
 import sys
 from os.path import join, dirname
 from playwright.sync_api import sync_playwright, expect
-from conftest import get_window_position, kill_port
+from conftest import get_window_position, kill_port, get_files, \
+    delete_files, get_files_diff
 
 sys.path.append(join(dirname(dirname(__file__)), "src"))
 
@@ -134,7 +135,7 @@ class Test002_No_Data:
     def setup_class(self, playwright_driver):
         self.app = playwright_driver
 
-    def test_badges_and_icons(self):
+    def test_validations(self):
         groups = list(set(CFG.groups))
         for group in groups:
             self.app.goto(f"http://127.0.0.1:8061/{group}")
@@ -145,20 +146,14 @@ class Test002_No_Data:
                 rows = self.app.locator(f"#{prd}-rows")
                 rows.scroll_into_view_if_needed()
                 rows.focus()
-                counter = 0
-                while True:
-                    deletes = rows.locator('button:has(i.bi-trash3)')
-                    count = deletes.count()
-                    if count == 0:
-                        break
 
-                    delete = deletes.first
+                deletes = rows.locator('button:has(i.bi-trash3):visible')
+                assert deletes.count() == CFG.product_rows[prd], "Wrong number of delete buttons"
+                for i in range(deletes.count() - 1, -1, -1):
+                    delete = deletes.nth(i)
                     delete.scroll_into_view_if_needed()
                     delete.focus()
                     delete.click()
-                    counter += 1
-
-                assert counter == CFG.product_rows[prd], "Wrong number of rows"
 
                 icon = self.app.locator(f'#icon-{prd}')
                 expect(icon).to_have_attribute("class", re.compile("icon-orange"))
@@ -178,6 +173,54 @@ class Test002_No_Data:
             save_container.focus()
             expect(save_container).to_have_class(re.compile("unclickable"))
 
+    def test_persistence(self):
+        groups = list(set(CFG.groups))
+        for group in groups:
+            self.app.goto(f"http://127.0.0.1:8061/{group}")
+            for prd, grp in zip(CFG.products, CFG.groups):
+                if grp != group:
+                    continue
+
+                rows = self.app.locator(f"#{prd}-rows")
+                rows.scroll_into_view_if_needed()
+                rows.focus()
+
+                deletes = rows.locator('button:has(i.bi-trash3):visible')
+                assert deletes.count() == 0, "There should be no delete buttons after clearing rows"
+
+    def test_validation_persistence(self):
+        groups = list(set(CFG.groups))
+        for group in groups:
+            self.app.goto(f"http://127.0.0.1:8061/{group}")
+            for prd, grp in zip(CFG.products, CFG.groups):
+                if grp != group:
+                    continue
+
+                rows = self.app.locator(f"#{prd}-rows")
+                rows.scroll_into_view_if_needed()
+                rows.focus()
+
+                icon = self.app.locator(f'#icon-{prd}')
+                expect(icon).to_have_attribute("class", re.compile("icon-orange"))
+
+                badge = self.app.locator(f'#status-{prd}')
+                badge.scroll_into_view_if_needed()
+                badge.focus()
+                expect(badge).to_have_class(re.compile("bg-warning"))
+
+            save_button = self.app.locator(f"#save-products-{group}")
+            save_button.scroll_into_view_if_needed()
+            save_button.focus()
+            expect(save_button).to_have_class(re.compile("btn-danger"))
+
+            save_container = self.app.locator(f"#save-container-{group}")
+            save_container.scroll_into_view_if_needed()
+            save_container.focus()
+            expect(save_container).to_have_class(re.compile("unclickable"))
+
+    def test_save(self):
+        pass
+
 
 @mark.incremental
 class Test003_With_Data:
@@ -185,7 +228,7 @@ class Test003_With_Data:
     def setup_class(self, playwright_driver):
         self.app = playwright_driver
 
-    def test_all(self):
+    def test_validations(self):
         groups = list(set(CFG.groups))
         for group in groups:
             self.app.goto(f"http://127.0.0.1:8061/{group}")
@@ -251,3 +294,42 @@ class Test003_With_Data:
             save_container.scroll_into_view_if_needed()
             save_container.focus()
             expect(save_container).to_have_class(re.compile("unclickable"))
+            break
+
+    def test_persistence(self):
+        pass
+
+    def test_validation_persistence(self):
+        pass
+
+    def test_save(self):
+        groups = list(set(CFG.groups))
+        original_files = get_files("data")
+        for group in groups:
+            self.app.goto(f"http://127.0.0.1:8061/{group}")
+
+            name = self.app.locator(f"#collector_name-{group}")
+            name.scroll_into_view_if_needed()
+            name.focus()
+            name.fill("Test Collector")
+
+            save_button = self.app.locator(f"#save-products-{group}")
+            save_button.scroll_into_view_if_needed()
+            save_button.focus()
+            save_button.click()
+
+
+
+        saved_files = get_files_diff(original_files, get_files("data"))
+        delete_files(saved_files, "data")
+
+
+
+@mark.incremental
+class Test004_Identification_Fields:
+    @fixture(autouse=True)
+    def setup_class(self, playwright_driver):
+        self.app = playwright_driver
+
+    def test_persistence(self):
+        pass

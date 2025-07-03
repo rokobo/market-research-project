@@ -61,7 +61,8 @@ CFG = SimpleNamespace(**dict(
         "files-data", "files-data-timestamp",
         "grid-data", "grid-data-timestamp",
     ],
-    report_timeout_months=3
+    report_timeout_months=3,
+    max_rows=8
 ))
 
 titles = config.set_index('product')[

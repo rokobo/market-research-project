@@ -1,7 +1,8 @@
 """Components for the pages."""
 
+from os import listdir
 import dash_bootstrap_components as dbc
-from tools import load_establishments, save_products2
+from tools import load_establishments, save_products2, load_brands
 from CONFIG import CFG, BOLD, CENTER, UNDERLINE, COORDINATES
 import uuid
 from dash import html, callback, Input, Output, State, ALL, dcc, \
@@ -11,6 +12,7 @@ from math import radians, sin, cos, sqrt, atan2
 from itertools import zip_longest
 import pandas as pd
 import sqlite3 as sql
+import time
 
 
 def INFO(comp_id):
@@ -51,35 +53,50 @@ def product_grid2(product):
         headers.append(dbc.Col(dbc.FormText("Preço"), style=CENTER))
     if fields[2]:
         headers.append(dbc.Col(dbc.FormText(
-            f"Qtd - ({CFG.quantities[product][1]})"), style=CENTER))
+            f"Qtd ({CFG.quantities[product][1]})"), style=CENTER))
 
     # Rows
     rows = []
-    for _ in range(CFG.product_rows[product]):
+    for i in range(CFG.max_rows):
         row = []
-        unique_id = str(uuid.uuid4())
         row.append(dbc.Col(dbc.Button(
             html.I(className="bi bi-trash3"),
-            id={'type': f"delete-{product}", 'index': unique_id},
+            id={'type': f"delete-{product}", 'index': i},
             outline=True
         ), width="auto"))
 
         if fields[0]:
-            row.append(dbc.Col(dbc.Select(
-                id={'type': f"brand-{product}", 'index': unique_id}
+            row.append(dbc.Col(dcc.Loading(
+                dbc.Select(
+                    options=load_brands(product),
+                    id={'type': f"brand-{product}", 'index': i},
+                    persistence=True, persistence_type="local",
+                ),
+                overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+                type="circle"
             ), width=5))
 
         if fields[1]:
-            row.append(dbc.Col(dbc.Input(
-                type="number", debounce=True,
-                id={'type': f"price-{product}", 'index': unique_id})))
+            row.append(dbc.Col(dcc.Loading(
+                dbc.Input(
+                    type="number", debounce=True,
+                    persistence=True, persistence_type="local",
+                    id={'type': f"price-{product}", 'index': i}),
+                overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+                type="circle"
+            )))
         if fields[2]:
             row.append(dbc.Col(dbc.Input(
                 type="number", debounce=True,
-                id={'type': f"quantity-{product}", 'index': unique_id})))
-        rows.append(dbc.Row(
-            row, className="g-0",
-            id={'type': f"row-{product}", 'index': unique_id}))
+                persistence=True, persistence_type="local",
+                id={'type': f"quantity-{product}", 'index': i})))
+        rows.append(
+            dbc.Collapse(
+                dbc.Row(
+                    row, className="g-0",
+                    id={'type': f"row-{product}", 'index': i}
+                ), id={'type': f"collapse-{product}", 'index': i})
+        )
 
     return html.Div([
         dbc.Col([
@@ -89,6 +106,7 @@ def product_grid2(product):
             dbc.Label(
                 CFG.product_titles[product], style=BOLD, className="mx-2"),
             dbc.Badge("", pill=True, id=f"status-{product}"),
+            dbc.FormText("", class_name="ms-1", id=f"status-{product}-count"),
         ], className="p-1 mb-0"),
 
         dbc.Row(headers),
@@ -164,8 +182,13 @@ def create_page(group: str):
         dbc.Navbar([
             dbc.Row([
                 html.A(
-                    html.Img(
-                        src=f"assets/icons/{prd}.svg", id=f"icon-{prd}"),
+                    dcc.Loading(
+                        html.Img(
+                            src=f"assets/icons/{prd}.svg", id=f"icon-{prd}"),
+                        overlay_style={
+                            "visibility": "visible", "filter": "blur(2px)"},
+                        target_components={f"icon-{prd}": "*"},
+                        type="circle"),
                     href=f"#{prd}-heading",
                 ) for prd in group_prds
             ], className="g-0 m-0 navigation")
@@ -247,14 +270,18 @@ def create_page(group: str):
                 "estabelecimento, margem de erro da geolocalização e última "
                 "atualização da localização)"],
                 target="estab-info"),
-            dbc.InputGroup([
-                dbc.Select(
-                    id=f"establishment-{group}",
-                    options=load_establishments()),
-                dbc.Button(
-                    [html.I(className="bi bi-geo-alt"), " Localizar"],
-                    id=f"fill-establishment-{group}", color="primary")
-            ]),
+            dcc.Loading(
+                dbc.InputGroup([
+                    dbc.Select(
+                        id=f"establishment-{group}",
+                        options=load_establishments()),
+                    dbc.Button(
+                        [html.I(className="bi bi-geo-alt"), " Localizar"],
+                        id=f"fill-establishment-{group}", color="primary")
+                ]),
+                overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+                type="circle",
+            ),
             dbc.FormText(
                 "...", id=f"establishment-formtext-{group}",
                 color="secondary", className="unwrap"),
@@ -306,31 +333,111 @@ def create_page(group: str):
             dbc.FormText("Opcional: relatar algo relevante", color="secondary")
         ], className="m-2"),
         INFO("save-info"),
-        html.Div(dcc.ConfirmDialogProvider(
+        dbc.Fade(dbc.Alert([
+            html.H4("Confirmação de envio", className="alert-heading"),
+            dcc.Markdown(id=f"confirm-send-{group}", className="g-0"),
             html.Div(dbc.Button(
                 [html.I(className="bi bi-file-earmark-arrow-up"), " Enviar"],
-                color="success", id=f"save-products-{group}"
-            ), className="d-grid m-5"),
-            id=f"confirm-send-{group}"
-        ), id=f"save-container-{group}"),
+                color="danger", id=f"save-products-{group}", disabled=True
+            ), className="d-grid m-2"),
+        ], className="m-2 p-2", color="light"),
+            id=f"save-container-{group}", is_in=True),
         dbc.Tooltip(
             "O botão 'Enviar' só poderá ser clicado quando todas as seções "
             "estiverem válidas (ícone e status não podem estar vermelhos). "
             "O botão ficará verde quando o envio estiver liberado.",
             target="save-info"),
-        dbc.Modal([
-            dbc.ModalHeader(
-                dbc.ModalTitle("RELATÓRIO ENVIADO"), close_button=False),
-            dbc.ModalBody("Obrigado por enviar seu relatório!"),
-            dbc.ModalFooter(dbc.Button(
-                "Fechar", id=f"close-send-confirmation-{group}",
-                className="ms-auto")),
-        ], id=f"send-confirmed-modal-{group}", centered=True, is_open=False),
+        dbc.Toast(
+            "Obrigado por enviar os dados, tenha um ótimo dia :)",
+            header="Relatório salvo!",
+            id=f"toast-{group}", icon="success",
+            is_open=True, dismissable=False, duration=4000,
+            style={"position": "fixed", "top": 80, "right": 10, "width": 350},
+        ),
+        dcc.Interval(id="reload-brands", interval=1000*60)
     ])
 
     for prd in group_prds:
-        create_row_callbacks(prd)
-        create_validation_callbacks(prd)
+        clientside_callback(
+            ClientsideFunction(
+                namespace='functions',
+                function_name='load_brands'
+            ),
+            Output({'type': f"brand-{prd}", 'index': MATCH}, "options"),
+            Input('reload-brands', 'n_intervals'),
+            State({'type': f"brand-{prd}", 'index': MATCH}, "id"),
+            State({'type': f"brand-{prd}", 'index': MATCH}, "options"),
+            prevent_initial_call=True
+        )
+
+        if CFG.product_fields[prd][0]:  # brand
+            clientside_callback(
+                ClientsideFunction(
+                    namespace='functions',
+                    function_name='process_product_branded'
+                ),
+                Output({'type': f"collapse-{prd}", 'index': ALL}, "is_open"),
+                Output(f"status-{prd}-count", "children"),
+                Output({'type': f"brand-{prd}", 'index': ALL}, "invalid"),
+                Output({'type': f"price-{prd}", 'index': ALL}, "invalid"),
+                Output({'type': f"quantity-{prd}", 'index': ALL}, "invalid"),
+                Output({'type': f"delete-{prd}", 'index': ALL}, "className"),
+                Output(f"status-{prd}", "children"),
+                Output(f"status-{prd}", "color"),
+                Output(f"icon-{prd}", "className"),
+
+                Input(f"add-{prd}", "n_clicks"),
+                Input({'type': f"delete-{prd}", 'index': ALL}, "n_clicks"),
+                Input({'type': f"brand-{prd}", 'index': ALL}, "value"),
+                Input({'type': f"price-{prd}", 'index': ALL}, "value"),
+                Input({'type': f"quantity-{prd}", 'index': ALL}, "value"),
+                State({'type': f"collapse-{prd}", 'index': ALL}, "is_open"),
+                State(f"add-{prd}", "id"),
+            )
+            clientside_callback(
+                ClientsideFunction(
+                    namespace='functions',
+                    function_name='delete_row_data_branded'
+                ),
+                Output({'type': f"brand-{prd}", 'index': MATCH}, "value"),
+                Output({'type': f"price-{prd}", 'index': MATCH}, "value"),
+                Output({'type': f"quantity-{prd}", 'index': MATCH}, "value"),
+                Input({'type': f"delete-{prd}", 'index': MATCH}, "n_clicks"),
+                prevent_initial_call=True
+            )
+        else:
+            clientside_callback(
+                ClientsideFunction(
+                    namespace='functions',
+                    function_name='process_product_brandless'
+                ),
+                Output({'type': f"collapse-{prd}", 'index': ALL}, "is_open"),
+                Output(f"status-{prd}-count", "children"),
+                Output({'type': f"price-{prd}", 'index': ALL}, "invalid"),
+                Output({'type': f"quantity-{prd}", 'index': ALL}, "invalid"),
+                Output({'type': f"delete-{prd}", 'index': ALL}, "className"),
+                Output(f"status-{prd}", "children"),
+                Output(f"status-{prd}", "color"),
+                Output(f"icon-{prd}", "className"),
+
+                Input(f"add-{prd}", "n_clicks"),
+                Input({'type': f"delete-{prd}", 'index': ALL}, "n_clicks"),
+                Input({'type': f"price-{prd}", 'index': ALL}, "value"),
+                Input({'type': f"quantity-{prd}", 'index': ALL}, "value"),
+                State({'type': f"collapse-{prd}", 'index': ALL}, "is_open"),
+                State(f"add-{prd}", "id"),
+            )
+            clientside_callback(
+                ClientsideFunction(
+                    namespace='functions',
+                    function_name='delete_row_data_branded'
+                ),
+                Output({'type': f"price-{prd}", 'index': MATCH}, "value"),
+                Output({'type': f"quantity-{prd}", 'index': MATCH}, "value"),
+                Input({'type': f"delete-{prd}", 'index': MATCH}, "n_clicks"),
+                prevent_initial_call=True
+            )
+
     create_save_callback(group, group_prds)
 
     @callback(
@@ -392,117 +499,13 @@ def haversine(lat1, lon1, lat2, lon2):
     return R * c
 
 
-def create_row_callbacks(prd):
-    clientside_callback(
-        ClientsideFunction(
-            namespace='functions',
-            function_name='load_brands'
-        ),
-        Output({'type': f"brand-{prd}", 'index': MATCH}, "options"),
-        Input({'type': f"brand-{prd}", 'index': MATCH}, "value"),
-        prevent_initial_call=False
-    )
-
-    @callback(
-        Output(f"{prd}-rows", "children", allow_duplicate=True),
-        Input(f"add-{prd}", "n_clicks"),
-        prevent_initial_call=True,
-    )
-    def add_item(button_clicked):
-        patched_children = Patch()
-        unique_id = str(uuid.uuid4())
-        fields = CFG.product_fields[prd]
-        row = []
-
-        row.append(dbc.Col(dbc.Button(
-            html.I(className="bi bi-trash3"),
-            id={'type': f"delete-{prd}", 'index': unique_id},
-            outline=True
-        ), width="auto"))
-
-        if fields[0]:
-            row.append(dbc.Col(dbc.Select(
-                id={'type': f"brand-{prd}", 'index': unique_id}), width=5))
-        if fields[1]:
-            row.append(dbc.Col(dbc.Input(
-                type="number",
-                id={'type': f"price-{prd}", 'index': unique_id})))
-        if fields[2]:
-            row.append(dbc.Col(dbc.Input(
-                type="number",
-                id={'type': f"quantity-{prd}", 'index': unique_id})))
-        patched_children.append(dbc.Row(
-            row, className="g-0",
-            id={'type': f"row-{prd}", 'index': unique_id}))
-        return patched_children
-
-    @callback(
-        Output(f"{prd}-rows", "children", allow_duplicate=True),
-        Input({'type': f"delete-{prd}", 'index': ALL}, "n_clicks"),
-        prevent_initial_call=True,
-    )
-    def delete_item(n_clicks):
-        patched_children = Patch()
-        for index, clicks in enumerate(n_clicks):
-            if clicks is not None:
-                del patched_children[index]
-                break
-        return patched_children
-
-
-def create_validation_callbacks(prd):
-    clientside_callback(
-        ClientsideFunction(
-            namespace='functions',
-            function_name='validate_rows'
-        ),
-        Output(f"status-{prd}", "children"),
-        Output(f"status-{prd}", "color"),
-        Output(f"icon-{prd}", "className"),
-        Input({'type': f"delete-{prd}", 'index': ALL}, "className"),
-        State(f"icon-{prd}", "src"),
-        prevent_initial_call=False
-    )
-
-    if CFG.product_fields[prd][0]:
-        clientside_callback(
-            ClientsideFunction(
-                namespace='functions',
-                function_name='validate_row_brand'
-            ),
-            Output({'type': f'brand-{prd}', 'index': MATCH}, "invalid"),
-            Output({'type': f'price-{prd}', 'index': MATCH}, "invalid"),
-            Output({'type': f'quantity-{prd}', 'index': MATCH}, "invalid"),
-            Output({'type': f'delete-{prd}', 'index': MATCH}, "className"),
-            Input({'type': f"brand-{prd}", 'index': MATCH}, "value"),
-            Input({'type': f"price-{prd}", 'index': MATCH}, "value"),
-            Input({'type': f"quantity-{prd}", 'index': MATCH}, "value"),
-            State({'type': f"delete-{prd}", 'index': MATCH}, "className"),
-            prevent_initial_call=False
-        )
-    else:
-        clientside_callback(
-            ClientsideFunction(
-                namespace='functions',
-                function_name='validate_row_brandless'
-            ),
-            Output({'type': f'price-{prd}', 'index': MATCH}, "invalid"),
-            Output({'type': f'quantity-{prd}', 'index': MATCH}, "invalid"),
-            Output({'type': f'delete-{prd}', 'index': MATCH}, "className"),
-            Input({'type': f"price-{prd}", 'index': MATCH}, "value"),
-            Input({'type': f"quantity-{prd}", 'index': MATCH}, "value"),
-            State({'type': f"delete-{prd}", 'index': MATCH}, "className"),
-            prevent_initial_call=False
-        )
-
-
 def create_save_callback(group, group_prds):
     clientside_callback(
         ClientsideFunction(
             namespace='functions',
             function_name='validate_sections'
         ),
-        Output(f"confirm-send-{group}", "message"),
+        Output(f"confirm-send-{group}", "children"),
         Output(f"save-products-{group}", "disabled"),
         Output(f"save-products-{group}", "color"),
         Output(f"save-container-{group}", "className"),
@@ -515,8 +518,24 @@ def create_save_callback(group, group_prds):
     )
 
     @callback(
-        Output(f"grids-{group}", "children"),
-        Input(f"confirm-send-{group}", "submit_n_clicks"),
+        Output(f"toast-{group}", "is_open"),
+        [Output(
+            {'type': f"brand-{prd}", 'index': ALL},
+            "value", allow_duplicate=True
+        ) for prd in group_prds],
+        [Output(
+            {'type': f"price-{prd}", 'index': ALL},
+            "value", allow_duplicate=True
+        ) for prd in group_prds],
+        [Output(
+            {'type': f"quantity-{prd}", 'index': ALL},
+            "value", allow_duplicate=True
+        ) for prd in group_prds],
+        [Output(
+            {'type': f"collapse-{prd}", 'index': ALL},
+            "is_open", allow_duplicate=True
+        ) for prd in group_prds],
+        Input(f"save-products-{group}", "n_clicks"),
         State(f"collector_name-{group}", "value"),
         State(f"collection_date-{group}", "value"),
         State(f"establishment-{group}", "value"),
@@ -533,32 +552,67 @@ def create_save_callback(group, group_prds):
         [
             State({'type': f"quantity-{prd}", 'index': ALL}, "value")
             for prd in group_prds],
+        [
+            State({'type': f"collapse-{prd}", 'index': ALL}, "is_open")
+            for prd in group_prds],
         prevent_initial_call=True
     )
     def save_group_products(
-        _clicks, name, date, estab, obs, pos, tm, geo_hist, *args
+        _clicks, name, date, estab, obs, pos, _tm, geo_hist, *args
     ):
         n = len(group_prds)
         brands = args[0:n]
         prices = args[n:2*n]
-        qtys = args[2*n:3*n]
+        quantities = args[2*n:3*n]
+        collapses = args[3*n:4*n]
         data = []
 
-        for prd, brds, prcs, qtys in zip(group_prds, brands, prices, qtys):
-            for brd, prc, qty in zip_longest(brds, prcs, qtys, fillvalue=None):
+        field_nones = [None for _ in range(CFG.max_rows)]
+        collapses = [
+            True if i < CFG.expected_rows[prd] else False
+
+        ]
+        out_success = [True]
+        out_success += [[None] * CFG.max_rows for _ in range(len(args))]
+        out_fail = [no_update]
+        out_fail += [[no_update] * CFG.max_rows for _ in range(len(args))]
+
+        loop1 = zip(group_prds, brands, prices, quantities, collapses)
+        for prd, brds, prcs, qtys, is_opens in loop1:
+            loop2 = zip_longest(brds, prcs, qtys, is_opens, fillvalue=None)
+            for brd, prc, qty, is_open in loop2:
+                if not is_open:
+                    continue
                 if qty is None:
                     qty = CFG.quantities[prd][0]
                 data.append({
                     'Produto': prd, 'Marca': brd,
                     'Preço': prc, 'Quantidade': qty
                 })
-
+        tm = int(time.time())
         if pos is None:
             pos_out = [0, 0, 0]
         else:
-            pos_out = [pos["lat"], pos["lon"], tm / 1000]
-        save_products2(data, (name, date, estab), obs, pos_out, geo_hist)
-        return [product_grid2(prd) for prd in group_prds]
+            pos_out = [pos["lat"], pos["lon"], tm]
+
+        current_files = set(listdir(CFG.data))
+        try:
+            save_products2(data, (name, date, estab), obs, pos_out, geo_hist)
+        except Exception as _:
+            return out_fail
+        new_files = set(listdir(CFG.data))
+        files = list(new_files - current_files)
+
+        for file in files:
+            fields = file.split("|")
+            expected = (date, str(tm), name, estab)
+            actual = (fields[0], fields[1], fields[2], fields[3])
+            if expected != actual:
+                continue
+            break
+        else:
+            return out_fail
+        return out_success
 
 
 def create_database_mod(db):

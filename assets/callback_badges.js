@@ -114,7 +114,7 @@ function refresh_brands() {
     console.timeEnd("refresh_brands");
 }
 
-setInterval(refresh_CFG, 1000 * 60);
+setInterval(refresh_CFG, 1000 * 60 * 5);
 
 refresh_CFG();
 
@@ -142,63 +142,6 @@ refresh_local_storages: function(_){
     const ss = String(now.getSeconds()).padStart(2, '0');
     return [markdown, `${hh}:${mm}:${ss}`];
 },
-validate_row_brand: function(brd, prc, qty, className) {
-    const output = [
-        brd === null || brd === "" || brd === undefined,
-        prc === null || prc === "" || prc === undefined || isNaN(prc) || prc <= 0,
-        false]
-
-    const allValid = output.every(val => !val);
-
-    if (allValid) {
-        const nc = "btn-outline-success";
-        if (className === nc) { output.push(dash_clientside.no_update)
-        } else { output.push(nc) }
-    } else {
-        const nc = "btn-outline-danger";
-        if (className === nc) { output.push(dash_clientside.no_update)
-        } else { output.push(nc) }
-    }
-    INFO(output, brd, prc, qty, className);
-    return output;
-},
-validate_row_brandless: function(prc, qty, className) {
-    const output = [
-        prc === null || prc === "" || prc === undefined || isNaN(prc) || prc <= 0,
-        false]
-
-    const allValid = output.every(val => !val);
-
-    if (allValid) {
-        const nc = "btn-outline-success";
-        if (className === nc) { output.push(dash_clientside.no_update)
-        } else { output.push(nc) }
-    } else {
-        const nc = "btn-outline-danger";
-        if (className === nc) { output.push(dash_clientside.no_update)
-        } else { output.push(nc) }
-    }
-    INFO(output, prc, qty, className);
-    return output;
-},
-validate_rows: function(cls, src) {
-    const icon = src.split("-")[0];
-    const prd = icon.split("/").at(-1).split(".")[0];
-    const CFG = JSON.parse(localStorage.getItem("CFG-data"));
-
-    if (cls.length === 0) {
-        rtn = ["Sem dados", "warning", "icon-orange"]
-        INFO(rtn, cls.length, prd, CFG["product_rows"][prd]);
-        return rtn;
-    }
-    const allSuccess = cls.every(cl => cl.includes("success"));
-    if (allSuccess) {
-        if (cls.length < CFG["product_rows"][prd]) { rtn =  ["Faltando", "warning", "icon-orange"] }
-        else { rtn = ["Completo", "success", "icon-green"] }
-    } else { rtn = ["Valores", "danger", "icon-red"] }
-    INFO(rtn, cls.length, prd, CFG["product_rows"][prd]);
-    return rtn;
-},
 validate_sections: function(name, date, estab, ...args) {
     const [color, children] = splitArgs(...args);
     let disabled = color.includes("danger")
@@ -213,20 +156,114 @@ validate_sections: function(name, date, estab, ...args) {
     });
 
     message = "";
-    message += `Produtos Perfeitos: ${counts["Completo"] || 0}\n`;
-    message += `Produtos com Faltas: ${counts["Faltando"] || 0}\n`;
-    message += `Produtos Sem dados: ${counts["Sem dados"] || 0}\n`;
+    message += `✅ Produtos Perfeitos: ${counts["Completo"] || 0}\n\n`;
+    message += `⚠️ Produtos com Faltas: ${counts["Faltando"] || 0}\n\n`;
+    message += `❌ Produtos Sem dados: ${counts["Sem dados"] || 0}\n\n`;
     INFO(disabled, disabled ? "danger" : "success", disabled ? "unclickable" : "", "\n", message);
     return [message, disabled, disabled ? "danger" : "success", disabled ? "unclickable" : ""];
 },
-load_brands: function(_) {
-    ctx = dash_clientside.callback_context.outputs_list.id.type.split("-")[1];
-    brands = JSON.parse(localStorage.getItem(`brands-${ctx}`));
-    if (brands === null || brands === undefined) {
-        ERROR("No brands found for", ctx);
-        return [];
-    }
-    INFO("load_brands", ctx);
-    return brands
+load_brands: function(_, id, opts) {
+    return new Promise((resolve) => {
+        const prd = id.type.split("-")[1];
+        const brands = JSON.parse(localStorage.getItem(`brands-${prd}`));
+        if (brands === null || brands === undefined) {
+            ERROR("No brands found for", prd);
+            resolve([]);
+        } else {
+            INFO("load_brands", prd);
+            resolve(brands);
+        }
+    });
+},
+delete_row_data_branded: function(_) {
+    return new Promise((resolve) => { resolve([null, null, null]) })
+},
+delete_row_data_brandless: function(_) {
+    return new Promise((resolve) => { resolve([null, null]) })
+},
+process_product_branded: function(...args) {
+    return new Promise((resolve) => {resolve(process_product(...args))})
+},
+process_product_brandless: function(...args) {
+    return new Promise((resolve) => {resolve(process_product(...args))})
 }
+}
+function process_product(add, del, ...data) {
+    const id = data.pop();
+    const collap = data.pop();
+    const qtys = data.pop();
+    const prcs = data.pop();
+    brds = null;
+    if (data.length !== 0) { brds = data.pop() }
+
+    CFG = JSON.parse(localStorage.getItem("CFG-data"));
+    const prd = id.split("add-")[1];
+    const ctx = dash_clientside.callback_context.triggered_id;
+
+    // Determine collapse is_open state
+    ideal_length = CFG["product_rows"][prd];
+    expected_length = CFG["max_rows"];
+    initial_array = new Array(expected_length).fill(false);
+    for (let i = 0; i < ideal_length; i++) { initial_array[i] = true }
+
+    let collapsed = localStorage.getItem(`collapse-${prd}`);
+    let is_open = null;
+
+    if (collapsed !== null) {
+        try {
+            is_open = JSON.parse(collapsed);
+        } catch (e) {
+            is_open = null;
+        }
+    }
+
+    if ( collapsed === null || !Array.isArray(is_open) || is_open.length !== expected_length ) { is_open = initial_array }
+
+    if (ctx === `add-${prd}`) {
+        for (let i = 0; i < is_open.length; i++) {
+            if (!is_open[i]) { is_open[i] = true; break }
+        }
+    }
+    else if (typeof ctx === "object" && ctx.type === `delete-${prd}`) {
+        if (typeof ctx.index === "number") { is_open[ctx.index] = false }
+    }
+
+    localStorage.setItem(`collapse-${prd}`, JSON.stringify(is_open));
+    const status = `${is_open.filter(x => x).length}/${expected_length}`;
+
+    // Validate inputs
+    prcInvalid = prcs.map(p => p == null || p === "" || isNaN(p) || p <= 0);
+    qtyInvalid = qtys.map(q => false);
+    brdInvalid = null;
+
+    if (brds === null) {
+        buttonClass = prcInvalid.map((p, i) => {
+            if (!p) { return "btn-outline-success" }
+            else { return "btn-outline-danger" }
+        });
+    } else {
+        brdInvalid = brds.map(b => !b);
+        buttonClass = brdInvalid.map((b, i) => {
+            if (!b && !prcInvalid[i]) { return "btn-outline-success" }
+            else { return "btn-outline-danger" }
+        });
+    }
+
+    // Validate section, set badge and icons
+    const openValidations = buttonClass.filter((_, i) => is_open[i]);
+    const validCount = openValidations.filter(cl => cl.includes("success")).length;
+
+    if (is_open.filter(x => x).length === 0) {
+        sectionValidations = ["Sem dados", "warning", "icon-orange"]
+    } else if (openValidations.every(cl => cl.includes("success"))) {
+        if (validCount < CFG["product_rows"][prd]) { sectionValidations =  ["Faltando", "warning", "icon-orange"] }
+        else { sectionValidations = ["Completo", "success", "icon-green"] }
+    } else { sectionValidations = ["Valores", "danger", "icon-red"] }
+
+
+    if (brds === null) {rtn = [is_open, status, prcInvalid, qtyInvalid, buttonClass];}
+    else {rtn = [is_open, status, brdInvalid, prcInvalid, qtyInvalid, buttonClass];}
+    rtn = rtn.concat(sectionValidations);
+    INFO(rtn)
+    return rtn;
 }
