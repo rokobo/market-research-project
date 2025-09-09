@@ -43,7 +43,7 @@ def create_group_pages(groups):
     cached_hash = load_cached_hash()
 
     pages = listdir(CFG.pages)
-    for grp in CFG.groups:
+    for grp in groups:
         if f"dynamic-{grp}.py" not in pages:
             cached_hash = None
 
@@ -58,7 +58,7 @@ def create_group_pages(groups):
         if page.startswith("dynamic-") and page.endswith(".py"):
             remove(join(CFG.pages, page))
             print(f"Removed page: {page}")
-    for group in set(CFG.groups):
+    for group in groups:
         if group is None:
             continue
         if exists(join(CFG.pages, f"dynamic-{group}.py")):

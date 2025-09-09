@@ -9,7 +9,7 @@ import sqlite3 as sql
 update_time = f"{int(time.time()):,}".replace(",", ".")
 config_folder = join(dirname(dirname(__file__)), "config")
 with sql.connect(join(config_folder, "products.db")) as db:
-    config = pd.read_sql("SELECT * FROM products", db)
+    config = pd.read_sql('SELECT * FROM products WHERE "group" IS NOT NULL', db)
 config["split"] = config["split"].astype(bool)
 
 
@@ -29,6 +29,7 @@ config["expanded"] = config.apply(
     lambda row: [f"{row['excel_product']} {sub}" for sub in row["splits"]]
     if row["split"] and row["splits"] else [row["excel_product"]], axis=1)
 
+config["group"] = config["group"].apply(lambda x: tuple(x.split(",")))
 
 CFG = SimpleNamespace(**dict(
     config_folder=config_folder,
@@ -65,6 +66,7 @@ CFG = SimpleNamespace(**dict(
     max_rows=8
 ))
 
+
 titles = config.set_index('product')[
     ['title', 'subtitle']].apply(list, axis=1).to_dict()
 
@@ -73,6 +75,10 @@ CFG.product_titles = {
     for (prd, lbl), (_, quant) in zip(titles.items(), CFG.quantities.items())
 }
 CFG.product_index = {prd: i for i, prd in enumerate(CFG.products)}
+
+CFG.unique_groups = CFG.groups.copy()
+CFG.unique_groups = list(set([i for sub in CFG.unique_groups for i in sub]))
+
 
 if not exists(CFG.data_agg_csv):
     makedirs(CFG.data_agg_csv, exist_ok=True)

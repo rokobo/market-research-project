@@ -19,7 +19,7 @@ layout = html.Div([
     html.H3("Páginas de Coleta", className="m-2"),
     dbc.Nav([
         navitem_with_icon(grp.capitalize(), grp, f"{i+1}-square-fill")
-        for i, grp in enumerate(set(CFG.groups)) if grp is not None
+        for i, grp in enumerate(set(CFG.unique_groups)) if grp is not None
     ], pills=True),
     html.Hr(),
     html.H3("Páginas de Análise", className="m-2"),

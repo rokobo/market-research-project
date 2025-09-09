@@ -12,3 +12,4 @@ html{scroll-padding-top:80px}
 .icon-red{filter: invert(12%) sepia(79%) saturate(7495%) hue-rotate(357deg) brightness(109%) contrast(111%)}
 .icon-orange{filter: invert(66%) sepia(29%) saturate(4461%) hue-rotate(1deg) brightness(106%) contrast(104%)}
 .icon-green{filter: invert(28%) sepia(58%) saturate(2191%) hue-rotate(94deg) brightness(95%) contrast(104%)}
+.collapse{transition: height 0.0s ease}

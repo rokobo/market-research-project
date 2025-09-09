@@ -37,14 +37,14 @@ CELL_CLASS = {
 }
 
 
-def product_grid2(product):
+def product_grid2(product, group):
     headers = []
     fields = CFG.product_fields[product]
 
     # Headers
     headers.append(dbc.Col(dbc.Button(
         html.I(className="bi bi-trash3"),
-        id=f"delete-{product}-header", disabled=True, color="light",
+        id=f"delete-{product}-header-{group}", disabled=True, color="light",
     ), width="auto"))
 
     if fields[0]:
@@ -61,7 +61,7 @@ def product_grid2(product):
         row = []
         row.append(dbc.Col(dbc.Button(
             html.I(className="bi bi-trash3"),
-            id={'type': f"delete-{product}", 'index': i},
+            id={'type': f"delete-{product}-{group}", 'index': i},
             outline=True
         ), width="auto"))
 
@@ -69,7 +69,7 @@ def product_grid2(product):
             row.append(dbc.Col(dcc.Loading(
                 dbc.Select(
                     options=load_brands(product),
-                    id={'type': f"brand-{product}", 'index': i},
+                    id={'type': f"brand-{product}-{group}", 'index': i},
                     persistence=True, persistence_type="local",
                 ),
                 overlay_style={"visibility": "visible", "filter": "blur(2px)"},
@@ -81,7 +81,7 @@ def product_grid2(product):
                 dbc.Input(
                     type="number", debounce=True,
                     persistence=True, persistence_type="local",
-                    id={'type': f"price-{product}", 'index': i}),
+                    id={'type': f"price-{product}-{group}", 'index': i}),
                 overlay_style={"visibility": "visible", "filter": "blur(2px)"},
                 type="circle"
             )))
@@ -89,13 +89,13 @@ def product_grid2(product):
             row.append(dbc.Col(dbc.Input(
                 type="number", debounce=True,
                 persistence=True, persistence_type="local",
-                id={'type': f"quantity-{product}", 'index': i})))
+                id={'type': f"quantity-{product}-{group}", 'index': i})))
         rows.append(
             dbc.Collapse(
                 dbc.Row(
                     row, className="g-0",
-                    id={'type': f"row-{product}", 'index': i}
-                ), id={'type': f"collapse-{product}", 'index': i})
+                    id={'type': f"row-{product}-{group}", 'index': i}
+                ), id={'type': f"collapse-{product}-{group}", 'index': i})
         )
 
     return html.Div([
@@ -105,18 +105,18 @@ def product_grid2(product):
                 style={"display": "inline-block"}),
             dbc.Label(
                 CFG.product_titles[product], style=BOLD, className="mx-2"),
-            dbc.Badge("", pill=True, id=f"status-{product}"),
-            dbc.FormText("", class_name="ms-1", id=f"status-{product}-count"),
+            dbc.Badge("", pill=True, id=f"status-{product}-{group}"),
+            dbc.FormText("", class_name="ms-1", id=f"status-{product}-count-{group}"),
         ], className="p-1 mb-0"),
 
         dbc.Row(headers),
-        dbc.Row(rows, id=f"{product}-rows", className="g-0"),
+        dbc.Row(rows, id=f"{product}-rows-{group}", className="g-0"),
 
         html.Div(dbc.Button(
             html.I(className="bi bi-file-earmark-arrow-down"),
-            id=f"add-{product}", outline=True, color="secondary"
+            id=f"add-{product}-{group}", outline=True, color="secondary"
         ), className="d-grid gap-2")
-    ], className="mx-2 mt-4", id=f"{product}-heading", role="product-div")
+    ], className="mx-2 mt-4", id=f"{product}-heading-{group}", role="product-div")
 
 
 def wait_modal(id, source, index):
@@ -172,10 +172,9 @@ def diagnostics_nav(source):
 def create_page(group: str):
     """Create a page for the given group."""
     assert type(group) is str
-    assert group in CFG.groups
 
     group_prds = [
-        prd for prd, grp in zip(CFG.products, CFG.groups) if grp == group]
+        prd for prd, grp in zip(CFG.products, CFG.groups) if group in grp]
     group_prds.sort()
 
     layout = html.Div([
@@ -184,10 +183,10 @@ def create_page(group: str):
                 html.A(
                     dcc.Loading(
                         html.Img(
-                            src=f"assets/icons/{prd}.svg", id=f"icon-{prd}"),
+                            src=f"assets/icons/{prd}.svg", id=f"icon-{prd}-{group}"),
                         overlay_style={
                             "visibility": "visible", "filter": "blur(2px)"},
-                        target_components={f"icon-{prd}": "*"},
+                        target_components={f"icon-{prd}-{group}": "*"},
                         type="circle"),
                     href=f"#{prd}-heading",
                 ) for prd in group_prds
@@ -223,7 +222,7 @@ def create_page(group: str):
                 dbc.DropdownMenuItem(
                     grp.capitalize(), href=f"/{grp}",
                     active=group == grp,
-                ) for grp in set(CFG.groups) if grp is not None
+                ) for grp in set(CFG.unique_groups) if grp is not None
             ], label="Categoria", color="secondary", class_name="m-0"),
         ], class_name="m-2", direction="horizontal"),
         dbc.Stack([
@@ -291,7 +290,7 @@ def create_page(group: str):
                 id=f"establishment-subformtext-{group}", color="secondary")
         ], className="m-2 unwrap"),
         html.Div([
-            product_grid2(prd) for prd in group_prds], id=f"grids-{group}"),
+            product_grid2(prd, group) for prd in group_prds], id=f"grids-{group}"),
         dbc.Tooltip([
             "O campo 'Quant.' só precisa ser preenchido quando a quantidade "
             "do produto que você está anotando é diferente da quantidade "
@@ -351,8 +350,15 @@ def create_page(group: str):
             "Obrigado por enviar os dados, tenha um ótimo dia :)",
             header="Relatório salvo!",
             id=f"toast-{group}", icon="success",
-            is_open=True, dismissable=False, duration=4000,
-            style={"position": "fixed", "top": 80, "right": 10, "width": 350},
+            is_open=False, dismissable=False, duration=10000,
+            style={"position": "fixed", "top": 110, "right": 10, "width": 350},
+        ),
+        dbc.Toast(
+            "Envie print para o administrador do site e anote os dados.",
+            header="Problema ao salvar!",
+            id=f"toast2-{group}", icon="danger",
+            is_open=False, dismissable=False, duration=10000,
+            style={"position": "fixed", "top": 110, "right": 10, "width": 350},
         ),
         dcc.Interval(id="reload-brands", interval=1000*60)
     ])
@@ -363,10 +369,10 @@ def create_page(group: str):
                 namespace='functions',
                 function_name='load_brands'
             ),
-            Output({'type': f"brand-{prd}", 'index': MATCH}, "options"),
+            Output({'type': f"brand-{prd}-{group}", 'index': MATCH}, "options"),
             Input('reload-brands', 'n_intervals'),
-            State({'type': f"brand-{prd}", 'index': MATCH}, "id"),
-            State({'type': f"brand-{prd}", 'index': MATCH}, "options"),
+            State({'type': f"brand-{prd}-{group}", 'index': MATCH}, "id"),
+            State({'type': f"brand-{prd}-{group}", 'index': MATCH}, "options"),
             prevent_initial_call=True
         )
 
@@ -376,33 +382,33 @@ def create_page(group: str):
                     namespace='functions',
                     function_name='process_product_branded'
                 ),
-                Output({'type': f"collapse-{prd}", 'index': ALL}, "is_open"),
-                Output(f"status-{prd}-count", "children"),
-                Output({'type': f"brand-{prd}", 'index': ALL}, "invalid"),
-                Output({'type': f"price-{prd}", 'index': ALL}, "invalid"),
-                Output({'type': f"quantity-{prd}", 'index': ALL}, "invalid"),
-                Output({'type': f"delete-{prd}", 'index': ALL}, "className"),
-                Output(f"status-{prd}", "children"),
-                Output(f"status-{prd}", "color"),
-                Output(f"icon-{prd}", "className"),
+                Output({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
+                Output(f"status-{prd}-count-{group}", "children"),
+                Output({'type': f"brand-{prd}-{group}", 'index': ALL}, "invalid"),
+                Output({'type': f"price-{prd}-{group}", 'index': ALL}, "invalid"),
+                Output({'type': f"quantity-{prd}-{group}", 'index': ALL}, "invalid"),
+                Output({'type': f"delete-{prd}-{group}", 'index': ALL}, "className"),
+                Output(f"status-{prd}-{group}", "children"),
+                Output(f"status-{prd}-{group}", "color"),
+                Output(f"icon-{prd}-{group}", "className"),
 
-                Input(f"add-{prd}", "n_clicks"),
-                Input({'type': f"delete-{prd}", 'index': ALL}, "n_clicks"),
-                Input({'type': f"brand-{prd}", 'index': ALL}, "value"),
-                Input({'type': f"price-{prd}", 'index': ALL}, "value"),
-                Input({'type': f"quantity-{prd}", 'index': ALL}, "value"),
-                State({'type': f"collapse-{prd}", 'index': ALL}, "is_open"),
-                State(f"add-{prd}", "id"),
+                Input(f"add-{prd}-{group}", "n_clicks"),
+                Input({'type': f"delete-{prd}-{group}", 'index': ALL}, "n_clicks"),
+                Input({'type': f"brand-{prd}-{group}", 'index': ALL}, "value"),
+                Input({'type': f"price-{prd}-{group}", 'index': ALL}, "value"),
+                Input({'type': f"quantity-{prd}-{group}", 'index': ALL}, "value"),
+                State({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
+                State(f"add-{prd}-{group}", "id"),
             )
             clientside_callback(
                 ClientsideFunction(
                     namespace='functions',
                     function_name='delete_row_data_branded'
                 ),
-                Output({'type': f"brand-{prd}", 'index': MATCH}, "value"),
-                Output({'type': f"price-{prd}", 'index': MATCH}, "value"),
-                Output({'type': f"quantity-{prd}", 'index': MATCH}, "value"),
-                Input({'type': f"delete-{prd}", 'index': MATCH}, "n_clicks"),
+                Output({'type': f"brand-{prd}-{group}", 'index': MATCH}, "value"),
+                Output({'type': f"price-{prd}-{group}", 'index': MATCH}, "value"),
+                Output({'type': f"quantity-{prd}-{group}", 'index': MATCH}, "value"),
+                Input({'type': f"delete-{prd}-{group}", 'index': MATCH}, "n_clicks"),
                 prevent_initial_call=True
             )
         else:
@@ -411,30 +417,30 @@ def create_page(group: str):
                     namespace='functions',
                     function_name='process_product_brandless'
                 ),
-                Output({'type': f"collapse-{prd}", 'index': ALL}, "is_open"),
-                Output(f"status-{prd}-count", "children"),
-                Output({'type': f"price-{prd}", 'index': ALL}, "invalid"),
-                Output({'type': f"quantity-{prd}", 'index': ALL}, "invalid"),
-                Output({'type': f"delete-{prd}", 'index': ALL}, "className"),
-                Output(f"status-{prd}", "children"),
-                Output(f"status-{prd}", "color"),
-                Output(f"icon-{prd}", "className"),
+                Output({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
+                Output(f"status-{prd}-count-{group}", "children"),
+                Output({'type': f"price-{prd}-{group}", 'index': ALL}, "invalid"),
+                Output({'type': f"quantity-{prd}-{group}", 'index': ALL}, "invalid"),
+                Output({'type': f"delete-{prd}-{group}", 'index': ALL}, "className"),
+                Output(f"status-{prd}-{group}", "children"),
+                Output(f"status-{prd}-{group}", "color"),
+                Output(f"icon-{prd}-{group}", "className"),
 
-                Input(f"add-{prd}", "n_clicks"),
-                Input({'type': f"delete-{prd}", 'index': ALL}, "n_clicks"),
-                Input({'type': f"price-{prd}", 'index': ALL}, "value"),
-                Input({'type': f"quantity-{prd}", 'index': ALL}, "value"),
-                State({'type': f"collapse-{prd}", 'index': ALL}, "is_open"),
-                State(f"add-{prd}", "id"),
+                Input(f"add-{prd}-{group}", "n_clicks"),
+                Input({'type': f"delete-{prd}-{group}", 'index': ALL}, "n_clicks"),
+                Input({'type': f"price-{prd}-{group}", 'index': ALL}, "value"),
+                Input({'type': f"quantity-{prd}-{group}", 'index': ALL}, "value"),
+                State({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
+                State(f"add-{prd}-{group}", "id"),
             )
             clientside_callback(
                 ClientsideFunction(
                     namespace='functions',
                     function_name='delete_row_data_branded'
                 ),
-                Output({'type': f"price-{prd}", 'index': MATCH}, "value"),
-                Output({'type': f"quantity-{prd}", 'index': MATCH}, "value"),
-                Input({'type': f"delete-{prd}", 'index': MATCH}, "n_clicks"),
+                Output({'type': f"price-{prd}-{group}", 'index': MATCH}, "value"),
+                Output({'type': f"quantity-{prd}-{group}", 'index': MATCH}, "value"),
+                Input({'type': f"delete-{prd}-{group}", 'index': MATCH}, "n_clicks"),
                 prevent_initial_call=True
             )
 
@@ -512,27 +518,28 @@ def create_save_callback(group, group_prds):
         Input(f"collector_name-{group}", "value"),
         Input(f"collection_date-{group}", "value"),
         Input(f"establishment-{group}", "value"),
-        [Input(f"status-{prd}", "color") for prd in group_prds],
-        [Input(f"status-{prd}", "children") for prd in group_prds],
+        [Input(f"status-{prd}-{group}", "color") for prd in group_prds],
+        [Input(f"status-{prd}-{group}", "children") for prd in group_prds],
         prevent_initial_call=False
     )
 
     @callback(
         Output(f"toast-{group}", "is_open"),
+        Output(f"toast2-{group}", "is_open"),
         [Output(
-            {'type': f"brand-{prd}", 'index': ALL},
+            {'type': f"brand-{prd}-{group}", 'index': ALL},
             "value", allow_duplicate=True
         ) for prd in group_prds],
         [Output(
-            {'type': f"price-{prd}", 'index': ALL},
+            {'type': f"price-{prd}-{group}", 'index': ALL},
             "value", allow_duplicate=True
         ) for prd in group_prds],
         [Output(
-            {'type': f"quantity-{prd}", 'index': ALL},
+            {'type': f"quantity-{prd}-{group}", 'index': ALL},
             "value", allow_duplicate=True
         ) for prd in group_prds],
         [Output(
-            {'type': f"collapse-{prd}", 'index': ALL},
+            {'type': f"collapse-{prd}-{group}", 'index': ALL},
             "is_open", allow_duplicate=True
         ) for prd in group_prds],
         Input(f"save-products-{group}", "n_clicks"),
@@ -544,16 +551,16 @@ def create_save_callback(group, group_prds):
         State("geolocation", "timestamp"),
         State("geo-history", "data"),
         [
-            State({'type': f"brand-{prd}", 'index': ALL}, "value")
+            State({'type': f"brand-{prd}-{group}", 'index': ALL}, "value")
             for prd in group_prds],
         [
-            State({'type': f"price-{prd}", 'index': ALL}, "value")
+            State({'type': f"price-{prd}-{group}", 'index': ALL}, "value")
             for prd in group_prds],
         [
-            State({'type': f"quantity-{prd}", 'index': ALL}, "value")
+            State({'type': f"quantity-{prd}-{group}", 'index': ALL}, "value")
             for prd in group_prds],
         [
-            State({'type': f"collapse-{prd}", 'index': ALL}, "is_open")
+            State({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open")
             for prd in group_prds],
         prevent_initial_call=True
     )
@@ -567,15 +574,22 @@ def create_save_callback(group, group_prds):
         collapses = args[3*n:4*n]
         data = []
 
-        field_nones = [None for _ in range(CFG.max_rows)]
-        collapses = [
-            True if i < CFG.expected_rows[prd] else False
+        out_success = [True, False]
+        out_success += [[None for _ in brds] for brds in brands]
+        out_success += [[None for _ in prcs] for prcs in prices]
+        out_success += [[None for _ in qtys] for qtys in quantities]
+        out_success += [[i < 2 for i in range(len(is_opens))] for is_opens in collapses]
 
-        ]
-        out_success = [True]
-        out_success += [[None] * CFG.max_rows for _ in range(len(args))]
-        out_fail = [no_update]
-        out_fail += [[no_update] * CFG.max_rows for _ in range(len(args))]
+        out_failure = [False, True]
+        out_failure += [[no_update for _ in brds] for brds in brands]
+        out_failure += [[no_update for _ in prcs] for prcs in prices]
+        out_failure += [[no_update for _ in qtys] for qtys in quantities]
+        out_failure += [[no_update for _ in is_opens] for is_opens in collapses]
+
+        print(args)
+        print("------")
+        print("------")
+        print(out_success)
 
         loop1 = zip(group_prds, brands, prices, quantities, collapses)
         for prd, brds, prcs, qtys, is_opens in loop1:
@@ -598,8 +612,9 @@ def create_save_callback(group, group_prds):
         current_files = set(listdir(CFG.data))
         try:
             save_products2(data, (name, date, estab), obs, pos_out, geo_hist)
-        except Exception as _:
-            return out_fail
+        except Exception as e:
+            print(e)
+            return out_failure
         new_files = set(listdir(CFG.data))
         files = list(new_files - current_files)
 
@@ -611,7 +626,7 @@ def create_save_callback(group, group_prds):
                 continue
             break
         else:
-            return out_fail
+            return out_failure
         return out_success
 
 
