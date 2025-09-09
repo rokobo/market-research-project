@@ -31,6 +31,4 @@ src/analysis.py
 test/test_dash.py
 /config/.sync
 config/marcas.db
-config/estabelecimentos.db
-config/products.db
 tmp/groups.hash
