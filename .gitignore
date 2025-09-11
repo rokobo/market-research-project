@@ -30,5 +30,4 @@ src/cleaning.ipynb
 src/analysis.py
 test/test_dash.py
 /config/.sync
-config/marcas.db
 tmp/groups.hash
