@@ -332,27 +332,29 @@ def create_page(group: str):
             dbc.FormText("Opcional: relatar algo relevante", color="secondary")
         ], className="m-2"),
         INFO("save-info"),
-        dbc.Fade(dbc.Alert([
-            html.H4("Confirmação de envio", className="alert-heading"),
-            dcc.Markdown(id=f"confirm-send-{group}", className="g-0"),
-            html.Div(dbc.Button(
-                [html.I(className="bi bi-file-earmark-arrow-up"), " Enviar"],
-                color="danger", id=f"save-products-{group}", disabled=True
-            ), className="d-grid m-2"),
-        ], className="m-2 p-2", color="light"),
-            id=f"save-container-{group}", is_in=True),
-        dbc.Tooltip(
-            "O botão 'Enviar' só poderá ser clicado quando todas as seções "
-            "estiverem válidas (ícone e status não podem estar vermelhos). "
-            "O botão ficará verde quando o envio estiver liberado.",
-            target="save-info"),
-        dbc.Toast(
-            "Obrigado por enviar os dados, tenha um ótimo dia :)",
-            header="Relatório salvo!",
-            id=f"toast-{group}", icon="success",
-            is_open=False, dismissable=False, duration=10000,
-            style={"position": "fixed", "top": 110, "right": 10, "width": 350},
-        ),
+        dcc.Loading([
+            dbc.Fade(dbc.Alert([
+                html.H4("Confirmação de envio", className="alert-heading"),
+                dcc.Markdown(id=f"confirm-send-{group}", className="g-0"),
+                html.Div(dbc.Button(
+                    [html.I(className="bi bi-file-earmark-arrow-up"), " Enviar"],
+                    color="danger", id=f"save-products-{group}", disabled=True
+                ), className="d-grid m-2"),
+            ], className="m-2 p-2", color="light"),
+                id=f"save-container-{group}", is_in=True),
+            dbc.Tooltip(
+                "O botão 'Enviar' só poderá ser clicado quando todas as seções "
+                "estiverem válidas (ícone e status não podem estar vermelhos). "
+                "O botão ficará verde quando o envio estiver liberado.",
+                target="save-info"),
+            dbc.Toast(
+                "Obrigado por enviar os dados, tenha um ótimo dia :)",
+                header="Relatório salvo!",
+                id=f"toast-{group}", icon="success",
+                is_open=False, dismissable=False, duration=10000,
+                style={"position": "fixed", "top": 110, "right": 10, "width": 350},
+            ),
+        ]),
         dbc.Toast(
             "Envie print para o administrador do site e anote os dados.",
             header="Problema ao salvar!",
