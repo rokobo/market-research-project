@@ -586,11 +586,6 @@ def create_save_callback(group, group_prds):
         out_failure += [[no_update for _ in qtys] for qtys in quantities]
         out_failure += [[no_update for _ in is_opens] for is_opens in collapses]
 
-        print(args)
-        print("------")
-        print("------")
-        print(out_success)
-
         loop1 = zip(group_prds, brands, prices, quantities, collapses)
         for prd, brds, prcs, qtys, is_opens in loop1:
             loop2 = zip_longest(brds, prcs, qtys, is_opens, fillvalue=None)
