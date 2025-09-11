@@ -186,7 +186,32 @@ process_product_branded: function(...args) {
 },
 process_product_brandless: function(...args) {
     return new Promise((resolve) => {resolve(process_product(...args))})
+},
+show_confetti: function(show) {
+    if (show) {showConfetti()}
 }
+}
+function showConfetti() {
+    var duration = 10 * 1000;
+    var animationEnd = Date.now() + duration;
+    var defaults = { startVelocity: 30, spread: 50, ticks: 450, zIndex: 200, scalar: 1.5 };
+
+    function randomInRange(min, max) {
+    return Math.random() * (max - min) + min;
+    }
+
+    var interval = setInterval(function() {
+    var timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+        return clearInterval(interval);
+    }
+
+    var particleCount = 30 * (timeLeft / duration);
+    // since particles fall down, start a bit higher than random
+    confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+    confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
 }
 function process_product(add, del, ...data) {
     const id = data.pop();

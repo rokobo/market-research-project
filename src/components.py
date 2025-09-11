@@ -362,8 +362,19 @@ def create_page(group: str):
             is_open=False, dismissable=False, duration=10000,
             style={"position": "fixed", "top": 110, "right": 10, "width": 350},
         ),
-        dcc.Interval(id="reload-brands", interval=1000*60)
+        dcc.Interval(id="reload-brands", interval=1000*60),
+        html.Div(id=f"confetti-{group}", style={"display": "none"}),
     ])
+
+    clientside_callback(
+        ClientsideFunction(
+            namespace='functions',
+            function_name='show_confetti'
+        ),
+        Output(f"confetti-{group}", "children"),
+        Input(f"toast-{group}", "is_open"),
+        prevent_initial_call=True
+    )
 
     for prd in group_prds:
         clientside_callback(
