@@ -18,5 +18,5 @@ layout = html.Div([
         html.Img(src=f"assets/icons/{p}.svg", className="px-2 icon-red"),
         html.Img(src=f"assets/icons/{p}.svg", className="px-2 icon-orange"),
         html.Img(src=f"assets/icons/{p}.svg", className="px-2 icon-green"),
-    ], direction="horizontal") for p in sorted(CFG.products)], className="m-2")
+    ], direction="horizontal") for p in CFG.products], className="m-2")
 ])

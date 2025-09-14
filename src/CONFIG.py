@@ -9,7 +9,15 @@ import sqlite3 as sql
 update_time = f"{int(time.time()):,}".replace(",", ".")
 config_folder = join(dirname(dirname(__file__)), "config")
 with sql.connect(join(config_folder, "products.db")) as db:
-    config = pd.read_sql('SELECT * FROM products WHERE "group" IS NOT NULL AND "group" != ""', db)
+    config = pd.read_sql(
+        """
+        SELECT *
+        FROM products
+        WHERE "group" IS NOT NULL AND "group" != ""
+        ORDER BY brand_row DESC, product ASC
+        """,
+        db
+    )
 config["split"] = config["split"].astype(bool)
 
 

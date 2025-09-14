@@ -175,7 +175,6 @@ def create_page(group: str):
 
     group_prds = [
         prd for prd, grp in zip(CFG.products, CFG.groups) if group in grp]
-    group_prds.sort()
 
     layout = html.Div([
         dbc.Navbar([
