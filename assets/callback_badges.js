@@ -159,7 +159,7 @@ validate_sections: function(name, date, estab, ...args) {
     message += `✅ Produtos Perfeitos: ${counts["Completo"] || 0}\n\n`;
     message += `⚠️ Produtos com Faltas: ${counts["Faltando"] || 0}\n\n`;
     message += `❌ Produtos Sem dados: ${counts["Sem dados"] || 0}\n\n`;
-    INFO(disabled, disabled ? "danger" : "success", disabled ? "unclickable" : "", "\n", message);
+    // INFO(disabled, disabled ? "danger" : "success", disabled ? "unclickable" : "", "\n", message);
     return [message, disabled, disabled ? "danger" : "success", disabled ? "unclickable" : ""];
 },
 load_brands: function(_, id, opts) {
@@ -170,22 +170,22 @@ load_brands: function(_, id, opts) {
             ERROR("No brands found for", prd);
             resolve([]);
         } else {
-            INFO("load_brands", prd);
+            // INFO("load_brands", prd);
             resolve(brands);
         }
     });
 },
 delete_row_data_branded: function(_) {
-    return new Promise((resolve) => { resolve([null, null, null]) })
+    return [null, null, null]
 },
 delete_row_data_brandless: function(_) {
-    return new Promise((resolve) => { resolve([null, null]) })
+    return [null, null]
 },
 process_product_branded: function(...args) {
-    return new Promise((resolve) => {resolve(process_product(...args))})
+    return process_product(...args)
 },
 process_product_brandless: function(...args) {
-    return new Promise((resolve) => {resolve(process_product(...args))})
+    return process_product(...args)
 },
 show_confetti: function(show) {
     if (show) {showConfetti()}
@@ -221,7 +221,7 @@ function process_product(add, del, ...data) {
     brds = null;
     if (data.length !== 0) { brds = data.pop() }
 
-    CFG = JSON.parse(localStorage.getItem("CFG-data"));
+    const CFG = JSON.parse(localStorage.getItem("CFG-data"));
     const prd = id.split("add-")[1];
     const ctx = dash_clientside.callback_context.triggered_id;
 
@@ -245,20 +245,19 @@ function process_product(add, del, ...data) {
     if ( collapsed === null || !Array.isArray(is_open) || is_open.length !== expected_length ) { is_open = initial_array }
 
     if (ctx === `add-${prd}`) {
-        for (let i = 0; i < is_open.length; i++) {
-            if (!is_open[i]) { is_open[i] = true; break }
-        }
+        const idx = is_open.indexOf(false);
+        if (idx !== -1) { is_open[idx] = true }
     }
     else if (typeof ctx === "object" && ctx.type === `delete-${prd}`) {
         if (typeof ctx.index === "number") { is_open[ctx.index] = false }
     }
 
     localStorage.setItem(`collapse-${prd}`, JSON.stringify(is_open));
-    const status = `${is_open.filter(x => x).length}/${expected_length}`;
+    const status = `${is_open.reduce((n, v) => n + (v ? 1 : 0), 0)}/${expected_length}`;
 
     // Validate inputs
-    prcInvalid = prcs.map(p => p == null || p === "" || isNaN(p) || p <= 0);
-    qtyInvalid = qtys.map(q => false);
+    prcInvalid = prcs.map(p => !(p > 0));
+    qtyInvalid = qtys.map(() => false);
     brdInvalid = null;
 
     if (brds === null) {
@@ -289,6 +288,6 @@ function process_product(add, del, ...data) {
     if (brds === null) {rtn = [is_open, status, prcInvalid, qtyInvalid, buttonClass];}
     else {rtn = [is_open, status, brdInvalid, prcInvalid, qtyInvalid, buttonClass];}
     rtn = rtn.concat(sectionValidations);
-    INFO(rtn)
+    // INFO(rtn)
     return rtn;
 }
