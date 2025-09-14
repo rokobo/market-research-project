@@ -188,7 +188,7 @@ def create_page(group: str):
                             "visibility": "visible", "filter": "blur(2px)"},
                         target_components={f"icon-{prd}-{group}": "*"},
                         type="circle"),
-                    href=f"#{prd}-heading",
+                    href=f"#{prd}-heading-{group}",
                 ) for prd in group_prds
             ], className="g-0 m-0 navigation")
         ], className="navbar bg-body", sticky="top", expand=True),
