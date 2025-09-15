@@ -201,16 +201,16 @@ function showConfetti() {
     }
 
     var interval = setInterval(function() {
-    var timeLeft = animationEnd - Date.now();
+        var timeLeft = animationEnd - Date.now();
 
-    if (timeLeft <= 0) {
-        return clearInterval(interval);
-    }
+        if (timeLeft <= 0) {
+            return clearInterval(interval);
+        }
 
-    var particleCount = 30 * (timeLeft / duration);
-    // since particles fall down, start a bit higher than random
-    confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-    confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+        var particleCount = 30 * (timeLeft / duration);
+        // since particles fall down, start a bit higher than random
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
 }
 function process_product(add, del, ...data) {
@@ -231,7 +231,7 @@ function process_product(add, del, ...data) {
     initial_array = new Array(expected_length).fill(false);
     for (let i = 0; i < ideal_length; i++) { initial_array[i] = true }
 
-    let collapsed = localStorage.getItem(`collapse-${prd}`);
+    let collapsed = localStorage.getItem(`store-collapse-${prd}`);
     let is_open = null;
 
     if (collapsed !== null) {
@@ -252,7 +252,7 @@ function process_product(add, del, ...data) {
         if (typeof ctx.index === "number") { is_open[ctx.index] = false }
     }
 
-    localStorage.setItem(`collapse-${prd}`, JSON.stringify(is_open));
+    localStorage.setItem(`store-collapse-${prd}`, JSON.stringify(is_open));
     const status = `${is_open.reduce((n, v) => n + (v ? 1 : 0), 0)}/${expected_length}`;
 
     // Validate inputs

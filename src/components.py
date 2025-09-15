@@ -356,6 +356,10 @@ def create_page(group: str):
         ),
         dcc.Interval(id="reload-brands", interval=1000*60),
         html.Div(id=f"confetti-{group}", style={"display": "none"}),
+        html.Div([
+            dcc.Store(id=f"store-collapse-{prd}-{group}", storage_type="local")
+            for prd in group_prds
+        ])
     ])
 
     clientside_callback(
@@ -543,10 +547,10 @@ def create_save_callback(group, group_prds):
             {'type': f"quantity-{prd}-{group}", 'index': ALL},
             "value", allow_duplicate=True
         ) for prd in group_prds],
-        [Output(
-            {'type': f"collapse-{prd}-{group}", 'index': ALL},
-            "is_open", allow_duplicate=True
-        ) for prd in group_prds],
+        [
+            Output(f"store-collapse-{prd}-{group}", "data")
+            for prd in group_prds
+        ],
         Input(f"save-products-{group}", "n_clicks"),
         State(f"collector_name-{group}", "value"),
         State(f"collection_date-{group}", "value"),
@@ -589,7 +593,7 @@ def create_save_callback(group, group_prds):
         out_failure += [[no_update for _ in brds] for brds in brands]
         out_failure += [[no_update for _ in prcs] for prcs in prices]
         out_failure += [[no_update for _ in qtys] for qtys in quantities]
-        out_failure += [[no_update for _ in is_opens] for is_opens in collapses]
+        out_failure += [no_update for is_opens in collapses]
 
         loop1 = zip(group_prds, brands, prices, quantities, collapses)
         for prd, brds, prcs, qtys, is_opens in loop1:
