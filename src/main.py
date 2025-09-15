@@ -25,6 +25,8 @@ load_dotenv()
 create_group_pages(CFG.unique_groups)
 
 
+THEMES = {"Light": dbc.themes.BOOTSTRAP, "Dark": dbc.themes.DARKLY}
+
 app = Dash(
     title="ICB", update_title="ICB...",
     external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -56,12 +58,29 @@ app.layout = html.Div([
     ], id="server-status-modal", size="lg", is_open=False, scrollable=True),
     html.Div(
         dbc.Stack([
+            dbc.Select(
+                options=[{"label": k, "value": v} for k, v in THEMES.items()],
+                persistence=True, persistence_type="local",
+                persisted_props=["value"], placeholder="Tema",
+                id="theme-select", size="sm",
+            ),
             dbc.Badge("Calc...", color="danger", id="geolocation-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
+    html.Link(id="theme-link", rel="stylesheet"),
     dash.page_container,
     html.Br(), html.Br(), html.Br(), html.Br(), html.Br(), html.Br(),
 ])
+
+
+clientside_callback(
+    ClientsideFunction(
+        namespace='functions',
+        function_name='theme_select'
+    ),
+    Output("theme-link", "href"),
+    Input("theme-select", "value")
+)
 
 
 @server.route("/get-cfg")

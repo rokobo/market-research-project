@@ -119,6 +119,7 @@ setInterval(refresh_CFG, 1000 * 60 * 5);
 refresh_CFG();
 
 window.dash_clientside.functions={
+theme_select: function(value) { return value },
 refresh_local_storages: function(_){
     let markdown = "";
     const keys = Object.keys(localStorage).sort();
