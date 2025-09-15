@@ -25,7 +25,16 @@ load_dotenv()
 create_group_pages(CFG.unique_groups)
 
 
-THEMES = {"Light": dbc.themes.BOOTSTRAP, "Dark": dbc.themes.DARKLY}
+THEMES = {
+    "🌞 Light": dbc.themes.BOOTSTRAP,
+    "🌞 Flatly": dbc.themes.FLATLY,
+    "🌞 Litera": dbc.themes.LITERA,
+    "🌞 Zephyr": dbc.themes.ZEPHYR,
+    "🌙 Superhero": dbc.themes.SUPERHERO,
+    "🌙 Dark": dbc.themes.DARKLY,
+    "🌙 Solar": dbc.themes.SOLAR,
+    "🌙 Vapor": dbc.themes.VAPOR,
+}
 
 app = Dash(
     title="ICB", update_title="ICB...",
