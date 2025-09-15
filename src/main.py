@@ -49,8 +49,16 @@ app.layout = html.Div([
     dcc.Store(id="brands", storage_type="local"),
     html.Canvas(id="confetti", className="foregroundAbsolute"),
     dcc.Geolocation(id="geolocation", high_accuracy=True, update_now=True),
-    dbc.Button(
-        "Status", color="info", size="sm", id="status-button",
+    html.Div(
+        dbc.Stack([
+            dbc.Button("Status", color="info", size="sm", id="status-button"),
+            dbc.Select(
+                options=[{"label": k, "value": v} for k, v in THEMES.items()],
+                persistence=True, persistence_type="local",
+                persisted_props=["value"], placeholder="Tema",
+                id="theme-select", size="sm",
+            ),
+        ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "left": 0, "zIndex": 5}),
     dbc.Modal([
         dbc.ModalHeader(id="server-status-header"),
@@ -58,12 +66,6 @@ app.layout = html.Div([
     ], id="server-status-modal", size="lg", is_open=False, scrollable=True),
     html.Div(
         dbc.Stack([
-            dbc.Select(
-                options=[{"label": k, "value": v} for k, v in THEMES.items()],
-                persistence=True, persistence_type="local",
-                persisted_props=["value"], placeholder="Tema",
-                id="theme-select", size="sm",
-            ),
             dbc.Badge("Calc...", color="danger", id="geolocation-badge"),
         ], direction="horizontal"),
         style={"position": "fixed", "bottom": 0, "right": 0, "zIndex": 5}),
