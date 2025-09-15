@@ -4,9 +4,8 @@ from os import listdir
 import dash_bootstrap_components as dbc
 from tools import load_establishments, save_products2, load_brands
 from CONFIG import CFG, BOLD, CENTER, UNDERLINE, COORDINATES
-import uuid
 from dash import html, callback, Input, Output, State, ALL, dcc, \
-    Patch, MATCH, ctx, no_update, ClientsideFunction, clientside_callback
+    MATCH, ctx, no_update, ClientsideFunction, clientside_callback
 from datetime import datetime
 from math import radians, sin, cos, sqrt, atan2
 from itertools import zip_longest
@@ -29,12 +28,6 @@ def CLEAR(comp_id, idx):
             "Você tem certeza que quer limpar todos os campos?\n\n"
             "Essa ação não pode ser revertida!")
     )
-
-
-CELL_CLASS = {
-    'wrong': 'params.value == null || params.value == ""',
-    'correct': 'params.value != null && params.value != ""'
-}
 
 
 def product_grid2(product, group):
