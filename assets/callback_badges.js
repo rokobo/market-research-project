@@ -86,7 +86,7 @@ function refresh_CFG() {
             if (!response.ok) {throw new Error('Network response was not ok /refresh_CFG')}
             return response.json();
         })
-        .then(data => { localStorage.setItem("CFG-data", JSON.stringify(data));console.timeEnd("refresh_CFG");refresh_brands() })
+        .then(data => { localStorage.setItem("CFG-data", JSON.stringify(data));console.timeEnd("refresh_CFG")})
         .catch(error => { console.error('Error fetching /get-cfg:', error);console.timeEnd("refresh_CFG") });
 }
 
@@ -114,9 +114,8 @@ function refresh_brands() {
     console.timeEnd("refresh_brands");
 }
 
-setInterval(refresh_CFG, 1000 * 60 * 5);
-
 refresh_CFG();
+refresh_brands()
 
 window.dash_clientside.functions={
 theme_select: function(value) { return value },
