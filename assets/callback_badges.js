@@ -115,7 +115,7 @@ function refresh_brands() {
 }
 
 refresh_CFG();
-refresh_brands()
+refresh_brands();
 
 window.dash_clientside.functions={
 theme_select: function(value) { return value },
@@ -226,7 +226,7 @@ function process_product(add, del, ...data) {
     const ctx = dash_clientside.callback_context.triggered_id;
 
     // Determine collapse is_open state
-    ideal_length = CFG["product_rows"][prd];
+    ideal_length = CFG["product_rows"][prd.split("-")[0]];
     expected_length = CFG["max_rows"];
     initial_array = new Array(expected_length).fill(false);
     for (let i = 0; i < ideal_length; i++) { initial_array[i] = true }
@@ -280,7 +280,7 @@ function process_product(add, del, ...data) {
     if (is_open.filter(x => x).length === 0) {
         sectionValidations = ["Sem dados", "warning", "icon-orange"]
     } else if (openValidations.every(cl => cl.includes("success"))) {
-        if (validCount < CFG["product_rows"][prd]) { sectionValidations =  ["Faltando", "warning", "icon-orange"] }
+        if (validCount < CFG["product_rows"][prd.split("-")[0]]) { sectionValidations =  ["Faltando", "warning", "icon-orange"] }
         else { sectionValidations = ["Completo", "success", "icon-green"] }
     } else { sectionValidations = ["Valores", "danger", "icon-red"] }
 

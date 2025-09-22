@@ -586,7 +586,7 @@ def create_save_callback(group, group_prds):
         out_success += [[None for _ in brds] for brds in brands]
         out_success += [[None for _ in prcs] for prcs in prices]
         out_success += [[None for _ in qtys] for qtys in quantities]
-        out_success += [[i < 2 for i in range(len(is_opens))] for is_opens in collapses]
+        out_success += [[i < 4 for i in range(len(is_opens))] for is_opens in collapses]
 
         out_failure = [False, True]
         out_failure += [[no_update for _ in brds] for brds in brands]
