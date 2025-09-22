@@ -14,7 +14,13 @@ with sql.connect(join(config_folder, "products.db")) as db:
         SELECT *
         FROM products
         WHERE "group" IS NOT NULL AND "group" != ""
-        ORDER BY brand_row DESC, product ASC
+        ORDER BY
+            CASE
+                WHEN brand_row = 1 AND split = 0 THEN 1
+                WHEN brand_row = 1 THEN 2
+                ELSE 3
+            END,
+            product ASC
         """,
         db
     )
