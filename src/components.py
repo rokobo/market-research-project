@@ -354,7 +354,6 @@ def create_page(group: str):
             is_open=False, dismissable=False, duration=10000,
             style={"position": "fixed", "top": 110, "right": 10, "width": 350},
         ),
-        dcc.Interval(id="reload-brands", interval=1000*60),
         html.Div(id=f"confetti-{group}", style={"display": "none"}),
         html.Div([
             dcc.Store(id=f"store-collapse-{prd}-{group}", storage_type="local")
@@ -379,10 +378,10 @@ def create_page(group: str):
                 function_name='load_brands'
             ),
             Output({'type': f"brand-{prd}-{group}", 'index': MATCH}, "options"),
-            Input('reload-brands', 'n_intervals'),
+            Input({'type': f"brand-{prd}-{group}", 'index': MATCH}, "id"),
             State({'type': f"brand-{prd}-{group}", 'index': MATCH}, "id"),
             State({'type': f"brand-{prd}-{group}", 'index': MATCH}, "options"),
-            prevent_initial_call=True
+            prevent_initial_call=False
         )
 
         if CFG.product_fields[prd][0]:  # brand
