@@ -100,7 +100,10 @@ def product_grid2(product, group):
                 CFG.product_titles[product], style=BOLD, className="mx-2"),
             dbc.Badge("", pill=True, id=f"status-{product}-{group}"),
             dbc.FormText("", class_name="ms-1", id=f"status-{product}-count-{group}"),
-        ], className="p-1 mb-0"),
+        ], className="p-1 pb-0 mb-0"),
+        dbc.Col([
+            dbc.FormText(f"Mínimo ideal de entradas: {CFG.product_rows[product]}"),
+        ], className="p-1 pt-0 my-0"),
 
         dbc.Row(headers),
         dbc.Row(rows, id=f"{product}-rows-{group}", className="g-0"),
