@@ -99,7 +99,6 @@ def product_grid2(product, group):
             dbc.Label(
                 CFG.product_titles[product], style=BOLD, className="mx-2"),
             dbc.Badge("", pill=True, id=f"status-{product}-{group}"),
-            dbc.FormText("", class_name="ms-1", id=f"status-{product}-count-{group}"),
         ], className="p-1 mb-0"),
 
         dbc.Row(headers),
@@ -379,35 +378,41 @@ def create_page(group: str):
                 function_name='load_brands'
             ),
             Output({'type': f"brand-{prd}-{group}", 'index': MATCH}, "options"),
-            Input('reload-brands', 'n_intervals'),
+            Input({'type': f"brand-{prd}-{group}", 'index': MATCH}, "id"),
             State({'type': f"brand-{prd}-{group}", 'index': MATCH}, "id"),
             State({'type': f"brand-{prd}-{group}", 'index': MATCH}, "options"),
-            prevent_initial_call=True
+            prevent_initial_call=False
+        )
+
+        clientside_callback(
+            ClientsideFunction(
+                namespace='functions',
+                function_name='add_row'
+            ),
+            Output({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
+            Input(f"add-{prd}-{group}", "n_clicks"),
+            State({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open")
+        )
+
+        clientside_callback(
+            ClientsideFunction(
+                namespace='functions',
+                function_name='validate_prices'
+            ),
+            Output({'type': f"price-{prd}-{group}", 'index': MATCH}, "invalid"),
+            Input({'type': f"price-{prd}-{group}", 'index': MATCH}, "value"),
+            prevent_initial_call=False
         )
 
         if CFG.product_fields[prd][0]:  # brand
             clientside_callback(
                 ClientsideFunction(
                     namespace='functions',
-                    function_name='process_product_branded'
+                    function_name='validate_brands'
                 ),
-                Output({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
-                Output(f"status-{prd}-count-{group}", "children"),
-                Output({'type': f"brand-{prd}-{group}", 'index': ALL}, "invalid"),
-                Output({'type': f"price-{prd}-{group}", 'index': ALL}, "invalid"),
-                Output({'type': f"quantity-{prd}-{group}", 'index': ALL}, "invalid"),
-                Output({'type': f"delete-{prd}-{group}", 'index': ALL}, "className"),
-                Output(f"status-{prd}-{group}", "children"),
-                Output(f"status-{prd}-{group}", "color"),
-                Output(f"icon-{prd}-{group}", "className"),
-
-                Input(f"add-{prd}-{group}", "n_clicks"),
-                Input({'type': f"delete-{prd}-{group}", 'index': ALL}, "n_clicks"),
-                Input({'type': f"brand-{prd}-{group}", 'index': ALL}, "value"),
-                Input({'type': f"price-{prd}-{group}", 'index': ALL}, "value"),
-                Input({'type': f"quantity-{prd}-{group}", 'index': ALL}, "value"),
-                State({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
-                State(f"add-{prd}-{group}", "id"),
+                Output({'type': f"brand-{prd}-{group}", 'index': MATCH}, "invalid"),
+                Input({'type': f"brand-{prd}-{group}", 'index': MATCH}, "value"),
+                prevent_initial_call=False
             )
             clientside_callback(
                 ClientsideFunction(
@@ -417,6 +422,7 @@ def create_page(group: str):
                 Output({'type': f"brand-{prd}-{group}", 'index': MATCH}, "value"),
                 Output({'type': f"price-{prd}-{group}", 'index': MATCH}, "value"),
                 Output({'type': f"quantity-{prd}-{group}", 'index': MATCH}, "value"),
+                Output({'type': f"collapse-{prd}-{group}", 'index': MATCH}, "is_open", allow_duplicate=True),
                 Input({'type': f"delete-{prd}-{group}", 'index': MATCH}, "n_clicks"),
                 prevent_initial_call=True
             )
@@ -424,44 +430,26 @@ def create_page(group: str):
             clientside_callback(
                 ClientsideFunction(
                     namespace='functions',
-                    function_name='process_product_brandless'
-                ),
-                Output({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
-                Output(f"status-{prd}-count-{group}", "children"),
-                Output({'type': f"price-{prd}-{group}", 'index': ALL}, "invalid"),
-                Output({'type': f"quantity-{prd}-{group}", 'index': ALL}, "invalid"),
-                Output({'type': f"delete-{prd}-{group}", 'index': ALL}, "className"),
-                Output(f"status-{prd}-{group}", "children"),
-                Output(f"status-{prd}-{group}", "color"),
-                Output(f"icon-{prd}-{group}", "className"),
-
-                Input(f"add-{prd}-{group}", "n_clicks"),
-                Input({'type': f"delete-{prd}-{group}", 'index': ALL}, "n_clicks"),
-                Input({'type': f"price-{prd}-{group}", 'index': ALL}, "value"),
-                Input({'type': f"quantity-{prd}-{group}", 'index': ALL}, "value"),
-                State({'type': f"collapse-{prd}-{group}", 'index': ALL}, "is_open"),
-                State(f"add-{prd}-{group}", "id"),
-            )
-            clientside_callback(
-                ClientsideFunction(
-                    namespace='functions',
                     function_name='delete_row_data_branded'
                 ),
                 Output({'type': f"price-{prd}-{group}", 'index': MATCH}, "value"),
                 Output({'type': f"quantity-{prd}-{group}", 'index': MATCH}, "value"),
+                Output({'type': f"collapse-{prd}-{group}", 'index': MATCH}, "is_open", allow_duplicate=True),
                 Input({'type': f"delete-{prd}-{group}", 'index': MATCH}, "n_clicks"),
                 prevent_initial_call=True
             )
 
     create_save_callback(group, group_prds)
 
-    @callback(
+    clientside_callback(
+        ClientsideFunction(
+            namespace='functions',
+            function_name='fill_date'
+        ),
         Output(f"collection_date-{group}", "value"),
         Input(f"fill-date-{group}", "n_clicks"),
         prevent_initial_call=False
     )
-    def fill_date(n_clicks):
-        return datetime.now().date().isoformat()
 
     @callback(
         Output(f"establishment-{group}", "value"),
@@ -471,7 +459,7 @@ def create_page(group: str):
         Input(f"establishment-{group}", "value"),
         State("geolocation", "position"),
         State("geolocation", "timestamp"),
-        prevent_initial_call=False
+        prevent_initial_call=True
     )
     def fill_establishment(n_clicks, estab, position, timestamp):
         context = ctx.triggered_id

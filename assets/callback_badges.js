@@ -78,21 +78,29 @@ waitForBadge("geolocation-badge", () => {
     });
 });
 
+MAX_FUNCTION_TIME = 100;
+function timeFunction(start, name) {
+    duration = performance.now() - start;
+    if (duration > MAX_FUNCTION_TIME) {
+        console.log(`Function ${name} took too long: ${duration.toFixed(2)}ms`);
+    }
+}
+
 
 function refresh_CFG() {
-    console.time("refresh_CFG");
+    start = performance.now();
     fetch('/get-cfg')
         .then(response => {
             if (!response.ok) {throw new Error('Network response was not ok /refresh_CFG')}
             return response.json();
         })
-        .then(data => { localStorage.setItem("CFG-data", JSON.stringify(data));console.timeEnd("refresh_CFG")})
-        .catch(error => { console.error('Error fetching /get-cfg:', error);console.timeEnd("refresh_CFG") });
+        .then(data => { localStorage.setItem("CFG-data", JSON.stringify(data));timeFunction(start, "refresh_CFG") })
+        .catch(error => { console.error('Error fetching /get-cfg:', error)});
 }
 
 
 function refresh_brands() {
-    console.time("refresh_brands");
+    start = performance.now();
     products = JSON.parse(localStorage.getItem("CFG-data")).products;
 
     // Remove brands from localStorage that are not in the current products list
@@ -111,15 +119,19 @@ function refresh_brands() {
             .then(data => { localStorage.setItem(`brands-${product}`, JSON.stringify(data)) })
             .catch(error => { console.error(`Error fetching /get-brand/${product}:`, error) });
     }
-    console.timeEnd("refresh_brands");
+    timeFunction(start, "refresh_brands");
 }
 
 refresh_CFG();
-refresh_brands()
+refresh_brands();
 
 window.dash_clientside.functions={
+validate_brands: function(value) { return value === null || value === undefined || value === "" },
+validate_prices: function(value) { return !(value > 0) },
 theme_select: function(value) { return value },
+fill_date: function(n_clicks) { return new Date().toISOString().split('T')[0]},
 refresh_local_storages: function(_){
+    start = performance.now();
     let markdown = "";
     const keys = Object.keys(localStorage).sort();
     for (const key of keys) {
@@ -140,9 +152,11 @@ refresh_local_storages: function(_){
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
     const ss = String(now.getSeconds()).padStart(2, '0');
+    timeFunction(start, "refresh_local_storages");
     return [markdown, `${hh}:${mm}:${ss}`];
 },
 validate_sections: function(name, date, estab, ...args) {
+    start = performance.now();
     const [color, children] = splitArgs(...args);
     let disabled = color.includes("danger")
     disabled = disabled || name === "" || date === "" || estab === "";
@@ -160,6 +174,7 @@ validate_sections: function(name, date, estab, ...args) {
     message += `⚠️ Produtos com Faltas: ${counts["Faltando"] || 0}\n\n`;
     message += `❌ Produtos Sem dados: ${counts["Sem dados"] || 0}\n\n`;
     // INFO(disabled, disabled ? "danger" : "success", disabled ? "unclickable" : "", "\n", message);
+    timeFunction(start, "validate_sections");
     return [message, disabled, disabled ? "danger" : "success", disabled ? "unclickable" : ""];
 },
 load_brands: function(_, id, opts) {
@@ -176,10 +191,22 @@ load_brands: function(_, id, opts) {
     });
 },
 delete_row_data_branded: function(_) {
-    return [null, null, null]
+    ctx = dash_clientside.callback_context.triggered_id;
+    idx = ctx.index;
+    prd = ctx.type.split("delete-")[1];
+    collapsed = JSON.parse(localStorage.getItem(`store-collapse-${prd}`));
+    collapsed[idx] = false;
+    localStorage.setItem(`store-collapse-${prd}`, JSON.stringify(collapsed));
+    return [null, null, null, false]
 },
 delete_row_data_brandless: function(_) {
-    return [null, null]
+    ctx = dash_clientside.callback_context.triggered_id;
+    idx = ctx.index;
+    prd = ctx.type.split("delete-")[1];
+    collapsed = JSON.parse(localStorage.getItem(`store-collapse-${prd}`));
+    collapsed[idx] = false;
+    localStorage.setItem(`store-collapse-${prd}`, JSON.stringify(collapsed));
+    return [null, null, false]
 },
 process_product_branded: function(...args) {
     return process_product(...args)
@@ -189,6 +216,36 @@ process_product_brandless: function(...args) {
 },
 show_confetti: function(show) {
     if (show) {showConfetti()}
+},
+add_row: function(_, is_open) {
+    start = performance.now();
+
+    prd = Object.keys(dash_clientside.callback_context.inputs)[0].split("add-")[1].replace(".n_clicks", "");
+    triggered_id = dash_clientside.callback_context.triggered_id;
+
+    // Retrieve and parse localStorage for current product
+    const storageKey = `store-collapse-${prd}`;
+    const storedValue = localStorage.getItem(storageKey);
+
+    // If this is the initial call (no trigger)
+    if (triggered_id === null || triggered_id === undefined) {
+        if (storedValue !== null) {
+            try {
+                const parsed = JSON.parse(storedValue);
+                if (Array.isArray(parsed) && parsed.length === is_open.length) {
+                    return parsed;
+                }
+            } catch (e) {
+                // Bad JSON in localStorage, ignore and fall back
+            }
+        }
+    } else {
+        const idx = is_open.findIndex(state => !state);
+        if (idx !== -1) {is_open[idx] = true};
+    }
+    localStorage.setItem(storageKey, JSON.stringify(is_open));
+    timeFunction(start, "add_row");
+    return is_open;
 }
 }
 function showConfetti() {
@@ -213,81 +270,96 @@ function showConfetti() {
         confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
 }
-function process_product(add, del, ...data) {
-    const id = data.pop();
+function process_product(add, ...data) {
+    start = performance.now();
+    ctx = dash_clientside.callback_context.triggered_id["type"].split("collapse-")[1];
     const collap = data.pop();
-    const qtys = data.pop();
-    const prcs = data.pop();
-    brds = null;
-    if (data.length !== 0) { brds = data.pop() }
+    const prc = data.pop();
+    const brd = data.pop();
 
-    const CFG = JSON.parse(localStorage.getItem("CFG-data"));
-    const prd = id.split("add-")[1];
-    const ctx = dash_clientside.callback_context.triggered_id;
-
-    // Determine collapse is_open state
-    ideal_length = CFG["product_rows"][prd];
-    expected_length = CFG["max_rows"];
-    initial_array = new Array(expected_length).fill(false);
-    for (let i = 0; i < ideal_length; i++) { initial_array[i] = true }
-
-    let collapsed = localStorage.getItem(`store-collapse-${prd}`);
-    let is_open = null;
-
-    if (collapsed !== null) {
-        try {
-            is_open = JSON.parse(collapsed);
-        } catch (e) {
-            is_open = null;
-        }
-    }
-
-    if ( collapsed === null || !Array.isArray(is_open) || is_open.length !== expected_length ) { is_open = initial_array }
-
-    if (ctx === `add-${prd}`) {
-        const idx = is_open.indexOf(false);
-        if (idx !== -1) { is_open[idx] = true }
-    }
-    else if (typeof ctx === "object" && ctx.type === `delete-${prd}`) {
-        if (typeof ctx.index === "number") { is_open[ctx.index] = false }
-    }
-
-    localStorage.setItem(`store-collapse-${prd}`, JSON.stringify(is_open));
-    const status = `${is_open.reduce((n, v) => n + (v ? 1 : 0), 0)}/${expected_length}`;
-
-    // Validate inputs
-    prcInvalid = prcs.map(p => !(p > 0));
-    qtyInvalid = qtys.map(() => false);
-    brdInvalid = null;
-
-    if (brds === null) {
-        buttonClass = prcInvalid.map((p, i) => {
-            if (!p) { return "btn-outline-success" }
-            else { return "btn-outline-danger" }
-        });
-    } else {
-        brdInvalid = brds.map(b => !b);
-        buttonClass = brdInvalid.map((b, i) => {
-            if (!b && !prcInvalid[i]) { return "btn-outline-success" }
-            else { return "btn-outline-danger" }
-        });
-    }
-
-    // Validate section, set badge and icons
-    const openValidations = buttonClass.filter((_, i) => is_open[i]);
-    const validCount = openValidations.filter(cl => cl.includes("success")).length;
-
-    if (is_open.filter(x => x).length === 0) {
-        sectionValidations = ["Sem dados", "warning", "icon-orange"]
-    } else if (openValidations.every(cl => cl.includes("success"))) {
-        if (validCount < CFG["product_rows"][prd]) { sectionValidations =  ["Faltando", "warning", "icon-orange"] }
-        else { sectionValidations = ["Completo", "success", "icon-green"] }
-    } else { sectionValidations = ["Valores", "danger", "icon-red"] }
-
-
-    if (brds === null) {rtn = [is_open, status, prcInvalid, qtyInvalid, buttonClass];}
-    else {rtn = [is_open, status, brdInvalid, prcInvalid, qtyInvalid, buttonClass];}
-    rtn = rtn.concat(sectionValidations);
-    // INFO(rtn)
-    return rtn;
+    brdInvalid = brd === null || brd === undefined || brd === "";
+    prcInvalid = !(prc > 0);
+    anyInvalid = brdInvalid || prcInvalid;
+    timeFunction(start, "process_product");
+    return [brdInvalid, prcInvalid, anyInvalid ? "btn-outline-danger" : "btn-outline-success"];
 }
+// function process_product(add, del, ...data) {
+//     start = performance.now();
+//     const id = data.pop();
+//     const collap = data.pop();
+//     const qtys = data.pop();
+//     const prcs = data.pop();
+//     brds = null;
+//     if (data.length !== 0) { brds = data.pop() }
+
+//     const CFG = JSON.parse(localStorage.getItem("CFG-data"));
+//     const prd = id.split("add-")[1];
+//     const ctx = dash_clientside.callback_context.triggered_id;
+
+//     // Determine collapse is_open state
+//     ideal_length = CFG["product_rows"][prd];
+//     expected_length = CFG["max_rows"];
+//     initial_array = new Array(expected_length).fill(false);
+//     for (let i = 0; i < ideal_length; i++) { initial_array[i] = true }
+
+//     let collapsed = localStorage.getItem(`store-collapse-${prd}`);
+//     let is_open = null;
+
+//     if (collapsed !== null) {
+//         try {
+//             is_open = JSON.parse(collapsed);
+//         } catch (e) {
+//             is_open = null;
+//         }
+//     }
+
+//     if ( collapsed === null || !Array.isArray(is_open) || is_open.length !== expected_length ) { is_open = initial_array }
+
+//     if (ctx === `add-${prd}`) {
+//         const idx = is_open.indexOf(false);
+//         if (idx !== -1) { is_open[idx] = true }
+//     }
+//     else if (typeof ctx === "object" && ctx.type === `delete-${prd}`) {
+//         if (typeof ctx.index === "number") { is_open[ctx.index] = false }
+//     }
+
+//     localStorage.setItem(`store-collapse-${prd}`, JSON.stringify(is_open));
+//     const status = `${is_open.reduce((n, v) => n + (v ? 1 : 0), 0)}/${expected_length}`;
+
+//     // Validate inputs
+//     prcInvalid = prcs.map(p => !(p > 0));
+//     qtyInvalid = qtys.map(() => false);
+//     brdInvalid = null;
+
+//     if (brds === null) {
+//         buttonClass = prcInvalid.map((p, i) => {
+//             if (!p) { return "btn-outline-success" }
+//             else { return "btn-outline-danger" }
+//         });
+//     } else {
+//         brdInvalid = brds.map(b => !b);
+//         buttonClass = brdInvalid.map((b, i) => {
+//             if (!b && !prcInvalid[i]) { return "btn-outline-success" }
+//             else { return "btn-outline-danger" }
+//         });
+//     }
+
+//     // Validate section, set badge and icons
+//     const openValidations = buttonClass.filter((_, i) => is_open[i]);
+//     const validCount = openValidations.filter(cl => cl.includes("success")).length;
+
+//     if (is_open.filter(x => x).length === 0) {
+//         sectionValidations = ["Sem dados", "warning", "icon-orange"]
+//     } else if (openValidations.every(cl => cl.includes("success"))) {
+//         if (validCount < CFG["product_rows"][prd]) { sectionValidations =  ["Faltando", "warning", "icon-orange"] }
+//         else { sectionValidations = ["Completo", "success", "icon-green"] }
+//     } else { sectionValidations = ["Valores", "danger", "icon-red"] }
+
+
+//     if (brds === null) {rtn = [is_open, status, prcInvalid, qtyInvalid, buttonClass];}
+//     else {rtn = [is_open, status, brdInvalid, prcInvalid, qtyInvalid, buttonClass];}
+//     rtn = rtn.concat(sectionValidations);
+//     // INFO(rtn)
+//     timeFunction(start, "process_product");
+//     return rtn;
+// }
