@@ -475,6 +475,8 @@ async function resetRows() {
     const CFG = await waitForLocalStorage(`CFG-data`);
     const [productDivs, group] = await getProductDivs();
     const validators = await generalValidators(group);
+    const saveOverlay = await waitForElementById(`save-overlay-${group}`);
+    const form = document.querySelector("form");
 
     validators[0].value = "";
     validators[1].value = "";
@@ -486,6 +488,8 @@ async function resetRows() {
         const storageKey = `store-collapse-${prd}`;
         const expected_rows = CFG.product_rows[prd];
         const max_rows = CFG.max_rows;
+        const statusBadge = await waitForElementById(`status-${prd}-${group}`);
+        const prdIcon = await waitForElementById(`icon-${prd}-${group}`);
 
         let resetCollapsed = Array.from({ length: max_rows }, (_, i) => i < expected_rows);
         localStorage.setItem(storageKey, JSON.stringify(resetCollapsed));
@@ -493,9 +497,11 @@ async function resetRows() {
         collapsed.forEach((c, i) => {
             c.className = resetCollapsed[i] ? "collapse show" : "collapse";
         });
+
+        validateProduct(null, prd, brdInputs, prcInputs, qtyInputs, statusBadge, prdIcon, CFG)
+        validateSections(...validators, form, saveOverlay);
     }
     console.timeEnd("resetRows");
-    location.reload();
 }
 
 async function setupListeners() {
