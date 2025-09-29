@@ -175,23 +175,27 @@ load_brands: function(_, id, opts) {
         }
     });
 },
-delete_row_data_branded: function(_) {
-    return [null, null, null]
-},
-delete_row_data_brandless: function(_) {
-    return [null, null]
-},
 process_product_branded: function(...args) {
     return process_product(...args)
 },
 process_product_brandless: function(...args) {
     return process_product(...args)
 },
+start_listeners: function(_) {
+    setupListeners();
+    return NOUPDATE;
+},
 show_confetti: function(show) {
-    if (show) {showConfetti()}
+    if (show) {
+        resetRows();
+        showConfetti();
+    }
+    return NOUPDATE;
 }
 }
+
 function showConfetti() {
+    console.log("Showing confetti!");
     var duration = 10 * 1000;
     var animationEnd = Date.now() + duration;
     var defaults = { startVelocity: 30, spread: 50, ticks: 450, zIndex: 200, scalar: 1.5 };
@@ -212,82 +216,366 @@ function showConfetti() {
         confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
         confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
+    console.log("Confetti setup complete.");
 }
-function process_product(add, del, ...data) {
-    const id = data.pop();
-    const collap = data.pop();
-    const qtys = data.pop();
-    const prcs = data.pop();
-    brds = null;
-    if (data.length !== 0) { brds = data.pop() }
 
+function waitForElementByQuery(query, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const start = performance.now();
+        const check = () => {
+            const el = document.querySelector(query);
+            if (el) return resolve(el);
+            if (performance.now() - start > timeout) {
+                console.error(`Timeout waiting for selector: ${query}`);
+                return reject(new Error(`Timeout waiting for ${query}`));
+            }
+            requestAnimationFrame(check);
+        };
+        check();
+    });
+}
+
+function waitForLocalStorage(key, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const start = performance.now();
+        function check() {
+            const value = localStorage.getItem(key);
+            if (value !== null) {
+                return resolve(JSON.parse(value));
+            }
+            if (performance.now() - start > timeout) {
+                console.error(`Timeout waiting for localStorage key: ${key}`);
+                return reject(new Error(`Timeout waiting for localStorage key: ${key}`));
+            }
+            requestAnimationFrame(check);
+        }
+        check();
+    });
+}
+
+function waitForElementsByQuery(query, timeout = 5000) {
     const CFG = JSON.parse(localStorage.getItem("CFG-data"));
-    const prd = id.split("add-")[1];
-    const ctx = dash_clientside.callback_context.triggered_id;
+    return new Promise((resolve, reject) => {
+        const start = performance.now();
+        function check() {
+            const els = document.querySelectorAll(query);
+            if (els && els.length >= CFG.max_rows) {
+                return resolve(Array.from(els));
+            }
+            if (performance.now() - start > timeout) {
+                console.error(`Timeout waiting for elements by selector: ${query}`);
+                return reject(new Error(`Timeout waiting for elements by selector: ${query}`));
+            }
+            requestAnimationFrame(check);
+        }
+        check();
+    });
+}
 
-    // Determine collapse is_open state
-    ideal_length = CFG["product_rows"][prd.split("-")[0]];
-    expected_length = CFG["max_rows"];
-    initial_array = new Array(expected_length).fill(false);
-    for (let i = 0; i < ideal_length; i++) { initial_array[i] = true }
+function waitForElementById(id, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const start = performance.now();
+        function check() {
+            const el = document.getElementById(id);
+            if (el) {
+                return resolve(el);
+            }
+            if (performance.now() - start > timeout) {
+                console.error(`Timeout waiting for element with id: ${id}`);
+                return reject(new Error(`Timeout waiting for element with id: ${id}`));
+            }
+            requestAnimationFrame(check);
+        }
+        check();
+    });
+}
 
-    let collapsed = localStorage.getItem(`store-collapse-${prd}`);
-    let is_open = null;
+async function getProductDivs() {
+    console.time("getProductDivs");
+    const grid = await waitForElementByQuery('[id^="grids-"]');
+    const group = grid.id.split("grids-")[1];
+    const productDivs = grid ? Array.from(grid.children) : [];
+    console.timeEnd("getProductDivs");
+    return [productDivs, group];
+}
 
-    if (collapsed !== null) {
-        try {
-            is_open = JSON.parse(collapsed);
-        } catch (e) {
-            is_open = null;
+async function getProductFields(prd, group, CFG) {
+    brdInputs = []
+    if (CFG.product_fields[prd][0] === 1) {
+        brdInputs = await waitForElementsByQuery(`select[id*="brand-${prd}-"]`)
+    }
+    const prcInputs = await waitForElementsByQuery(`input[id*="price-${prd}-"]`);
+    const qtyInputs = await waitForElementsByQuery(`input[id*="quantity-${prd}-"]`);
+    const deleteBtns = await waitForElementsByQuery(`button[id*="delete-${prd}-"]`);
+    const addBtn = await waitForElementById(`add-${prd}-${group}`);
+    const collapsed = await waitForElementsByQuery(`div[id*="collapse-${prd}-"]`);
+    return [brdInputs, prcInputs, qtyInputs, deleteBtns, addBtn, collapsed];
+}
+
+function validateProduct(prdEvent, prd, brds, prcs, qtys, badge, icon, CFG) {
+    console.time("validateProduct");
+
+    if (brds.length === 0) {
+        validBrds = Array(prcs.length).fill(true);
+    } else {
+        validBrds = brds.map(brd => {
+            const visible = !!(brd.offsetWidth || brd.offsetHeight || brd.getClientRects().length);
+            return visible ? brd.checkValidity() : true;
+        });
+    }
+    validPrcs = prcs.map(prc => {
+        const visible = !!(prc.offsetWidth || prc.offsetHeight || prc.getClientRects().length);
+        return visible ? prc.checkValidity() : true;
+    });
+    validQtys = qtys.map(qty => {
+        const visible = !!(qty.offsetWidth || qty.offsetHeight || qty.getClientRects().length);
+        return visible ? qty.checkValidity() : true;
+    });
+    visibleRows = prcs.filter(prc => !!(prc.offsetWidth || prc.offsetHeight || prc.getClientRects().length)).length;
+
+    let allValid = true;
+    for (let i = 0; i < validBrds.length; i++) {
+        if (!validBrds[i] || !validPrcs[i] || !validQtys[i]) {
+            allValid = false;
+            break;
         }
     }
-
-    if ( collapsed === null || !Array.isArray(is_open) || is_open.length !== expected_length ) { is_open = initial_array }
-
-    if (ctx === `add-${prd}`) {
-        const idx = is_open.indexOf(false);
-        if (idx !== -1) { is_open[idx] = true }
-    }
-    else if (typeof ctx === "object" && ctx.type === `delete-${prd}`) {
-        if (typeof ctx.index === "number") { is_open[ctx.index] = false }
-    }
-
-    localStorage.setItem(`store-collapse-${prd}`, JSON.stringify(is_open));
-    const status = `${is_open.reduce((n, v) => n + (v ? 1 : 0), 0)}/${expected_length}`;
-
-    // Validate inputs
-    prcInvalid = prcs.map(p => !(p > 0));
-    qtyInvalid = qtys.map(() => false);
-    brdInvalid = null;
-
-    if (brds === null) {
-        buttonClass = prcInvalid.map((p, i) => {
-            if (!p) { return "btn-outline-success" }
-            else { return "btn-outline-danger" }
-        });
+    if (visibleRows === 0) {
+        badge.textContent = "Sem dados";
+        badge.className = "badge rounded-pill bg-warning";
+        icon.className = "icon-orange";
+    } else if (allValid) {
+        if (visibleRows < CFG.product_rows[prd]) {
+            badge.textContent = "Poucos itens";
+            badge.className = "badge rounded-pill bg-warning";
+            icon.className = "icon-orange";
+        } else {
+            badge.textContent = "Completo";
+            badge.className = "badge rounded-pill bg-success";
+            icon.className = "icon-green";
+        }
     } else {
-        brdInvalid = brds.map(b => !b);
-        buttonClass = brdInvalid.map((b, i) => {
-            if (!b && !prcInvalid[i]) { return "btn-outline-success" }
-            else { return "btn-outline-danger" }
-        });
+        badge.textContent = "Valores inválidos";
+        badge.className = "badge rounded-pill bg-danger";
+        icon.className = "icon-red";
+    }
+    console.timeEnd("validateProduct");
+}
+
+function addRow(prd, collapsed, initial=false) {
+    console.time("addRow");
+    const storageKey = `store-collapse-${prd}`;
+    let storedValue = localStorage.getItem(storageKey);
+    const CFG = JSON.parse(localStorage.getItem("CFG-data"));
+    const expected_rows = CFG.product_rows[prd];
+    let collapsedStates = collapsed.map(c => c.className.includes("show"));
+
+    // Ensure localStorage exists, if not initialize it
+    if (storedValue === null || storedValue === undefined || storedValue.length === 0 || JSON.parse(storedValue).length !== CFG.max_rows) {
+        localStorage.setItem(storageKey, JSON.stringify(collapsedStates));
+        storedValue = collapsedStates;
+    } else {
+        storedValue = JSON.parse(storedValue);
     }
 
-    // Validate section, set badge and icons
-    const openValidations = buttonClass.filter((_, i) => is_open[i]);
-    const validCount = openValidations.filter(cl => cl.includes("success")).length;
+    // If initial call, sync UI with localStorage
+    if (initial) {
+        collapsed.forEach((c, i) => {
+            c.className = storedValue[i] ? "collapse show" : "collapse";
+        });
+        console.timeEnd("addRow");
+        return;
+    }
 
-    if (is_open.filter(x => x).length === 0) {
-        sectionValidations = ["Sem dados", "warning", "icon-orange"]
-    } else if (openValidations.every(cl => cl.includes("success"))) {
-        if (validCount < CFG["product_rows"][prd.split("-")[0]]) { sectionValidations =  ["Faltando", "warning", "icon-orange"] }
-        else { sectionValidations = ["Completo", "success", "icon-green"] }
-    } else { sectionValidations = ["Valores", "danger", "icon-red"] }
-
-
-    if (brds === null) {rtn = [is_open, status, prcInvalid, qtyInvalid, buttonClass];}
-    else {rtn = [is_open, status, brdInvalid, prcInvalid, qtyInvalid, buttonClass];}
-    rtn = rtn.concat(sectionValidations);
-    // INFO(rtn)
-    return rtn;
+    // Add new row if possible and sync localStorage
+    const nextOpenIdx = collapsedStates.findIndex(state => !state);
+    if (nextOpenIdx !== -1) {
+        collapsed[nextOpenIdx].className = "collapse show";
+        storedValue[nextOpenIdx] = true;
+    }
+    localStorage.setItem(storageKey, JSON.stringify(storedValue));
+    console.timeEnd("addRow");
 }
+
+function deleteRow(prd, collapsed, event, brds, prcs, qtys) {
+    console.time("deleteRow");
+    const storageKey = `store-collapse-${prd}`;
+    let storedValue = JSON.parse(localStorage.getItem(storageKey));
+    const deleteId = event.currentTarget.id;
+    const deleteIdx = JSON.parse(deleteId).index;
+    let collapsedStates = collapsed.map(c => c.className.includes("show"));
+
+    // Collapse row, set field values to null and update localStorage
+    if (brds.length !== 0) {brds[deleteIdx].value = null}
+    prcs[deleteIdx].value = null;
+    qtys[deleteIdx].value = null;
+    collapsed[deleteIdx].className = "collapse";
+    collapsedStates[deleteIdx] = false;
+    localStorage.setItem(storageKey, JSON.stringify(collapsedStates));
+
+    // Also change dash's persistence localStorage to null
+    let key = JSON.parse(deleteId);
+    console.log("Deleting row with key:", key);
+    const keyBase = `_dash_persistence.${JSON.stringify(key)}.value.true`;
+    const keyBrc = keyBase.replace("delete", "brand");
+    const keyPrc = keyBase.replace("delete", "price");
+    const keyQty = keyBase.replace("delete", "quantity");
+    if (brds.length !== 0) {localStorage.setItem(keyBrc, JSON.stringify([null]))}
+    localStorage.setItem(keyPrc, JSON.stringify([null]));
+    localStorage.setItem(keyQty, JSON.stringify([null]));
+    console.timeEnd("deleteRow");
+}
+
+async function generalValidators(group) {
+    console.time("generalValidators");
+    const nameInput = await waitForElementById(`collector_name-${group}`);
+    const dateInput = await waitForElementById(`collection_date-${group}`);
+    const estabInput = await waitForElementById(`establishment-${group}`);
+    const allBadges = await waitForElementsByQuery(`span[id^="status-"][id$="${group}"]`);
+    const nameIcon = await waitForElementById(`icon-collector_name-${group}`);
+    const dateIcon = await waitForElementById(`icon-collection_date-${group}`);
+    const estabIcon = await waitForElementById(`icon-establishment-${group}`);
+    const confirmSend = await waitForElementById(`confirm-send-${group}`);
+    const saveBtn = await waitForElementById(`save-products-${group}`);
+    const saveContainer = await waitForElementById(`save-container-${group}`);
+    console.timeEnd("generalValidators");
+    return [nameInput, dateInput, estabInput, allBadges, nameIcon, dateIcon, estabIcon, confirmSend, saveBtn, saveContainer];
+}
+
+function validateSections(nameInput, dateInput, estabInput, allBadges, nameIcon, dateIcon, estabIcon, confirmSend, saveBtn, saveContainer, form, saveOverlay) {
+    console.time("validateSections");
+
+    const nameValid = nameInput.checkValidity();
+    const dateValid = dateInput.checkValidity();
+    const estabValid = estabInput.checkValidity();
+    const badgeValids = allBadges.every(badge => {return !badge.className.includes("danger")});
+    const perfectCount = allBadges.filter(badge => badge.className.includes("bg-success")).length;
+    const warningCount = allBadges.filter(badge => badge.className.includes("bg-warning")).length;
+    const dangerCount = allBadges.filter(badge => badge.className.includes("bg-danger")).length;
+
+    let message = "";
+    message += `✅ Produtos perfeitos: ${perfectCount}<br>`;
+    message += `⚠️ Produtos com poucos itens: ${warningCount}<br>`;
+    message += `❌ Produtos com dados inválidos: ${dangerCount}<br>`;
+    confirmSend.innerHTML = message;
+
+    nameIcon.className = nameValid ? "icon-green" : "icon-red";
+    dateIcon.className = dateValid ? "icon-green" : "icon-red";
+    estabIcon.className = estabValid ? "icon-green" : "icon-red";
+
+    const AllValid = nameValid && dateValid && estabValid && badgeValids;
+
+    saveBtn.className = AllValid ? "btn btn-success" : "btn btn-danger";
+    saveOverlay.style.pointerEvents = AllValid ? "none" : "all";
+    console.timeEnd("validateSections");
+}
+
+async function resetRows() {
+    console.time("resetRows");
+    const CFG = await waitForLocalStorage(`CFG-data`);
+    const [productDivs, group] = await getProductDivs();
+    const validators = await generalValidators(group);
+
+    validators[0].value = "";
+    validators[1].value = "";
+    validators[2].value = "";
+
+    for (const prdDiv of productDivs) {
+        const prd = prdDiv.id.split("-")[0];
+        const [brdInputs, prcInputs, qtyInputs, deleteBtns, addBtn, collapsed] = await getProductFields(prd, group, CFG);
+        const storageKey = `store-collapse-${prd}`;
+        const expected_rows = CFG.product_rows[prd];
+        const max_rows = CFG.max_rows;
+
+        let resetCollapsed = Array.from({ length: max_rows }, (_, i) => i < expected_rows);
+        localStorage.setItem(storageKey, JSON.stringify(resetCollapsed));
+
+        collapsed.forEach((c, i) => {
+            c.className = resetCollapsed[i] ? "collapse show" : "collapse";
+        });
+    }
+    console.timeEnd("resetRows");
+    location.reload();
+}
+
+async function setupListeners() {
+    /*
+    In this function, we add event listeners and pre-find the elements we need.
+    We really on the native validation of the input fields, so we just need to listen for changes.
+    Then we use the validations to change related badges and icons.
+    */
+    console.time("setupListeners");
+    const [productDivs, group] = await getProductDivs();
+    const CFG = await waitForLocalStorage(`CFG-data`);
+    const validators = await generalValidators(group);
+    const saveOverlay = await waitForElementById(`save-overlay-${group}`);
+    const form = document.querySelector("form");
+
+    validators[0].addEventListener("input", function(e) {
+        validateSections(...validators, form, saveOverlay);
+    });
+    validators[1].addEventListener("input", function(e) {
+        validateSections(...validators, form, saveOverlay);
+    });
+    validators[2].addEventListener("input", function(e) {
+        validateSections(...validators, form, saveOverlay);
+    });
+
+    for (const prdDiv of productDivs) {
+        let start = performance.now();
+        const prd = prdDiv.id.split("-")[0];
+        const [brdInputs, prcInputs, qtyInputs, deleteBtns, addBtn, collapsed] = await getProductFields(prd, group, CFG);
+
+        // We also need the appropriate badges and icons
+        const statusBadge = await waitForElementById(`status-${prd}-${group}`);
+        const prdIcon = await waitForElementById(`icon-${prd}-${group}`);
+
+        if (brdInputs.length !== 0) {
+            brdInputs.forEach(input => {
+                input.addEventListener("input", function(e) {
+                    validateProduct(e, prd, brdInputs, prcInputs, qtyInputs, statusBadge, prdIcon, CFG)
+                    validateSections(...validators, form, saveOverlay);
+                });
+            });
+        }
+        prcInputs.forEach(input => {
+            input.addEventListener("input", function(e) {
+                validateProduct(e, prd, brdInputs, prcInputs, qtyInputs, statusBadge, prdIcon, CFG)
+                validateSections(...validators, form, saveOverlay);
+            });
+        });
+        qtyInputs.forEach(input => {
+            input.addEventListener("input", function(e) {
+                validateProduct(e, prd, brdInputs, prcInputs, qtyInputs, statusBadge, prdIcon, CFG)
+                validateSections(...validators, form, saveOverlay);
+            });
+        });
+        deleteBtns.forEach(btn => {
+            btn.addEventListener("click", function(e) {
+                deleteRow(prd, collapsed, e, brdInputs, prcInputs, qtyInputs);
+                validateProduct(e, prd, brdInputs, prcInputs, qtyInputs, statusBadge, prdIcon, CFG);
+                validateSections(...validators, form, saveOverlay);
+            });
+        });
+        addBtn.addEventListener("click", function(e) {
+            addRow(prd, collapsed);
+            validateProduct(e, prd, brdInputs, prcInputs, qtyInputs, statusBadge, prdIcon, CFG)
+            validateSections(...validators, form, saveOverlay);
+        });
+
+        // Initial validation
+        console.log(`Finished setting up listeners in ${(performance.now() - start).toFixed(2)} ms`);
+        addRow(prd, collapsed, true);
+        validateProduct(null, prd, brdInputs, prcInputs, qtyInputs, statusBadge, prdIcon, CFG);
+    }
+    validateSections(...validators, form, saveOverlay);
+
+    saveOverlay.addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        form.reportValidity();
+    });
+
+    console.timeEnd("setupListeners");
+}
+document.querySelectorAll("form").forEach(f => f.setAttribute("autocomplete", "off"));

@@ -13,3 +13,15 @@ html{scroll-padding-top:80px}
 .icon-orange{filter: invert(66%) sepia(29%) saturate(4461%) hue-rotate(1deg) brightness(106%) contrast(104%)}
 .icon-green{filter: invert(28%) sepia(58%) saturate(2191%) hue-rotate(94deg) brightness(95%) contrast(104%)}
 .collapse{transition: height 0.0s ease}
+input:invalid, select:invalid {border-color: red}
+[id] {scroll-margin-top: 150px}
+.overlay-blocker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    z-index: 1000;
+    cursor: not-allowed;
+}
